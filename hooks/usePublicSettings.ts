@@ -39,7 +39,16 @@ export const usePublicSettings = () => {
         throw new Error(`Public settings API failed: ${response.status} ${response.statusText}`)
       }
 
-      return response.json()
+      const result = await response.json()
+      
+      // API now returns: { success: true, data: {...}, timestamp: "..." }
+      // Unwrap the data property to maintain compatibility
+      if (result.success === true && result.data) {
+        return result.data
+      }
+      
+      // Fallback for old format (if any endpoints still use it)
+      return result
     },
     retry: 3,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),

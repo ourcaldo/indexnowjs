@@ -39,7 +39,9 @@ export default function GlobalQuotaWarning() {
       })
 
       if (response.ok) {
-        const data = await response.json()
+        const result = await response.json()
+        // API now returns: { success: true, data: {...}, timestamp: "..." }
+        const data = result.success === true && result.data ? result.data : result
         setQuotaInfo(data.user?.quota)
       }
     } catch (error) {

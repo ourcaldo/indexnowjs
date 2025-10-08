@@ -106,7 +106,9 @@ export function useGlobalQuotaManager() {
       let notifications = globalQuotaData.notifications
 
       if (dashboardResponse.ok) {
-        const dashboardData = await dashboardResponse.json()
+        const result = await dashboardResponse.json()
+        // API now returns: { success: true, data: {...}, timestamp: "..." }
+        const dashboardData = result.success === true && result.data ? result.data : result
         quotaInfo = dashboardData.user?.quota || quotaInfo
         notifications = dashboardData.notifications || notifications
       }

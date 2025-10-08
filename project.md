@@ -2978,3 +2978,74 @@ Verified actual API response from `https://api.indexnow.studio/v1/public/setting
 
 **Impact**: Frontend now correctly loads site settings without undefined property errors.
 
+
+---
+
+### API Response Format Migration - Phase 2 Fixes (October 8, 2025)
+**Critical Data Access Fix**: Fixed 6 hooks/components that were accessing undefined data after API response format standardization via `secureWrapper`.
+
+#### ✅ Root Cause Analysis
+After implementing `secureWrapper` with standardized API response format `{ success: true, data: {...}, timestamp }`, multiple frontend hooks and components were still accessing the OLD response structure directly (`response.user`) instead of unwrapping the new `data` property (`response.data.user`).
+
+#### ✅ Files Fixed - API Response Unwrapping
+
+**1. Dashboard Data Hook**
+- **File**: `hooks/useDashboardData.ts`
+- **Issue**: Accessing `response.user` instead of `response.data.user`
+- **Fix**: Added unwrapping logic to extract `data` property from API response
+- ✅ Dashboard now properly displays user quota and data
+
+**2. Public Settings Hook**
+- **File**: `hooks/usePublicSettings.ts`
+- **Issue**: Same unwrapping issue
+- **Fix**: Added response unwrapping with fallback for backward compatibility
+- ✅ Public settings load correctly
+
+**3. Global Quota Manager Hook**
+- **File**: `hooks/useGlobalQuotaManager.ts`
+- **Issue**: `dashboardData.user?.quota` was undefined (missing `.data` unwrap)
+- **Fix**: Unwrap `result.data` before accessing nested properties
+- ✅ Global quota tracking now works properly
+
+**4. Global Quota Warning Component**
+- **File**: `components/GlobalQuotaWarning.tsx`
+- **Issue**: `data.user?.quota` was undefined (missing `.data` unwrap)
+- **Fix**: Unwrap API response to access nested data structure
+- ✅ Quota warnings display correctly
+
+**5. Usage Overview Card Component**
+- **File**: `app/dashboard/settings/plans-billing/components/UsageOverviewCard.tsx`
+- **Issue**: `dashboardData.user?.quota`, `dashboardData.rankTracking?.usage`, `dashboardData.billing` all undefined
+- **Fix**: Unwrap API response before accessing dashboard data properties
+- ✅ Usage statistics display correctly
+
+**6. Billing Stats Component**
+- **File**: `app/dashboard/settings/plans-billing/components/BillingStats.tsx`
+- **Issue**: `dashboardData.user?.quota` and `dashboardData.rankTracking?.usage` undefined
+- **Fix**: Unwrap API response to extract nested data
+- ✅ Billing statistics render properly
+
+#### ✅ Implementation Pattern
+All fixes follow the same safe unwrapping pattern:
+```typescript
+const result = await response.json()
+// API now returns: { success: true, data: {...}, timestamp: "..." }
+// Unwrap the data property to maintain compatibility
+const actualData = result.success === true && result.data ? result.data : result
+```
+
+This pattern:
+- ✅ Safely unwraps the new API format
+- ✅ Falls back to old format if needed (backward compatibility)
+- ✅ Prevents accessing undefined properties
+- ✅ Maintains type safety
+
+#### ✅ Results
+- **Dashboard Rendering**: Fixed critical undefined data errors ✅
+- **Quota Tracking**: Global quota manager works correctly ✅
+- **Billing UI**: Usage and billing stats display properly ✅
+- **User Experience**: All dashboard features functional ✅
+- **API Consistency**: All endpoints now use standardized response format ✅
+
+**Impact**: Complete resolution of dashboard data access issues after API response format migration. All 6 affected hooks/components now properly unwrap the `data` property from the standardized API response structure `{ success: true, data: {...}, timestamp }`.
+

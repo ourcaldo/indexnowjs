@@ -92,7 +92,9 @@ export const BillingStats = ({
       })
 
       if (response.ok) {
-        const dashboardData = await response.json()
+        const result = await response.json()
+        // API now returns: { success: true, data: {...}, timestamp: "..." }
+        const dashboardData = result.success === true && result.data ? result.data : result
         setUsageData(dashboardData.user?.quota)
         setKeywordUsage(dashboardData.rankTracking?.usage)
       }
