@@ -450,6 +450,61 @@ await ErrorHandlingService.createError(ErrorType.DATABASE, error, {
 
 ---
 
+### Dashboard API Response Format Fix - COMPLETED (October 8, 2025)
+**Issue Resolution**: Fixed dashboard data rendering issues after secureWrapper implementation changed API response format.
+
+#### Problem Identified
+After implementing secureWrapper and global error handling, APIs started returning responses in the standardized format:
+```json
+{
+  "success": true,
+  "data": {
+    "data": [...],
+    "pagination": {...}
+  }
+}
+```
+
+The dashboard pages were extracting data incorrectly:
+- **Extracted**: `keywordsData?.data` → `{ "data": [...], "pagination": {...} }` (object)
+- **Expected**: Array of keywords
+- **Error**: `eo.filter is not a function` when trying to filter on an object
+
+#### Solution Implemented
+Updated data extraction in `/app/dashboard/indexnow/overview/page.tsx`:
+
+**Before (Incorrect)**:
+```typescript
+const keywords = keywordsData?.data || []
+const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
+```
+
+**After (Correct)**:
+```typescript
+const keywords = keywordsData?.data?.data || []
+const pagination = keywordsData?.data?.pagination || { page: 1, total: 0, total_pages: 1 }
+```
+
+Added response unwrapping logic in query functions:
+```typescript
+const result = await response.json()
+// Handle new API response format: { success: true, data: {...} }
+return result.success === true && result.data ? result : result
+```
+
+#### Files Modified
+- `app/dashboard/indexnow/overview/page.tsx` - Fixed data extraction for keywords, pagination, and stats
+- Query functions now properly unwrap the nested response structure
+
+#### Impact
+- ✅ Dashboard renders all data correctly
+- ✅ Keywords overview page displays properly
+- ✅ Pagination works correctly
+- ✅ Statistics calculations use correct data
+- ✅ No more `.filter()` errors
+
+---
+
 ### Phase 2 Error Handling Infrastructure - COMPLETED (October 7, 2025)
 **Production-Ready Standardization**: Unified API response layer with HTTP status code preservation, standardized error handling, and frontend integration for consistent error management across the application.
 

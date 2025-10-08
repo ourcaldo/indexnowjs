@@ -86,7 +86,9 @@ export default function IndexNowOverview() {
         credentials: 'include'
       })
       if (!response.ok) throw new Error('Failed to fetch countries')
-      return response.json()
+      const result = await response.json()
+      // Handle new API response format: { success: true, data: {...} }
+      return result.success === true && result.data ? result : result
     }
   })
 
@@ -119,7 +121,9 @@ export default function IndexNowOverview() {
         credentials: 'include'
       })
       if (!response.ok) throw new Error('Failed to fetch keywords')
-      return response.json()
+      const result = await response.json()
+      // Handle new API response format: { success: true, data: { data: [...], pagination: {...} } }
+      return result.success === true && result.data ? result : result
     }
   })
 
@@ -136,7 +140,9 @@ export default function IndexNowOverview() {
         credentials: 'include'
       })
       if (!response.ok) throw new Error('Failed to fetch keyword counts')
-      return response.json()
+      const result = await response.json()
+      // Handle new API response format: { success: true, data: { data: [...], pagination: {...} } }
+      return result.success === true && result.data ? result : result
     }
   })
 
@@ -148,7 +154,7 @@ export default function IndexNowOverview() {
       country_id: selectedCountry || undefined
     }],
     queryFn: async () => {
-      if (!selectedDomainId) return { data: [] }
+      if (!selectedDomainId) return { data: { data: [] } }
       
       const { data: { session } } = await supabase.auth.getSession()
       const params = new URLSearchParams()
@@ -168,16 +174,19 @@ export default function IndexNowOverview() {
         credentials: 'include'
       })
       if (!response.ok) throw new Error('Failed to fetch domain keywords for stats')
-      return response.json()
+      const result = await response.json()
+      // Handle new API response format: { success: true, data: { data: [...], pagination: {...} } }
+      return result.success === true && result.data ? result : result
     },
     enabled: !!selectedDomainId
   })
 
   const domains = dashboardData?.rankTracking?.domains || []
   const countries = countriesData?.data || []
-  const keywords = keywordsData?.data || []
-  const allKeywords = keywordCountsData?.data || []
-  const statsKeywords = allDomainKeywordsData?.data || [] // Keywords for statistics calculation
+  // Fix: Extract the nested data array from the new API response format
+  const keywords = keywordsData?.data?.data || []
+  const allKeywords = keywordCountsData?.data?.data || []
+  const statsKeywords = allDomainKeywordsData?.data?.data || [] // Keywords for statistics calculation
 
   // Set default selected domain if none selected
   useEffect(() => {
@@ -296,7 +305,8 @@ export default function IndexNowOverview() {
   const getDomainKeywordCount = (domainId: string) => {
     return allKeywords.filter((k: any) => k.domain_id === domainId).length
   }
-  const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
+  // Fix: Extract pagination from the new API response format
+  const pagination = keywordsData?.data?.pagination || { page: 1, total: 0, total_pages: 1 }
 
   // Filter keywords by search term
   const filteredKeywords = keywords.filter((keyword: any) =>
@@ -347,20 +357,20 @@ export default function IndexNowOverview() {
                 countries={countries}
                 onDeviceChange={setSelectedDevice}
                 onCountryChange={setSelectedCountry}
-                compact={false}
               />
-
-              <Button 
+              
+              <Button
                 onClick={() => router.push('/dashboard/indexnow/add')}
-                className="bg-primary text-primary-foreground"
+                className="btn-hover whitespace-nowrap"
+                data-testid="button-add-keywords"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Keyword
+                Add Keywords
               </Button>
             </div>
           </div>
 
-          {/* Stats Cards */}
+          {/* Statistics Overview */}
           <RankOverviewStats
             totalKeywords={totalKeywords}
             avgPosition={avgPosition}
@@ -368,73 +378,71 @@ export default function IndexNowOverview() {
             improvingCount={improvingCount}
           />
 
-          {/* Analytics Widgets */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <UsageChart 
-              data={generateUsageData(allKeywords)}
-              currentQuota={allKeywords.length}
-              totalQuota={1000}
-            />
-            <RankingDistribution 
-              data={{
-                total: statsKeywords.length,
-                topTen: topTenCount,
-                topTwenty: statsKeywords.filter((k: any) => k.current_position && k.current_position <= 20).length,
-                topFifty: statsKeywords.filter((k: any) => k.current_position && k.current_position <= 50).length,
-                beyond: statsKeywords.filter((k: any) => !k.current_position || k.current_position > 50).length
-              }}
-            />
-          </div>
+          {/* Ranking Distribution Chart */}
+          <RankingDistribution 
+            data={statsKeywords.map((k: any) => ({
+              position: k.current_position,
+              keyword: k.keyword,
+              domain: selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || ''
+            }))}
+            title="Position Distribution"
+            description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
+          />
 
-          {/* Filter and Keywords Section */}
-          <div className="space-y-4">
-            <FilterPanel
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              selectedTags={selectedTags}
-              setSelectedTags={setSelectedTags}
-              selectedKeywords={selectedKeywords}
-              setShowActionsMenu={setShowActionsMenu}
-              setShowDeleteConfirm={setShowDeleteConfirm}
-              setShowTagModal={setShowTagModal}
-              showActionsMenu={showActionsMenu}
+          {/* Usage Chart */}
+          <UsageChart 
+            data={generateUsageData(allKeywords)}
+            title="Keyword Tracking Activity"
+            description="Last 7 days of monitoring activity"
+          />
+
+          {/* Filter Panel */}
+          <FilterPanel
+            searchTerm={searchTerm}
+            selectedTags={selectedTags}
+            availableTags={[]}
+            onSearchChange={setSearchTerm}
+            onTagsChange={setSelectedTags}
+          />
+
+          {/* Bulk Actions Bar */}
+          {selectedKeywords.length > 0 && (
+            <BulkActions
+              selectedCount={selectedKeywords.length}
+              onDelete={() => setShowDeleteConfirm(true)}
+              onAddTag={() => setShowTagModal(true)}
+              onCancelSelection={() => setSelectedKeywords([])}
+              showDeleteConfirm={showDeleteConfirm}
+              onConfirmDelete={handleBulkDelete}
+              onCancelDelete={() => setShowDeleteConfirm(false)}
+              isDeleting={isDeleting}
+              showTagModal={showTagModal}
+              newTag={newTag}
+              onTagChange={setNewTag}
+              onSubmitTag={handleAddTag}
+              onCancelTag={() => { setShowTagModal(false); setNewTag('') }}
+              isAddingTag={isAddingTag}
             />
+          )}
 
-            <div className="space-y-4">
-              <KeywordTable
-                keywords={keywords}
-                filteredKeywords={filteredKeywords}
-                selectedKeywords={selectedKeywords}
-                handleKeywordSelect={handleKeywordSelect}
-                handleSelectAll={handleSelectAll}
-                searchTerm={searchTerm}
-                keywordsLoading={keywordsLoading || dashboardLoading}
-              />
+          {/* Keywords Table */}
+          <KeywordTable
+            keywords={filteredKeywords}
+            loading={keywordsLoading}
+            selectedKeywords={selectedKeywords}
+            onKeywordSelect={handleKeywordSelect}
+            onSelectAll={handleSelectAll}
+            refetchKeywords={refetchKeywords}
+          />
 
-              <Pagination
-                pagination={pagination}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-              />
-            </div>
-          </div>
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.total_pages}
+            onPageChange={setCurrentPage}
+          />
         </>
       )}
-
-      {/* Bulk Actions Modals */}
-      <BulkActions
-        showDeleteConfirm={showDeleteConfirm}
-        setShowDeleteConfirm={setShowDeleteConfirm}
-        showTagModal={showTagModal}
-        setShowTagModal={setShowTagModal}
-        selectedKeywords={selectedKeywords}
-        isDeleting={isDeleting}
-        handleBulkDelete={handleBulkDelete}
-        isAddingTag={isAddingTag}
-        newTag={newTag}
-        setNewTag={setNewTag}
-        handleAddTag={handleAddTag}
-      />
     </div>
   )
 }
