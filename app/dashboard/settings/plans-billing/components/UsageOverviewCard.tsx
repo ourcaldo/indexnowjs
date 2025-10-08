@@ -62,7 +62,7 @@ export const UsageOverviewCard = () => {
       const token = (await supabase.auth.getSession()).data.session?.access_token
       if (!token) return
 
-      const response = await fetch(DASHBOARD_ENDPOINTS.OVERVIEW, {
+      const response = await fetch(DASHBOARD_ENDPOINTS.MAIN, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

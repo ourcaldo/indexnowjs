@@ -118,8 +118,13 @@ export default function PlansTab() {
         throw new Error('Failed to load packages')
       }
 
-      const data = await response.json()
-      setPackagesData(data)
+      const result = await response.json()
+      // API now returns: { success: true, data: {...}, timestamp: "..." }
+      if (result.success === true && result.data) {
+        setPackagesData(result.data)
+      } else {
+        throw new Error(result.error?.message || 'Failed to load packages')
+      }
     } catch (error) {
       console.error('Error loading packages:', error)
       setError(error instanceof Error ? error.message : 'Failed to load packages')
@@ -179,7 +184,12 @@ export default function PlansTab() {
 
       if (response.ok) {
         const result = await response.json()
-        setTrialEligible(result.eligible)
+        // API now returns: { success: true, data: {...}, timestamp: "..." }
+        if (result.success === true && result.data) {
+          setTrialEligible(result.data.eligible)
+        } else {
+          setTrialEligible(false)
+        }
       } else {
         setTrialEligible(false)
       }
@@ -393,12 +403,12 @@ export default function PlansTab() {
                 <div className="mb-6">
                   {pricingInfo.originalPrice && (
                     <div className="text-muted-foreground line-through text-lg mb-1">
-                      {formatCurrency(pricingInfo.originalPrice, pkg.currency)}
+                      {formatCurrency(pricingInfo.originalPrice, pkg.currency as 'IDR' | 'USD')}
                     </div>
                   )}
                   <div className="flex items-baseline justify-center">
                     <span className="text-4xl font-bold text-foreground">
-                      {formatCurrency(pricingInfo.price, pkg.currency)}
+                      {formatCurrency(pricingInfo.price, pkg.currency as 'IDR' | 'USD')}
                     </span>
                     <span className="text-muted-foreground ml-1">
                       {currentPeriod?.suffix}

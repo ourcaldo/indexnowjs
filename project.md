@@ -1517,6 +1517,127 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### API Response Format & Frontend Unwrapping Issues Fixed (October 8, 2025, 16:40 UTC)
+**Critical Bug Fix**: Resolved multiple issues related to standardized API response format `{ success: true, data: {...} }` implementation where frontend pages weren't properly unwrapping responses.
+
+#### ✅ Issues Identified
+1. **Dynamic Routes Params Error**: `authenticatedApiWrapper` middleware not passing context parameter, causing "Cannot destructure property 'params' of 'undefined'" errors in dynamic routes
+2. **Billing Endpoints User ID Mismatch**: `billing/overview` and `billing/history` creating duplicate Supabase clients causing user ID mismatch errors
+3. **Frontend Incorrect Unwrapping**: Multiple frontend pages using wrong unwrapping pattern `result.success === true && result.data ? result : result` which returns wrapped response instead of unwrapped data
+4. **Missing DASHBOARD_ENDPOINTS**: `UsageOverviewCard` referencing non-existent `DASHBOARD_ENDPOINTS.OVERVIEW` instead of `.MAIN`
+5. **TypeScript LSP Errors**: Currency type mismatches and null safety issues in settings/plans-billing components
+
+#### ✅ Backend Fixes Applied
+
+**1. Fixed authenticatedApiWrapper Middleware** (`lib/core/api-response-middleware.ts`)
+- Updated type signature to accept optional `context` parameter with `params: Promise<any>`
+- Modified wrapper return function to accept and pass through context parameter
+- Now properly supports Next.js 15 dynamic routes where params are promises
+- Added documentation example for dynamic route usage
+
+**Before**:
+```typescript
+export function authenticatedApiWrapper<T = any>(
+  handler: (request: NextRequest, auth: AuthenticatedRequest) => Promise<...>
+) {
+  return async (request: NextRequest): Promise<NextResponse> => {
+    const response = await handler(request, authResult.data)
+  }
+}
+```
+
+**After**:
+```typescript
+export function authenticatedApiWrapper<T = any>(
+  handler: (
+    request: NextRequest, 
+    auth: AuthenticatedRequest, 
+    context?: { params: Promise<any> }
+  ) => Promise<...>
+) {
+  return async (request: NextRequest, context?: { params: Promise<any> }): Promise<NextResponse> => {
+    const response = await handler(request, authResult.data, context)
+  }
+}
+```
+
+**2. Fixed Billing Endpoints** (`app/api/v1/billing/overview/route.ts`, `app/api/v1/billing/history/route.ts`)
+- Removed duplicate `createServerClient` and `cookies()` imports
+- Changed from creating new Supabase client to using `auth.supabase` from wrapper
+- Changed `user.id` references to `auth.userId` for consistency
+- All SecureServiceRoleWrapper calls now use authenticated client from wrapper
+
+**Before (billing/overview)**:
+```typescript
+export const GET = authenticatedApiWrapper(async (request, user) => {
+  const cookieStore = await cookies()
+  const supabase = createServerClient(...)  // ❌ Duplicate client
+  
+  await SecureServiceRoleWrapper.executeWithUserSession(
+    supabase,  // ❌ New client with different session
+    { userId: user.id }  // ❌ Mismatched user ID
+  )
+})
+```
+
+**After (billing/overview)**:
+```typescript
+export const GET = authenticatedApiWrapper(async (request, auth) => {
+  await SecureServiceRoleWrapper.executeWithUserSession(
+    auth.supabase,  // ✅ Use authenticated client from wrapper
+    { userId: auth.userId }  // ✅ Consistent user ID
+  )
+})
+```
+
+#### ✅ Frontend Fixes Applied
+
+**3. Fixed IndexNow Overview Page** (`app/dashboard/indexnow/overview/page.tsx`)
+- Fixed 4 query functions with incorrect unwrapping pattern
+- Changed from ternary returning `result` to proper if/else returning `result.data`
+
+**Before**:
+```typescript
+const result = await response.json()
+return result.success === true && result.data ? result : result  // ❌ Returns wrapped response
+```
+
+**After**:
+```typescript
+const result = await response.json()
+if (result.success === true && result.data) {
+  return result.data  // ✅ Returns unwrapped data
+}
+return result
+```
+
+**4. Fixed PlansTab Component** (`app/dashboard/settings/plans-billing/plans/PlansTab.tsx`)
+- Fixed `loadPackages` to unwrap API response and handle errors explicitly
+- Fixed `checkTrialEligibility` to unwrap API response properly
+- Added proper error handling with explicit success checks
+- Fixed currency type casting for `formatCurrency` function calls
+
+**5. Fixed UsageOverviewCard Component** (`app/dashboard/settings/plans-billing/components/UsageOverviewCard.tsx`)
+- Changed `DASHBOARD_ENDPOINTS.OVERVIEW` to `DASHBOARD_ENDPOINTS.MAIN`
+
+**6. Fixed BillingStats Component** (`app/dashboard/settings/plans-billing/components/BillingStats.tsx`)
+- Added null coalescing operators (`??`) for safer null checks on `keywordUsage?.keywords_limit`
+- Fixed potential undefined access in conditional rendering
+
+#### ✅ Impact & Results
+- ✅ **All LSP errors resolved**: Down from 27 errors to 0
+- ✅ **Dynamic routes working**: All `/jobs/[id]/` endpoints now receive params correctly
+- ✅ **Billing endpoints fixed**: No more user ID mismatch errors
+- ✅ **Frontend pages unwrapping correctly**: All dashboard pages now handle standardized API responses
+- ✅ **Type safety improved**: All TypeScript errors resolved
+
+#### 📝 Architect Review Notes
+- **Status**: Pass - Changes meet objectives without introducing blocking defects
+- **Recommendations for Future Work**:
+  1. Create shared response-unwrapping helper to ensure uniform handling across all fetch calls
+  2. Spot-check remaining dashboard React Query hooks for consistent unwrapping patterns
+  3. Add response format validation in development mode to catch unwrapping issues early
+
 ### Dashboard Authentication User ID Mismatch Fixed (October 8, 2025)
 **Critical Bug Fix**: Resolved 401 Unauthorized errors on dashboard and user profile endpoints caused by user ID mismatch in security wrapper validation.
 

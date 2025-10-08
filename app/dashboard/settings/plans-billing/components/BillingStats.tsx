@@ -236,7 +236,7 @@ export const BillingStats = ({
                       <Server className="h-4 w-4 text-muted-foreground" />
                       <span className="font-semibold text-foreground">
                         {keywordUsage?.keywords_used || 0}
-                        {!keywordUsage?.is_unlimited && keywordUsage?.keywords_limit > 0 && (
+                        {!keywordUsage?.is_unlimited && (keywordUsage?.keywords_limit ?? 0) > 0 && (
                           <span className="text-sm text-muted-foreground ml-1">
                             ({Math.round(getUsagePercentage(
                               keywordUsage?.keywords_used || 0, 
@@ -248,7 +248,7 @@ export const BillingStats = ({
                       </span>
                     </div>
                     <span className="text-muted-foreground">
-                      {keywordUsage?.is_unlimited ? 'Unlimited' : (keywordUsage?.keywords_limit > 0 ? keywordUsage.keywords_limit : 'Loading...')}
+                      {keywordUsage?.is_unlimited ? 'Unlimited' : ((keywordUsage?.keywords_limit ?? 0) > 0 ? keywordUsage?.keywords_limit : 'Loading...')}
                     </span>
                   </div>
                 </div>
