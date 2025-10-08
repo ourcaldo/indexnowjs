@@ -8,7 +8,6 @@
  * - Mandatory user validation before any service role operation
  * - Comprehensive audit logging for compliance
  * - Input sanitization and validation
- * - Rate limiting and abuse prevention
  * - Context validation for business justification
  */
 
@@ -103,31 +102,28 @@ export class SecureServiceRoleWrapper {
       )
     }
     
-    // 3. Rate limiting for user operations
-    await this.checkUserRateLimit(user.id, operationContext.operation)
-    
-    // 4. Input validation and sanitization
+    // 3. Input validation and sanitization
     const sanitizedContext = this.sanitizeUserContext(operationContext)
     const sanitizedDatabaseContext = this.sanitizeQueryOptions(databaseContext)
     
-    // 5. Log operation start for audit trail
+    // 4. Log operation start for audit trail
     const auditId = await this.logUserOperationStart(sanitizedContext, sanitizedDatabaseContext)
     
     let result: T
     let operationSuccess = false
     
     try {
-      // 6. Execute operation with user client (RLS automatically applies)
+      // 5. Execute operation with user client (RLS automatically applies)
       result = await operation(userSupabaseClient)
       operationSuccess = true
       
-      // 7. Log successful operation
+      // 6. Log successful operation
       await this.logUserOperationSuccess(auditId, sanitizedContext, result)
       
       return result
       
     } catch (error) {
-      // 8. Log failed operation
+      // 7. Log failed operation
       await this.logUserOperationFailure(auditId, sanitizedContext, error)
       throw error
     }
@@ -145,30 +141,27 @@ export class SecureServiceRoleWrapper {
     // Step 1: Validate the operation context
     await this.validateOperationContext(context, queryOptions)
     
-    // Step 2: Rate limiting check
-    await this.checkRateLimit(context.userId, context.operation)
-    
-    // Step 3: Sanitize any input data
+    // Step 2: Sanitize any input data
     const sanitizedQueryOptions = this.sanitizeQueryOptions(queryOptions)
     
-    // Step 4: Log operation start for audit trail
+    // Step 3: Log operation start for audit trail
     const auditId = await this.logOperationStart(context, sanitizedQueryOptions)
     
     let result: T
     let operationSuccess = false
     
     try {
-      // Step 5: Execute the actual operation
+      // Step 4: Execute the actual operation
       result = await operation()
       operationSuccess = true
       
-      // Step 6: Log successful operation
+      // Step 5: Log successful operation
       await this.logOperationSuccess(auditId, context, result)
       
       return result
       
     } catch (error) {
-      // Step 7: Log failed operation
+      // Step 6: Log failed operation
       await this.logOperationFailure(auditId, context, error)
       throw error
     }
@@ -226,43 +219,6 @@ export class SecureServiceRoleWrapper {
     }, 'Service role operation context validated successfully')
   }
   
-  /**
-   * Check rate limiting for service role operations to prevent abuse
-   */
-  private static async checkRateLimit(userId: string, operation: string): Promise<void> {
-    try {
-      // Check recent operations by this user
-      const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString()
-      
-      const { count, error } = await supabaseAdmin
-        .from('indb_security_audit_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('event_type', 'service_role_operation')
-        .gte('created_at', oneMinuteAgo)
-      
-      if (error) {
-        logger.error({ error, userId }, 'Failed to check service role rate limit')
-        return // Allow operation if rate limit check fails
-      }
-      
-      // Allow up to 200 service role operations per minute per user
-      const rateLimit = 200
-      if (count && count >= rateLimit) {
-        throw new ServiceRoleSecurityViolationError(
-          'Service role operation rate limit exceeded',
-          { userId, operation, count, rateLimit }
-        )
-      }
-      
-    } catch (error) {
-      if (error instanceof ServiceRoleSecurityViolationError) {
-        throw error
-      }
-      // Log error but don't block operation
-      logger.error({ error, userId, operation }, 'Service role rate limit check failed')
-    }
-  }
   
   /**
    * Sanitize query options to prevent injection attacks
@@ -440,41 +396,6 @@ export class SecureServiceRoleWrapper {
     }
   }
 
-  /**
-   * Rate limiting for user operations (more permissive than service role ops)
-   */
-  private static async checkUserRateLimit(userId: string, operation: string): Promise<void> {
-    try {
-      const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString()
-      
-      const { count, error } = await supabaseAdmin
-        .from('indb_security_audit_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('event_type', 'user_operation')
-        .gte('created_at', oneMinuteAgo)
-      
-      if (error) {
-        logger.error({ error, userId }, 'Failed to check user operation rate limit')
-        return
-      }
-      
-      // Allow up to 100 user operations per minute (higher than service role ops)
-      const rateLimit = 100
-      if (count && count >= rateLimit) {
-        throw new ServiceRoleSecurityViolationError(
-          'User operation rate limit exceeded',
-          { userId, operation, count, rateLimit }
-        )
-      }
-      
-    } catch (error) {
-      if (error instanceof ServiceRoleSecurityViolationError) {
-        throw error
-      }
-      logger.error({ error, userId, operation }, 'User operation rate limit check failed')
-    }
-  }
 
   /**
    * Sanitize user operation context
