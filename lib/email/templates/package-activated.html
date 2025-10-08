@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Activated</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px 0;
+        }
+        
+        .email-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .header {
+            background-color: #ffffff;
+            padding: 30px 30px 20px 30px;
+            text-align: center;
+            border-bottom: none;
+        }
+        
+        .content {
+            padding: 20px 30px 30px 30px;
+            text-align: left;
+        }
+        
+        .greeting {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #4BB543;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .stats-container {
+            margin: 30px 0;
+        }
+        
+        .stats-row {
+            display: table;
+            width: 100%;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        
+        .stats-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stats-label {
+            display: table-cell;
+            color: #333;
+            width: 70%;
+            text-align: left;
+        }
+        
+        .stats-value {
+            display: table-cell;
+            color: #333;
+            width: 30%;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: #1A1A1A;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        
+        .footer-message {
+            font-size: 14px;
+            color: #333;
+            margin: 30px 0 20px 0;
+            line-height: 1.6;
+        }
+        
+        .signature {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .team-name {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            background-color: #2c2c2c;
+            padding: 20px 30px;
+            text-align: left;
+        }
+        
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 0 10px;
+            }
+            
+            .content, .header, .footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div style="font-size: 24px; font-weight: bold; color: #1A1A1A;">IndexNow Studio</div>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">Hi {{customerName}},</div>
+            
+            <div class="message">
+                Congratulations! Your IndexNow Studio subscription has been successfully activated and is ready to use. You can now start submitting your URLs for faster indexing.
+            </div>
+            
+            <div class="stats-container">
+                <div class="stats-row">
+                    <span class="stats-label">Package</span>
+                    <span class="stats-value">{{packageName}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Billing Period</span>
+                    <span class="stats-value">{{billingPeriod}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Valid Until</span>
+                    <span class="stats-value">{{expiresAt}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Status</span>
+                    <span class="stats-value" style="color: #4BB543;">Active</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}" class="cta-button">Access Your Dashboard</a>
+            </div>
+            
+            <div class="footer-message">
+                You can now start using all the features included in your {{packageName}} package. If you have any questions or need assistance, our support team is here to help.
+            </div>
+            
+            <div class="signature">Welcome to IndexNow Studio!</div>
+            <div class="team-name">The IndexNow Studio Team</div>
+            
+            <div class="timestamp">Activated on {{activationDate}}</div>
+        </div>
+        
+        <div class="footer">
+            <center><div style="font-size: 16px; font-weight: bold; color: white; margin-bottom: 10px;">IndexNow Studio</div></center>
+        </div>
+    </div>
+</body>
+</html>

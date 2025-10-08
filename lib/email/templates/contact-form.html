@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form Submission - IndexNow Studio</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #1A1A1A;
+            background-color: #F7F9FC;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .email-header {
+            background: linear-gradient(135deg, #1A1A1A 0%, #2C2C2E 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        .email-header h1 {
+            color: #FFFFFF;
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .email-header p {
+            color: #FFFFFF;
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .email-body {
+            padding: 40px 30px;
+        }
+        .contact-info {
+            background-color: #F7F9FC;
+            border-left: 4px solid #3D8BFF;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+        .contact-info h2 {
+            margin: 0 0 15px 0;
+            color: #1A1A1A;
+            font-size: 18px;
+        }
+        .contact-field {
+            margin-bottom: 12px;
+        }
+        .contact-field strong {
+            color: #1A1A1A;
+            display: inline-block;
+            width: 100px;
+            font-size: 14px;
+        }
+        .contact-field span {
+            color: #6C757D;
+            font-size: 14px;
+        }
+        .contact-type {
+            display: inline-block;
+            background-color: #3D8BFF;
+            color: #FFFFFF;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .order-id {
+            display: inline-block;
+            background-color: #4BB543;
+            color: #FFFFFF;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .message-section {
+            margin: 30px 0;
+        }
+        .message-section h3 {
+            color: #1A1A1A;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .message-content {
+            background-color: #FFFFFF;
+            border: 1px solid #E0E6ED;
+            padding: 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #1A1A1A;
+        }
+        .submission-details {
+            background-color: #F7F9FC;
+            border: 1px solid #E0E6ED;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 6px;
+        }
+        .submission-details h4 {
+            margin: 0 0 15px 0;
+            color: #1A1A1A;
+            font-size: 14px;
+        }
+        .submission-details p {
+            margin: 8px 0;
+            font-size: 12px;
+            color: #6C757D;
+        }
+        .submission-details code {
+            background-color: #E0E6ED;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .email-footer {
+            background-color: #1A1A1A;
+            padding: 20px;
+            text-align: center;
+        }
+        .email-footer p {
+            color: #FFFFFF;
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .priority-high {
+            background-color: #E63946;
+        }
+        .priority-medium {
+            background-color: #F0A202;
+        }
+        .priority-low {
+            background-color: #4BB543;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>📩 New Contact Form Submission</h1>
+            <p>IndexNow Studio Support Request</p>
+        </div>
+        
+        <div class="email-body">
+            <div class="contact-info">
+                <h2>Contact Information</h2>
+                
+                <div class="contact-field">
+                    <strong>Name:</strong>
+                    <span>{{name}}</span>
+                </div>
+                
+                <div class="contact-field">
+                    <strong>Email:</strong>
+                    <span>{{email}}</span>
+                </div>
+                
+                <div class="contact-field">
+                    <strong>Type:</strong>
+                    <span class="contact-type">{{type}}</span>
+                </div>
+                
+                <div class="contact-field">
+                    <strong>Subject:</strong>
+                    <span>{{subject}}</span>
+                </div>
+                
+                {{#if orderId}}
+                <div class="contact-field">
+                    <strong>Order ID:</strong>
+                    <span class="order-id">{{orderId}}</span>
+                </div>
+                {{/if}}
+            </div>
+            
+            <div class="message-section">
+                <h3>📝 Message Content</h3>
+                <div class="message-content">{{message}}</div>
+            </div>
+            
+            <div class="submission-details">
+                <h4>🔍 Submission Details</h4>
+                <p><strong>IP Address:</strong> <code>{{ipAddress}}</code></p>
+                <p><strong>User Agent:</strong> <code>{{userAgent}}</code></p>
+                <p><strong>Submitted At:</strong> <code>{{submittedAt}}</code></p>
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <p>© 2025 IndexNow Studio. Professional Rank Tracking Made Simple.</p>
+        </div>
+    </div>
+</body>
+</html>

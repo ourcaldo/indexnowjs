@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Notification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px 0;
+        }
+        
+        .email-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .header {
+            background-color: #ffffff;
+            padding: 30px 30px 20px 30px;
+            text-align: center;
+            border-bottom: none;
+        }
+        
+        .logo {
+            max-width: 120px;
+            height: auto;
+        }
+        
+        .content {
+            padding: 20px 30px 30px 30px;
+            text-align: left;
+        }
+        
+        .greeting {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .alert-box {
+            background-color: #e8f4fd;
+            border-left: 4px solid #3D8BFF;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .alert-icon {
+            font-size: 20px;
+            margin-right: 10px;
+            color: #3D8BFF;
+        }
+        
+        .alert-text {
+            font-size: 14px;
+            color: #1A1A1A;
+            font-weight: 500;
+        }
+        
+        .stats-container {
+            margin: 30px 0;
+        }
+        
+        .stats-row {
+            display: table;
+            width: 100%;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        
+        .stats-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stats-label {
+            display: table-cell;
+            color: #333;
+            width: 40%;
+            text-align: left;
+        }
+        
+        .stats-value {
+            display: table-cell;
+            color: #333;
+            width: 60%;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .security-section {
+            margin: 30px 0;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .security-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .security-icon {
+            margin-right: 8px;
+            color: #4BB543;
+        }
+        
+        .security-grid {
+            margin: 15px 0;
+        }
+        
+        .security-row {
+            display: table;
+            width: 100%;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+        
+        .security-label {
+            display: table-cell;
+            color: #6C757D;
+            width: 35%;
+            text-align: left;
+        }
+        
+        .security-value {
+            display: table-cell;
+            color: #1A1A1A;
+            width: 65%;
+            text-align: right;
+            font-weight: 500;
+        }
+        
+        .footer-message {
+            font-size: 14px;
+            color: #333;
+            margin: 30px 0 20px 0;
+            line-height: 1.6;
+        }
+        
+        .signature {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .team-name {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            background-color: #2c2c2c;
+            padding: 20px 30px;
+            text-align: left;
+        }
+        
+        .footer-logo {
+            max-width: 80px;
+            height: auto;
+            margin-bottom: 10px;
+            filter: brightness(0) invert(1);
+        }
+        
+        .not-you {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .not-you-text {
+            font-size: 13px;
+            color: #856404;
+            margin: 0;
+        }
+        
+        .action-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #E63946;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 0 10px;
+            }
+            
+            .content, .header, .footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div style="font-size: 24px; font-weight: bold; color: #1A1A1A;">IndexNow Studio</div>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">Hi {{userName}},</div>
+            
+            <div class="message">
+                We detected a new login to your IndexNow Studio account. If this was you, you can safely ignore this email. If you don't recognize this activity, please review the details below and secure your account immediately.
+            </div>
+            
+            <div class="stats-container">
+                <div class="stats-row">
+                    <span class="stats-label">Login Time</span>
+                    <span class="stats-value">{{loginTime}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Email Address</span>
+                    <span class="stats-value">{{userEmail}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">IP Address</span>
+                    <span class="stats-value">{{ipAddress}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Location</span>
+                    <span class="stats-value">{{location}}</span>
+                </div>
+            </div>
+            
+            <div class="security-section">
+                <div class="security-title">
+                    <span class="security-icon">🛡️</span>
+                    Device & Browser Information
+                </div>
+                <div class="security-grid">
+                    <div class="security-row">
+                        <span class="security-label">Device</span>
+                        <span class="security-value">{{deviceType}}</span>
+                    </div>
+                    <div class="security-row">
+                        <span class="security-label">Browser</span>
+                        <span class="security-value">{{browser}}</span>
+                    </div>
+                    <div class="security-row">
+                        <span class="security-label">Operating System</span>
+                        <span class="security-value">{{operatingSystem}}</span>
+                    </div>
+                    <div class="security-row">
+                        <span class="security-label">Security Risk</span>
+                        <span class="security-value">{{securityRisk}}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="not-you">
+                <div class="not-you-text">
+                    <strong>This wasn't you?</strong><br>
+                    If you don't recognize this login, someone else might have access to your account. Please change your password immediately and review your account security settings.
+                </div>
+                <a href="{{secureAccountUrl}}" class="action-button">Secure My Account</a>
+            </div>
+            
+            <div class="footer-message">
+                For your security, we recommend enabling two-factor authentication and using a strong, unique password for your IndexNow Studio account.
+            </div>
+            
+            <div class="signature">Stay secure,</div>
+            <div class="team-name">The IndexNow Studio Security Team</div>
+            
+            <div class="timestamp">Login notification sent on {{notificationTime}}</div>
+        </div>
+        
+        <div class="footer">
+            <center><div style="font-size: 16px; font-weight: bold; color: white; margin-bottom: 10px;">IndexNow Studio</div></center>
+        </div>
+    </div>
+</body>
+</html>

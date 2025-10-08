@@ -1,0 +1,290 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Continuous scrolling animation for company logos */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 25s linear infinite;
+}
+
+:root {
+  /* New Color Palette - Professional Dark Theme */
+  --pure-white: #FFFFFF;
+  --light-gray: #F7F9FC;
+  --charcoal: #2C2C2E;
+  --soft-blue: #3D8BFF; /* Fixed: Using project spec color instead of #5B7BBF */
+  --cool-gray: #E0E6ED;
+  --graphite: #1A1A1A;
+  --slate-gray: #6C757D;
+  --mint-green: #4BB543;
+  --amber: #F0A202;
+  --rose-red: #E63946;
+  --light-blue-bg: #F0F9FF; /* Light blue background for selected states */
+  --light-red-bg: #FEF2F2; /* Light red background for error states */
+  --light-red-border: #FECACA; /* Light red border for error states */
+  --success-text: #065F46; /* Dark green text for success messages */
+  --error-text: #DC2626; /* Red text for error messages */
+  
+  /* Brand-specific colors for semantic usage */
+  --brand-primary: var(--graphite); /* #1A1A1A */
+  --brand-secondary: var(--charcoal); /* #2C2C2E */
+  --brand-accent: var(--soft-blue); /* #3D8BFF */
+  --brand-text: var(--slate-gray); /* #6C757D */
+  
+  /* Button specific colors */
+  --button-primary: #1C2331;
+  --button-secondary: #0d1b2a;
+  --button-tertiary: #22333b;
+  --button-dark: #1E1E1E;
+  
+  /* CSS Variables using new palette */
+  --background: 0 0% 100%; /* #FFFFFF */
+  --foreground: 0 0% 10%; /* #1A1A1A */
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 0 0% 10%; /* #1A1A1A */
+  --popover: 0 0% 100%; /* #FFFFFF */
+  --popover-foreground: 0 0% 10%; /* #1A1A1A */
+  
+  /* Primary elements using button colors */
+  --primary: 220 27% 15%; /* #1C2331 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 210 40% 98%; /* #F7F9FC */
+  --secondary-foreground: 240 3% 18%; /* #2C2C2E */
+  --muted: 210 40% 98%; /* #F7F9FC */
+  --muted-foreground: 210 8% 46%; /* #6C757D */
+  --accent: 218 100% 62%; /* #3D8BFF */
+  --accent-foreground: 0 0% 100%; /* #FFFFFF */
+  
+  /* Semantic colors */
+  --success: 142 70% 49%; /* #4BB543 converted to HSL */
+  --success-foreground: 0 0% 100%;
+  --warning: 39 92% 47%; /* #F0A202 converted to HSL */
+  --warning-foreground: 0 0% 7%;
+  --error: 354 70% 54%; /* #E63946 converted to HSL */
+  --error-foreground: 0 0% 100%;
+  --info: 218 58% 63%; /* #3D8BFF converted to HSL */
+  --info-foreground: 0 0% 100%;
+  
+  /* Status-specific colors for badges and indicators */
+  --status-excellent: var(--success);
+  --status-good: var(--info); 
+  --status-warning: var(--warning);
+  --status-poor: var(--error);
+  
+  /* Interactive element colors */
+  --hover-overlay: 0 0% 0% / 0.05; /* rgba(0,0,0,0.05) in HSL format */
+  --focus-ring: var(--soft-blue);
+  --disabled-bg: var(--cool-gray);
+  --disabled-text: var(--slate-gray);
+  
+  /* UI Elements */
+  --border: 215 16% 88%; /* #E0E6ED */
+  --input: 215 16% 88%; /* #E0E6ED */
+  --ring: 218 100% 62%; /* #3D8BFF */
+  --destructive: 354 70% 54%; /* #E63946 */
+  --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+  --radius: 0.5rem;
+  
+  /* Table specific */
+  --table-frozen-column: #E8F4F8;
+  --table-frozen-column-foreground: var(--charcoal);
+  
+  /* Table header colors - Semrush style */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+}
+
+.dark {
+  --background: 0 0% 0%; /* Pure black background */
+  --foreground: 0 0% 100%; /* Pure white text */
+  --card: 0 0% 0%; /* Black cards */
+  --card-foreground: 0 0% 100%; /* White text on cards */
+  --popover: 0 0% 0%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 5%; /* Very dark secondary background */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 5%;
+  --muted-foreground: 0 0% 100%; /* White muted text */
+  --accent: 218 100% 62%; /* Keep brand accent consistent */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 20%; /* Dark borders */
+  --input: 0 0% 5%;
+  --ring: 218 100% 62%; /* Keep accent ring consistent */
+  
+  /* Table specific - dark mode */
+  --table-frozen-column: hsl(215, 35%, 18%);
+  --table-frozen-column-foreground: hsl(0, 0%, 95%);
+  
+  /* Table header colors - dark mode */
+  --slate-50: hsl(215, 25%, 12%);
+  --slate-100: hsl(215, 25%, 15%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+}
+
+@layer utilities {
+  /* Statistical number styling */
+  .stat-number {
+    @apply text-2xl font-bold;
+    color: hsl(var(--stat-primary));
+  }
+  
+  .stat-number-large {
+    @apply text-4xl font-bold;
+    color: hsl(var(--stat-primary));
+  }
+  
+  .stat-percentage {
+    @apply text-xl font-semibold;
+    color: hsl(var(--stat-success));
+  }
+  
+  .stat-secondary {
+    @apply font-medium;
+    color: hsl(var(--stat-secondary));
+  }
+  
+  .stat-neutral {
+    @apply text-sm;
+    color: hsl(var(--stat-neutral));
+  }
+  
+  /* Status indicators */
+  .status-excellent {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background: hsl(var(--success));
+    color: hsl(var(--success-foreground));
+  }
+  
+  .status-good {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background: hsl(var(--info));
+    color: hsl(var(--info-foreground));
+  }
+  
+  .status-warning {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background: hsl(var(--warning));
+    color: hsl(var(--warning-foreground));
+  }
+  
+  /* Interactive elements with rich colors */
+  .card-interactive {
+    @apply transition-all duration-200 hover:shadow-md;
+    border-left: 4px solid hsl(var(--accent));
+  }
+  
+  .card-interactive:hover {
+    border-left-color: hsl(var(--primary));
+  }
+
+  /* Universal hover effect for buttons */
+  .btn-hover {
+    @apply transition-colors duration-200;
+  }
+  
+  .btn-hover:hover {
+    background-color: var(--button-dark) !important;
+    color: var(--pure-white) !important;
+  }
+  
+  /* Form Elements */
+  .form-field-default {
+    @apply border-border bg-background text-foreground rounded-md px-3 py-2;
+    border: 1px solid var(--border);
+  }
+  
+  .form-field-error {
+    @apply border-error bg-background text-foreground rounded-md px-3 py-2;
+    border: 1px solid hsl(var(--error));
+  }
+  
+  .form-field-success {
+    @apply border-success bg-background text-foreground rounded-md px-3 py-2;
+    border: 1px solid hsl(var(--success));
+  }
+  
+  .form-field-focus {
+    @apply outline-none focus:ring-2 focus:ring-info focus:border-info;
+  }
+  
+  /* Cards and Containers */
+  .card-default {
+    @apply bg-card border-border rounded-lg;
+    border: 1px solid var(--border);
+  }
+  
+  .card-bordered {
+    @apply bg-card border-border rounded-lg shadow-sm;
+    border: 1px solid var(--border);
+  }
+  
+  /* Status Badges */
+  .badge-success {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background: hsl(var(--success));
+    color: hsl(var(--success-foreground));
+  }
+  
+  .badge-warning {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background: hsl(var(--warning));
+    color: hsl(var(--warning-foreground));
+  }
+  
+  .badge-error {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background: hsl(var(--error));
+    color: hsl(var(--error-foreground));
+  }
+  
+  .badge-info {
+    @apply px-2 py-1 rounded text-xs font-medium;
+    background: hsl(var(--info));
+    color: hsl(var(--info-foreground));
+  }
+
+  /* Status Border Utilities for Toast */
+  .border-success {
+    border-color: hsl(var(--success)) !important;
+  }
+  
+  .border-warning {
+    border-color: hsl(var(--warning)) !important;
+  }
+  
+  .border-error {
+    border-color: hsl(var(--error)) !important;
+  }
+  
+  .border-info {
+    border-color: hsl(var(--info)) !important;
+  }
+
+  /* Radial gradient utility */
+  .bg-gradient-radial {
+    background: radial-gradient(var(--tw-gradient-stops));
+  }
+}

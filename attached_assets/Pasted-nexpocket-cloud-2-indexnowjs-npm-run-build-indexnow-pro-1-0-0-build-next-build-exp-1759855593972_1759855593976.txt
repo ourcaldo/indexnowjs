@@ -1,0 +1,119 @@
+nexpocket@cloud-2:~/indexnowjs$ npm run build
+
+> indexnow-pro@1.0.0 build
+> next build
+
+ ⚠ `experimental.instrumentationHook` is no longer needed, because `instrumentation.js` is available by default. You can remove it from next.config.js.
+ ⚠ Invalid next.config.js options detected:
+ ⚠     Unrecognized key(s) in object: 'instrumentationHook' at "experimental"
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+   ▲ Next.js 15.5.0
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · cpus: 2
+     · serverActions
+     ✓ instrumentationHook
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (108kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (318kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+Failed to compile.
+
+./app/api/debug/payment-result/route.ts
+Error:   × Expected ',', got ']'
+    ╭─[/home/nexpocket/indexnowjs/app/api/debug/payment-result/route.ts:21:1]
+ 18 │     }
+ 19 │
+ 20 │     logger.info({ data: [{
+ 21 │       payment_method, result: JSON.stringify(sanitizedResult, null, 2] }, '📋 [DEBUG] Payment result received:'),
+    ·                                                                      ─
+ 22 │       timestamp: new Date().toISOString(),
+ 23 │       environment: 'development'
+ 24 │     })
+    ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/debug/payment-result/route.ts
+
+./app/api/midtrans/webhook/route.ts
+Error:   × Expected ',', got ']'
+    ╭─[/home/nexpocket/indexnowjs/app/api/midtrans/webhook/route.ts:44:1]
+ 41 │     } else {
+ 42 │       // Try to parse as text and then JSON
+ 43 │       const text = await request.text()
+ 44 │       logger.info({ data: [text.substring(0, 200] }, '📄 [Unified Webhook] Raw text data:'))
+    ·                                                 ─
+ 45 │
+ 46 │       try {
+ 47 │         body = JSON.parse(text)
+    ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/midtrans/webhook/route.ts
+
+./app/api/v1/billing/channels/midtrans-recurring/handler.ts
+Error:   × Expected ',', got ']'
+     ╭─[/home/nexpocket/indexnowjs/app/api/v1/billing/channels/midtrans-recurring/handler.ts:120:1]
+ 117 │
+ 118 │     // Step 1: Create charge transaction with token_id from frontend tokenization
+ 119 │     logger.info({ data: [{
+ 120 │       order_id: transactionId, amount_usd: amount.finalAmount, token_id: this.tokenId.substring(0, 20] }, '🚀 [Midtrans Recurring] Creating charge transaction with parameters:') + '...',
+     ·                                                                                                      ─
+ 121 │       customer_name: `${this.paymentData.customer_info.first_name} ${this.paymentData.customer_info.last_name}`,
+ 122 │       customer_email: this.paymentData.customer_info.email
+ 123 │     })
+     ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/v1/billing/channels/midtrans-recurring/handler.ts
+./app/api/v1/billing/payment/route.ts
+
+./app/api/v1/billing/channels/shared/base-handler.ts
+Error:   × Expected '{', got 'abstract'
+    ╭─[/home/nexpocket/indexnowjs/app/api/v1/billing/channels/shared/base-handler.ts:34:1]
+ 31 │   redirect_url?: string
+ 32 │ }
+ 33 │
+ 34 │ export abstract class BasePaymentHandler {
+    ·        ────────
+ 35 │   protected packageData: any
+ 36 │   protected userData: any
+    ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/v1/billing/channels/shared/base-handler.ts
+./app/api/v1/billing/channels/bank-transfer/route.ts
+
+./app/api/v1/public/contact/route.ts
+Error:   × Expected ',', got ']'
+    ╭─[/home/nexpocket/indexnowjs/app/api/v1/public/contact/route.ts:73:1]
+ 70 │
+ 71 │   // Log the contact form submission for admin tracking
+ 72 │   logger.info({ data: [{
+ 73 │     name: validatedData.name, email: validatedData.email, type: validatedData.type, subject: validatedData.subject, hasOrderId: Boolean(validatedData.orderId] }, '📝 Contact form submitted'),
+    ·                                                                                                                                                              ─
+ 74 │     messageLength: validatedData.message.length,
+ 75 │     ipAddress,
+ 76 │     timestamp: new Date().toISOString()
+    ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/api/v1/public/contact/route.ts
+
+
+> Build failed because of webpack errors

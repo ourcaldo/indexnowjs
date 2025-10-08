@@ -1,0 +1,195 @@
+[TAILING] Tailing last 15 lines for [indexnow] process (change the value with --lines option)
+/home/nexpocket/.pm2/logs/indexnow-error.log last 15 lines:
+0|indexnow | AuthApiError: Invalid Refresh Token: Already Used
+0|indexnow |     at bj (.next/server/middleware.js:33:29514)
+0|indexnow |     at async bl (.next/server/middleware.js:33:30488)
+0|indexnow |     at async bk (.next/server/middleware.js:33:29898)
+0|indexnow |     at async c (.next/server/middleware.js:33:66387)
+0|indexnow |     at async (.next/server/middleware.js:33:66650) {
+0|indexnow |   __isAuthError: true,
+0|indexnow |   status: 400,
+0|indexnow |   code: 'refresh_token_already_used'
+0|indexnow | }
+0|indexnow | ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+0|indexnow | ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+0|indexnow | ⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+0|indexnow | GeoIP-lite failed to initialize: ENOENT: no such file or directory, open '/home/nexpocket/indexnowjs/.next/server/data/geoip-country.dat'
+0|indexnow | Location tracking will use fallback IP-API service
+
+/home/nexpocket/.pm2/logs/indexnow-out.log last 15 lines:
+0|indexnow | {"level":"INFO","time":"2025-10-06T18:30:00.028Z","pid":2913553,"hostname":"cloud-2","userId":"system","operation":"fetch_pending_indexing_jobs_for_processing","table":"indb_indexing_jobs","operationType":"select","msg":"Service role operation context validated successfully"}
+0|indexnow | {"level":"ERROR","time":"2025-10-06T18:30:00.055Z","pid":2913553,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+0|indexnow | {"level":"ERROR","time":"2025-10-06T18:30:00.072Z","pid":2913553,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+0|indexnow | {"level":"ERROR","time":"2025-10-06T18:30:00.075Z","pid":2913553,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+0|indexnow | {"level":"INFO","time":"2025-10-06T18:30:00.097Z","pid":2913553,"hostname":"cloud-2","auditId":"664c2bbb-3eb7-4c8e-958d-898d078fe894","userId":"system","operation":"fetch_pending_indexing_jobs_for_processing","msg":"Service role operation completed successfully"}
+0|indexnow | {"level":"INFO","time":"2025-10-06T18:30:00.116Z","pid":2913553,"hostname":"cloud-2","auditId":"2e31fed9-9722-45ba-88bf-80c97a4b3281","userId":"system","operation":"get_expired_trials","msg":"Service role operation completed successfully"}
+0|indexnow | ✅ [Trial Monitor] No expired trials to process
+0|indexnow | ✅ [Trial Monitor] Trial monitor job completed successfully
+0|indexnow | [INFO] ✅ Trial monitoring job completed successfully
+0|indexnow | [INFO] 🏁 Trial monitoring job execution completed
+0|indexnow | {"level":"INFO","time":"2025-10-06T18:30:00.119Z","pid":2913553,"hostname":"cloud-2","auditId":"cd4c7518-7efe-4889-be52-c67dd4f0f7cc","userId":"system","operation":"find_keywords_needing_enrichment","msg":"Service role operation completed successfully"}
+0|indexnow | 📊 [Keyword Enrichment] Found 0 keywords without enrichment data
+0|indexnow | ✅ [Keyword Enrichment] No keywords need enrichment
+0|indexnow | SIGINT received, shutting down gracefully...
+0|indexnow | Server closed
+
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8
+0|indexnow  | > indexnow-pro@1.0.0 start
+0|indexnow  | > tsx server/custom-server.ts
+0|indexnow  | /home/nexpocket/indexnowjs/node_modules/next/src/server/lib/router-utils/filesystem.ts:158
+0|indexnow  |       throw new Error(
+0|indexnow  |             ^
+0|indexnow  | Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+0|indexnow  |     at setupFsCheck (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/filesystem.js:156:41)
+0|indexnow  |     at async initialize (/home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-server.js:112:23)
+0|indexnow  |     at async NextCustomServer.prepare (/home/nexpocket/indexnowjs/node_modules/next/dist/server/next.js:287:28)
+0|indexnow  | Node.js v18.20.8

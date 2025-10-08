@@ -1,0 +1,96 @@
+modules = ["web", "nodejs-20"]
+run = "npm run dev"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["nano"]
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 42205
+externalPort = 3000
+
+[[ports]]
+localPort = 43225
+externalPort = 3001
+
+[[ports]]
+localPort = 45259
+externalPort = 5000
+
+[[ports]]
+localPort = 46271
+externalPort = 3002
+
+[[ports]]
+localPort = 46781
+externalPort = 3003
+
+[[ports]]
+localPort = 46825
+externalPort = 4200
+
+[env]
+PORT = "8081"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Development Server"
+author = 47128650
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsx server/custom-server.ts"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "IndexNow Studio"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "IndexNow Studio"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[agent]
+expertMode = true

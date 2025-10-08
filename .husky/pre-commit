@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Phase 3 - Milestone C.2: Pre-commit validation
+# Runs lint-staged to validate code quality before commits
+
+echo "🔍 Running pre-commit checks..."
+
+npx lint-staged
+
+echo "✅ Pre-commit checks complete!"

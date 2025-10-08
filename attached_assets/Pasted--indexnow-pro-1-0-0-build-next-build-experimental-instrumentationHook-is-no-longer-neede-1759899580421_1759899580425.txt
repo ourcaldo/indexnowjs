@@ -1,0 +1,306 @@
+> indexnow-pro@1.0.0 build
+> next build
+
+ ⚠ `experimental.instrumentationHook` is no longer needed, because `instrumentation.js` is available by default. You can remove it from next.config.js.
+ ⚠ Invalid next.config.js options detected:
+ ⚠     Unrecognized key(s) in object: 'instrumentationHook' at "experimental"
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+   ▲ Next.js 15.5.0
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · cpus: 2
+     · serverActions
+     ✓ instrumentationHook
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 23.8s
+
+./lib/analytics/sentry-server.ts
+Attempted import error: 'httpIntegration' is not exported from '@sentry/nextjs' (imported as 'Sentry').
+
+Import trace for requested module:
+./lib/analytics/sentry-server.ts
+./lib/monitoring/error-handling.ts
+./lib/services/security/SecureServiceRoleWrapper.ts
+./lib/auth/server-auth.ts
+./lib/auth/index.ts
+./app/register/page.tsx
+
+./lib/analytics/sentry-server.ts
+Attempted import error: 'httpIntegration' is not exported from '@sentry/nextjs' (imported as 'Sentry').
+
+Import trace for requested module:
+./lib/analytics/sentry-server.ts
+./lib/monitoring/error-handling.ts
+./lib/services/security/SecureServiceRoleWrapper.ts
+
+./lib/analytics/sentry-server.ts
+Attempted import error: 'httpIntegration' is not exported from '@sentry/nextjs' (imported as 'Sentry').
+
+Import trace for requested module:
+./lib/analytics/sentry-server.ts
+
+   Skipping validation of types
+   Skipping linting
+   Collecting page data  ...⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+   Collecting page data  .IndexNow Studio background services initialized successfully
+GeoIP-lite failed to initialize: ENOENT: no such file or directory, open '/home/nexpocket/indexnowjs/.next/server/data/geoip-country.dat'
+Location tracking will use fallback IP-API service
+GeoIP-lite failed to initialize: ENOENT: no such file or directory, open '/home/nexpocket/indexnowjs/.next/server/data/geoip-country.dat'
+Location tracking will use fallback IP-API service
+   Collecting page data  ...IndexNow Studio background services initialized successfully
+ ✓ Collecting page data
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+GeoIP-lite failed to initialize: ENOENT: no such file or directory, open '/home/nexpocket/indexnowjs/.next/server/data/geoip-country.dat'
+Location tracking will use fallback IP-API service
+{"level":"INFO","time":"2025-10-08T04:58:31.122Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_sitemap_settings","table":"indb_site_settings","operationType":"select","msg":"Service role operation context validated successfully"}
+[SITEMAP] Starting posts sitemap generation
+[SITEMAP] Starting main sitemap generation
+{"level":"INFO","time":"2025-10-08T04:58:31.155Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_sitemap_settings","table":"indb_site_settings","operationType":"select","msg":"Service role operation context validated successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.159Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_sitemap_settings","table":"indb_site_settings","operationType":"select","msg":"Service role operation context validated successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.242Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_sitemap_settings","table":"indb_site_settings","operationType":"select","msg":"Service role operation context validated successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.247Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_sitemap_settings","table":"indb_site_settings","operationType":"select","msg":"Service role operation context validated successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.251Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_robots_txt_settings","table":"indb_site_settings","operationType":"select","msg":"Service role operation context validated successfully"}
+IndexNow Studio background services initialized successfully
+IndexNow Studio background services initialized successfully
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+GeoIP-lite failed to initialize: ENOENT: no such file or directory, open '/home/nexpocket/indexnowjs/.next/server/data/geoip-country.dat'
+Location tracking will use fallback IP-API service
+{"level":"ERROR","time":"2025-10-08T04:58:31.559Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.585Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.589Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.594Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.596Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.597Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"INFO","time":"2025-10-08T04:58:31.781Z","pid":2380545,"hostname":"cloud-2","auditId":"97f6244a-b2b0-4f68-80bc-aa1018632124","userId":"system","operation":"get_sitemap_settings","msg":"Service role operation completed successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.781Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_published_posts_for_sitemap","table":"indb_cms_posts","operationType":"select","msg":"Service role operation context validated successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.786Z","pid":2380545,"hostname":"cloud-2","auditId":"3c9050db-7c53-4a16-95fb-1c0ad4aa92f4","userId":"system","operation":"get_sitemap_settings","msg":"Service role operation completed successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.786Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_categories_for_sitemap","table":"indb_cms_categories","operationType":"select","msg":"Service role operation context validated successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.787Z","pid":2380545,"hostname":"cloud-2","auditId":"8c9ca1a5-88bc-4669-800b-c654013fb3f7","userId":"system","operation":"get_sitemap_settings","msg":"Service role operation completed successfully"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.790Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.794Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"INFO","time":"2025-10-08T04:58:31.797Z","pid":2380545,"hostname":"cloud-2","auditId":"9d35d107-36cc-4dd9-9e3b-2232468f133a","userId":"system","operation":"get_sitemap_settings","msg":"Service role operation completed successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.798Z","pid":2380545,"hostname":"cloud-2","userId":"system","operation":"get_tags_from_posts_for_sitemap","table":"indb_cms_posts","operationType":"select","msg":"Service role operation context validated successfully"}
+{"level":"ERROR","time":"2025-10-08T04:58:31.804Z","pid":2380545,"hostname":"cloud-2","error":{"message":""},"userId":"system","msg":"Failed to check service role rate limit"}
+{"level":"INFO","time":"2025-10-08T04:58:31.872Z","pid":2380545,"hostname":"cloud-2","auditId":"88fc2ae5-409b-4fc8-b694-8f5355615a67","userId":"system","operation":"get_sitemap_settings","msg":"Service role operation completed successfully"}
+[SITEMAP] SUCCESS: main sitemap - 4 URLs in 630ms
+{"level":"INFO","time":"2025-10-08T04:58:31.873Z","pid":2380545,"hostname":"cloud-2","auditId":"44210e2b-f2f4-4756-9b6f-598a47372ac0","userId":"system","operation":"get_robots_txt_settings","msg":"Service role operation completed successfully"}
+{"level":"INFO","time":"2025-10-08T04:58:31.882Z","pid":2380545,"hostname":"cloud-2","auditId":"5b03df02-f218-4f15-962c-2eebaccbb26a","userId":"system","operation":"get_categories_for_sitemap","msg":"Service role operation completed successfully"}
+[PERF] Categories sitemap query took 96ms
+{"level":"INFO","time":"2025-10-08T04:58:31.884Z","pid":2380545,"hostname":"cloud-2","auditId":"6584ca0b-8ab6-4f91-92b4-0ba9ef4e9d62","userId":"system","operation":"get_tags_from_posts_for_sitemap","msg":"Service role operation completed successfully"}
+[PERF] Tags sitemap query took 86ms
+{"level":"INFO","time":"2025-10-08T04:58:31.887Z","pid":2380545,"hostname":"cloud-2","auditId":"1484d081-0916-4143-af80-b9e1b07b1447","userId":"system","operation":"get_published_posts_for_sitemap","msg":"Service role operation completed successfully"}
+[PERF] Posts sitemap query took 106ms for page 1
+[SITEMAP] SUCCESS: posts sitemap - 12 URLs in 733ms
+ ✓ Generating static pages (143/143)
+ ✓ Collecting build traces
+ ✓ Finalizing page optimization
+
+Route (app)                                                 Size  First Load JS  Revalidate  Expire
+┌ ○ /                                                    16.8 kB         301 kB         30m      1y
+├ ○ /_not-found                                             1 kB         103 kB
+├ ƒ /[slug]                                              1.61 kB         283 kB
+├ ƒ /api/debug/payment-result                              440 B         102 kB
+├ ƒ /api/health                                            440 B         102 kB
+├ ƒ /api/midtrans/webhook                                  440 B         102 kB
+├ ƒ /api/revalidate                                        440 B         102 kB
+├ ƒ /api/system/restart-worker                             440 B         102 kB
+├ ƒ /api/system/status                                     440 B         102 kB
+├ ƒ /api/system/worker-status                              440 B         102 kB
+├ ƒ /api/v1/admin/activity                                 440 B         102 kB
+├ ƒ /api/v1/admin/activity/[id]                            440 B         102 kB
+├ ƒ /api/v1/admin/cms/categories                           440 B         102 kB
+├ ƒ /api/v1/admin/cms/categories/[id]                      440 B         102 kB
+├ ƒ /api/v1/admin/cms/pages                                440 B         102 kB
+├ ƒ /api/v1/admin/cms/pages/[id]                           440 B         102 kB
+├ ƒ /api/v1/admin/cms/pages/[id]/status                    440 B         102 kB
+├ ƒ /api/v1/admin/cms/pages/validate-slug                  440 B         102 kB
+├ ƒ /api/v1/admin/cms/posts                                440 B         102 kB
+├ ƒ /api/v1/admin/cms/posts/[id]                           440 B         102 kB
+├ ƒ /api/v1/admin/cms/posts/[id]/status                    440 B         102 kB
+├ ƒ /api/v1/admin/cms/posts/validate-slug                  440 B         102 kB
+├ ƒ /api/v1/admin/cms/revalidate                           440 B         102 kB
+├ ƒ /api/v1/admin/cms/upload                               440 B         102 kB
+├ ƒ /api/v1/admin/dashboard                                440 B         102 kB
+├ ƒ /api/v1/admin/debug-auth                               440 B         102 kB
+├ ƒ /api/v1/admin/errors                                   440 B         102 kB
+├ ƒ /api/v1/admin/errors/[id]                              440 B         102 kB
+├ ƒ /api/v1/admin/errors/critical                          440 B         102 kB
+├ ƒ /api/v1/admin/errors/stats                             440 B         102 kB
+├ ƒ /api/v1/admin/orders                                   440 B         102 kB
+├ ƒ /api/v1/admin/orders/[id]                              440 B         102 kB
+├ ƒ /api/v1/admin/orders/[id]/status                       440 B         102 kB
+├ ƒ /api/v1/admin/packages                                 440 B         102 kB
+├ ƒ /api/v1/admin/rank-tracker/trigger-manual-check        440 B         102 kB
+├ ƒ /api/v1/admin/seo/sitemap/monitoring                   440 B         102 kB
+├ ƒ /api/v1/admin/seo/sitemap/regenerate                   440 B         102 kB
+├ ƒ /api/v1/admin/seo/sitemap/test                         440 B         102 kB
+├ ƒ /api/v1/admin/settings/packages                        440 B         102 kB
+├ ƒ /api/v1/admin/settings/packages/[id]                   440 B         102 kB
+├ ƒ /api/v1/admin/settings/payments                        440 B         102 kB
+├ ƒ /api/v1/admin/settings/payments/[id]                   440 B         102 kB
+├ ƒ /api/v1/admin/settings/payments/[id]/default           440 B         102 kB
+├ ƒ /api/v1/admin/settings/site                            440 B         102 kB
+├ ƒ /api/v1/admin/settings/site/test-email                 440 B         102 kB
+├ ƒ /api/v1/admin/users                                    440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]                               440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/activity                      440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/api-stats                     440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/change-package                440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/extend-subscription           440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/quota-usage                   440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/reset-password                440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/reset-quota                   440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/security                      440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/service-accounts              440 B         102 kB
+├ ƒ /api/v1/admin/users/[id]/suspend                       440 B         102 kB
+├ ƒ /api/v1/admin/verify-role                              440 B         102 kB
+├ ƒ /api/v1/auth/callback                                  440 B         102 kB
+├ ƒ /api/v1/auth/detect-location                           440 B         102 kB
+├ ƒ /api/v1/auth/login                                     440 B         102 kB
+├ ƒ /api/v1/auth/logout                                    440 B         102 kB
+├ ƒ /api/v1/auth/register                                  440 B         102 kB
+├ ƒ /api/v1/auth/resend-verification                       440 B         102 kB
+├ ƒ /api/v1/auth/session                                   440 B         102 kB
+├ ƒ /api/v1/auth/test-login                                440 B         102 kB
+├ ƒ /api/v1/auth/user/change-password                      440 B         102 kB
+├ ƒ /api/v1/auth/user/profile                              440 B         102 kB
+├ ƒ /api/v1/auth/user/quota                                440 B         102 kB
+├ ƒ /api/v1/auth/user/settings                             440 B         102 kB
+├ ƒ /api/v1/auth/user/trial-eligibility                    440 B         102 kB
+├ ƒ /api/v1/auth/user/trial-status                         440 B         102 kB
+├ ƒ /api/v1/auth/verify                                    440 B         102 kB
+├ ƒ /api/v1/billing/cancel-trial                           440 B         102 kB
+├ ƒ /api/v1/billing/channels/bank-transfer                 440 B         102 kB
+├ ƒ /api/v1/billing/channels/midtrans-recurring            440 B         102 kB
+├ ƒ /api/v1/billing/channels/midtrans-snap                 440 B         102 kB
+├ ƒ /api/v1/billing/history                                440 B         102 kB
+├ ƒ /api/v1/billing/midtrans-3ds-callback                  440 B         102 kB
+├ ƒ /api/v1/billing/midtrans-config                        440 B         102 kB
+├ ƒ /api/v1/billing/midtrans/create-payment                440 B         102 kB
+├ ƒ /api/v1/billing/midtrans/process-recurring             440 B         102 kB
+├ ƒ /api/v1/billing/orders/[id]                            440 B         102 kB
+├ ƒ /api/v1/billing/overview                               440 B         102 kB
+├ ƒ /api/v1/billing/packages                               440 B         102 kB
+├ ƒ /api/v1/billing/packages/[id]                          440 B         102 kB
+├ ƒ /api/v1/billing/payment                                440 B         102 kB
+├ ƒ /api/v1/billing/payment-gateways                       440 B         102 kB
+├ ƒ /api/v1/billing/transactions/[id]                      440 B         102 kB
+├ ƒ /api/v1/billing/upload-proof                           440 B         102 kB
+├ ƒ /api/v1/blog/categories                                440 B         102 kB
+├ ƒ /api/v1/blog/posts                                     440 B         102 kB
+├ ƒ /api/v1/blog/posts/[slug]                              440 B         102 kB
+├ ƒ /api/v1/dashboard                                      440 B         102 kB
+├ ƒ /api/v1/indexing/jobs                                  440 B         102 kB
+├ ƒ /api/v1/indexing/jobs/[id]                             440 B         102 kB
+├ ƒ /api/v1/indexing/jobs/[id]/process                     440 B         102 kB
+├ ƒ /api/v1/indexing/jobs/[id]/submissions                 440 B         102 kB
+├ ƒ /api/v1/indexing/jobs/stop-all                         440 B         102 kB
+├ ƒ /api/v1/indexing/jobs/trigger-processing               440 B         102 kB
+├ ƒ /api/v1/indexing/parse-sitemap                         440 B         102 kB
+├ ƒ /api/v1/indexing/service-accounts                      440 B         102 kB
+├ ƒ /api/v1/indexing/service-accounts/[id]                 440 B         102 kB
+├ ƒ /api/v1/integrations/seranking/health                  440 B         102 kB
+├ ƒ /api/v1/integrations/seranking/health/metrics          440 B         102 kB
+├ ƒ /api/v1/integrations/seranking/keyword-data            440 B         102 kB
+├ ƒ /api/v1/integrations/seranking/keyword-data/bulk       440 B         102 kB
+├ ƒ /api/v1/integrations/seranking/quota/history           440 B         102 kB
+├ ƒ /api/v1/integrations/seranking/quota/status            440 B         102 kB
+├ ƒ /api/v1/notifications/dismiss/[id]                     440 B         102 kB
+├ ƒ /api/v1/notifications/service-account-quota            440 B         102 kB
+├ ƒ /api/v1/payments/channels/snap                         440 B         102 kB
+├ ƒ /api/v1/payments/midtrans/webhook                      440 B         102 kB
+├ ƒ /api/v1/public/contact                                 440 B         102 kB
+├ ƒ /api/v1/public/packages                                440 B         102 kB
+├ ƒ /api/v1/public/pages                                   440 B         102 kB
+├ ƒ /api/v1/public/pages/[slug]                            440 B         102 kB
+├ ƒ /api/v1/public/settings                                440 B         102 kB
+├ ƒ /api/v1/public/site-settings                           440 B         102 kB
+├ ƒ /api/v1/rank-tracking/check-rank                       440 B         102 kB
+├ ƒ /api/v1/rank-tracking/countries                        440 B         102 kB
+├ ƒ /api/v1/rank-tracking/domains                          440 B         102 kB
+├ ƒ /api/v1/rank-tracking/keyword-usage                    440 B         102 kB
+├ ƒ /api/v1/rank-tracking/keywords                         440 B         102 kB
+├ ƒ /api/v1/rank-tracking/keywords/add-tag                 440 B         102 kB
+├ ƒ /api/v1/rank-tracking/keywords/bulk-delete             440 B         102 kB
+├ ƒ /api/v1/rank-tracking/rank-history                     440 B         102 kB
+├ ƒ /api/v1/system/health                                  440 B         102 kB
+├ ƒ /api/v1/system/status                                  440 B         102 kB
+├ ƒ /api/websocket                                         440 B         102 kB
+├ ○ /backend/admin                                       5.48 kB         282 kB
+├ ○ /backend/admin/activity                               6.9 kB         154 kB
+├ ƒ /backend/admin/activity/[id]                         6.63 kB         125 kB
+├ ○ /backend/admin/cms/pages                              6.3 kB         108 kB
+├ ƒ /backend/admin/cms/pages/[id]/edit                   2.13 kB         298 kB
+├ ○ /backend/admin/cms/pages/create                       1.3 kB         297 kB
+├ ○ /backend/admin/cms/posts                             5.95 kB         108 kB
+├ ƒ /backend/admin/cms/posts/[id]/edit                   1.92 kB         287 kB
+├ ○ /backend/admin/cms/posts/create                       1.3 kB         286 kB
+├ ○ /backend/admin/login                                 6.81 kB         165 kB
+├ ○ /backend/admin/orders                                   8 kB         203 kB
+├ ƒ /backend/admin/orders/[id]                           9.61 kB         181 kB
+├ ○ /backend/admin/settings/packages                     7.45 kB         109 kB
+├ ○ /backend/admin/settings/payments                     6.38 kB         108 kB
+├ ○ /backend/admin/settings/site                         8.14 kB         110 kB
+├ ○ /backend/admin/users                                 5.81 kB         107 kB
+├ ƒ /backend/admin/users/[id]                            13.7 kB         115 kB
+├ ƒ /backend/admin/users/[id]/activity                   5.41 kB         124 kB
+├ ○ /blog                                                3.84 kB         292 kB
+├ ƒ /blog/[category]/[slug]                              9.59 kB         295 kB
+├ ƒ /blog/category/[category]                            2.11 kB         290 kB
+├ ƒ /blog/tag/[tag]                                      2.03 kB         290 kB
+├ ○ /contact                                             4.22 kB         286 kB
+├ ○ /dashboard                                           10.9 kB         317 kB
+├ ○ /dashboard/admin/errors                              12.8 kB         171 kB
+├ ○ /dashboard/indexnow                                  4.12 kB         167 kB
+├ ○ /dashboard/indexnow/add                              9.13 kB         136 kB
+├ ○ /dashboard/indexnow/jobs                             2.15 kB         104 kB
+├ ○ /dashboard/indexnow/new                              2.36 kB         104 kB
+├ ○ /dashboard/indexnow/overview                          6.7 kB         341 kB
+├ ○ /dashboard/indexnow/rank-history                     13.1 kB         348 kB
+├ ○ /dashboard/manage-jobs                               6.96 kB         353 kB
+├ ƒ /dashboard/manage-jobs/[id]                          4.69 kB         318 kB
+├ ○ /dashboard/settings                                  2.25 kB         357 kB
+├ ○ /dashboard/settings/general                          1.48 kB         328 kB
+├ ○ /dashboard/settings/plans-billing                    4.84 kB         313 kB
+├ ○ /dashboard/settings/plans-billing/checkout           18.6 kB         337 kB
+├ ○ /dashboard/settings/plans-billing/history            4.13 kB         294 kB
+├ ƒ /dashboard/settings/plans-billing/order/[id]         9.93 kB         168 kB
+├ ƒ /dashboard/settings/plans-billing/orders/[order_id]  6.04 kB         296 kB
+├ ○ /dashboard/settings/plans-billing/plans              3.81 kB         294 kB
+├ ○ /dashboard/settings/profile                           4.6 kB         327 kB
+├ ○ /dashboard/settings/service-accounts                   201 B         333 kB
+├ ○ /dashboard/test-backend                              1.43 kB         103 kB
+├ ○ /dashboard/tools/fastindexing                        4.21 kB         167 kB
+├ ○ /dashboard/tools/fastindexing/manage-jobs            6.98 kB         353 kB
+├ ƒ /dashboard/tools/fastindexing/manage-jobs/[id]       4.69 kB         318 kB
+├ ○ /faq                                                 4.54 kB         286 kB
+├ ○ /login                                               3.15 kB         295 kB
+├ ○ /pricing                                             5.47 kB         290 kB
+├ ○ /register                                            6.84 kB         313 kB
+├ ○ /resend-verification                                 2.59 kB         120 kB
+├ ○ /robots.txt                                            440 B         102 kB          1h      1y
+├ ○ /sitemap-categories.xml                                440 B         102 kB          1h      1y
+├ ○ /sitemap-pages.xml                                     440 B         102 kB          1h      1y
+├ ○ /sitemap-posts.xml                                     440 B         102 kB          1h      1y
+├ ○ /sitemap-tags.xml                                      440 B         102 kB          1h      1y
+└ ○ /sitemap.xml                                           440 B         102 kB          1h      1y
++ First Load JS shared by all                             102 kB
+  ├ chunks/1255-15f04a30ae2c7791.js                      45.5 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js                  54.2 kB
+  └ other shared chunks (total)                          1.95 kB
+
+Route (pages)                                               Size  First Load JS
+─ ƒ /api/socket                                              0 B        86.3 kB
++ First Load JS shared by all                            86.3 kB
+  ├ chunks/framework-b9fd9bcc3ecde907.js                 44.8 kB
+  ├ chunks/main-239d49e15b14f269.js                      39.5 kB
+  └ other shared chunks (total)                          1.91 kB
+
+ƒ Middleware                                              131 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

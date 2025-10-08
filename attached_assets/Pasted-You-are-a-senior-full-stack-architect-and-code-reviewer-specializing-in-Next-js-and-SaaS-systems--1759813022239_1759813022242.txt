@@ -1,0 +1,87 @@
+You are a senior full-stack architect and code reviewer specializing in Next.js and SaaS systems.
+
+Your task: perform a full, in-depth audit of the entire project codebase with a focus on **error handling** across all layers.
+
+The project is a Next.js SaaS app containing:
+- Marketing website
+- User dashboard
+- Admin backend
+all within one monorepo or Next.js app structure.
+
+### Objectives
+1. **Identify and review all parts of the project where errors are created, caught, or handled**, including:
+   - API routes (/app/api or /pages/api)
+   - Server actions
+   - Middleware
+   - Components with try/catch or useEffect error handling
+   - Custom hooks, utils, and libraries
+   - Error boundaries (error.tsx files)
+   - Any global or client-side error logging (e.g., Sentry, Posthog, console.error)
+   - Database operations (e.g., Prisma, Supabase, raw SQL)
+   - Third-party integrations (API calls, SDK usage)
+   - Auth handling and redirects
+
+2. **Analyze the structure and consistency of error handling**, including:
+   - Whether the project uses standardized error classes (e.g., AppError, ValidationError)
+   - Whether API routes return a consistent JSON shape for errors (e.g. `{ success: false, error: { message, type } }`)
+   - Whether UI-level error boundaries are used properly in each route group ((marketing), (dashboard), (admin))
+   - How errors are displayed to users in forms, toasts, or UI messages
+   - How server errors are logged and monitored
+   - Whether sensitive information is leaked in error responses
+
+3. **Check for missing or unsafe error handling**, such as:
+   - Uncaught async errors
+   - Direct console logs in production
+   - Missing try/catch around data fetching or mutations
+   - Lack of error serialization when returning `NextResponse`
+   - Missing error.tsx files in route groups
+   - Error loops (where a failed component re-triggers rendering infinitely)
+
+4. **Provide recommendations** for:
+   - A standardized error structure across frontend + backend
+   - Folder organization for `/lib/errors`, `/utils/errorHandler.ts`, and route-level boundaries
+   - Integration or improvement of logging tools (Sentry, etc.)
+   - Clear developer documentation on how to throw, catch, and display errors
+
+### Deliverable
+Generate a new Markdown file named:
+`error-handling-audit-report.md`
+
+The report must include:
+
+#### 1. Executive Summary
+A short overview (in plain English) of how the project currently handles errors and the main strengths/weaknesses.
+
+#### 2. Findings (Detailed)
+- Categorize findings into sections:
+  - API / Server
+  - Frontend / UI
+  - Middleware
+  - Logging / Monitoring
+  - Security (data leaks, sensitive info exposure)
+- For each issue, include:
+  - Code location (file path + line if possible)
+  - Issue description
+  - Severity (High, Medium, Low)
+  - Recommended fix or refactor pattern
+
+#### 3. Recommendations Summary
+A concise action plan (checklist style) for improving error handling, ensuring the codebase follows standardized and scalable patterns.
+
+#### 4. Example Best Practices
+Include sample code snippets for:
+- Unified `AppError` class hierarchy
+- Standardized API response format
+- Error boundary usage
+- Logging integration (Sentry or custom)
+- UI error display pattern
+
+### Rules
+- Review the **entire repository**, not just the /app or /pages folder.
+- Do not skip .ts, .tsx, or .js files related to logic or configuration.
+- Be exhaustive — if there’s any implicit or unhandled error, it must be noted.
+- Maintain a professional and technical tone suitable for engineering documentation.
+- Output **only** the final report in Markdown format.
+
+Once finished, save or output the full Markdown content in a new file called:
+`error-handling-audit-report.md`

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px 0;
+        }
+        
+        .email-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .header {
+            background-color: #ffffff;
+            padding: 30px 30px 20px 30px;
+            text-align: center;
+            border-bottom: none;
+        }
+        
+        .logo {
+            max-width: 120px;
+            height: auto;
+        }
+        
+        .content {
+            padding: 20px 30px 30px 30px;
+            text-align: left;
+        }
+        
+        .greeting {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .stats-container {
+            margin: 30px 0;
+        }
+        
+        .stats-row {
+            display: table;
+            width: 100%;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        
+        .stats-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stats-label {
+            display: table-cell;
+            color: #333;
+            width: 70%;
+            text-align: left;
+        }
+        
+        .stats-value {
+            display: table-cell;
+            color: #333;
+            width: 30%;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .detail-section {
+            margin: 30px 0;
+        }
+        
+        .detail-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 15px;
+        }
+        
+        .detail-grid {
+            margin: 15px 0;
+        }
+        
+        .detail-row {
+            display: table;
+            width: 100%;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            display: table-cell;
+            font-weight: 600;
+            color: #000;
+            width: 70%;
+            text-align: left;
+        }
+        
+        .detail-value {
+            display: table-cell;
+            color: #333;
+            width: 30%;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .footer-message {
+            font-size: 14px;
+            color: #333;
+            margin: 30px 0 20px 0;
+            line-height: 1.6;
+        }
+        
+        .signature {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .team-name {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            background-color: #2c2c2c;
+            padding: 20px 30px;
+            text-align: left;
+        }
+        
+        .footer-logo {
+            max-width: 80px;
+            height: auto;
+            margin-bottom: 10px;
+            filter: brightness(0) invert(1);
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .social-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #555;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 0 10px;
+            }
+            
+            .content, .header, .footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div style="font-size: 24px; font-weight: bold; color: #1A1A1A;">IndexNow Studio</div>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">Hi {{customerName}},</div>
+            
+            <div class="message">
+                Thank you for your subscription! We've received your order and are processing your payment. Here are your order details:
+            </div>
+            
+            <div class="stats-container">
+                <div class="stats-row">
+                    <span class="stats-label">Order ID</span>
+                    <span class="stats-value">{{orderId}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Package</span>
+                    <span class="stats-value">{{packageName}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Billing Period</span>
+                    <span class="stats-value">{{billingPeriod}}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-label">Amount</span>
+                    <span class="stats-value">{{amount}}</span>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <div class="detail-title">Payment Instructions</div>
+                <div class="detail-grid">
+                    <div class="detail-row">
+                        <span class="detail-label">Payment Method</span>
+                        <span class="detail-value">{{paymentMethod}}</span>
+                    </div>
+                    {{#if bankName}}
+                    <div class="detail-row">
+                        <span class="detail-label">Bank</span>
+                        <span class="detail-value">{{bankName}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Account Name</span>
+                        <span class="detail-value">{{accountName}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Account Number</span>
+                        <span class="detail-value">{{accountNumber}}</span>
+                    </div>
+                    {{/if}}
+                    {{#if vaNumber}}
+                    <div class="detail-row">
+                        <span class="detail-label">Virtual Account</span>
+                        <span class="detail-value">{{vaNumber}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Bank</span>
+                        <span class="detail-value">{{vaBank}}</span>
+                    </div>
+                    {{/if}}
+                    {{#if storeCode}}
+                    <div class="detail-row">
+                        <span class="detail-label">Store</span>
+                        <span class="detail-value">{{storeName}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Payment Code</span>
+                        <span class="detail-value">{{storeCode}}</span>
+                    </div>
+                    {{/if}}
+                    {{#if expiryTime}}
+                    <div class="detail-row">
+                        <span class="detail-label">Payment Expires</span>
+                        <span class="detail-value" style="color: #F0A202;">{{expiryTime}}</span>
+                    </div>
+                    {{/if}}
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <span class="detail-value">Pending Payment</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-message">
+                {{#if expiryTime}}
+                <strong>Important:</strong> Please complete your payment before {{expiryTime}} to avoid order expiration.<br><br>
+                {{/if}}
+                {{#if vaNumber}}
+                Please transfer the exact amount to the virtual account number above. {{/if}}{{#if storeCode}}
+                Please visit {{storeName}} and provide the payment code above to complete your payment. {{/if}}{{#if bankName}}
+                Please transfer to the bank account above and include your Order ID ({{orderId}}) in the payment reference. {{/if}}
+                Once we receive your payment, we'll activate your subscription and send you a confirmation email.
+            </div>
+            
+            <div class="signature">Thank you for choosing IndexNow Studio!</div>
+            <div class="team-name">The IndexNow Studio Team</div>
+            
+            <div class="timestamp">Order placed on {{orderDate}}</div>
+        </div>
+        
+        <div class="footer">
+            <center><div style="font-size: 16px; font-weight: bold; color: white; margin-bottom: 10px;">IndexNow Studio</div></center>
+        </div>
+    </div>
+</body>
+</html>

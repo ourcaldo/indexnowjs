@@ -1,0 +1,80 @@
+nexpocket@cloud-2:~/indexnowjs$ npm instal
+npm error code ETARGET
+npm error notarget No matching version found for @analytics/customerio@^1.3.0.
+npm error notarget In most cases you or one of your dependencies are requesting
+npm error notarget a package version that doesn't exist.
+npm error A complete log of this run can be found in: /home/nexpocket/.npm/_logs/2025-10-06T18_32_04_001Z-debug-0.log
+nexpocket@cloud-2:~/indexnowjs$ npm install
+npm error code ETARGET
+npm error notarget No matching version found for @analytics/customerio@^1.3.0.
+npm error notarget In most cases you or one of your dependencies are requesting
+npm error notarget a package version that doesn't exist.
+npm error A complete log of this run can be found in: /home/nexpocket/.npm/_logs/2025-10-06T18_32_10_200Z-debug-0.log
+nexpocket@cloud-2:~/indexnowjs$ npm run build
+
+> indexnow-pro@1.0.0 build
+> next build
+
+   ▲ Next.js 15.5.0
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · cpus: 2
+     · serverActions
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./lib/analytics/analytics-client.ts
+Module not found: Can't resolve 'analytics'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./lib/analytics/index.ts
+./components/providers/AnalyticsProvider.tsx
+
+./lib/analytics/analytics-client.ts
+Module not found: Can't resolve '@analytics/google-analytics'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./lib/analytics/index.ts
+./components/providers/AnalyticsProvider.tsx
+
+./lib/analytics/analytics-client.ts
+Module not found: Can't resolve '@analytics/google-tag-manager'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./lib/analytics/index.ts
+./components/providers/AnalyticsProvider.tsx
+
+./lib/analytics/analytics-client.ts
+Module not found: Can't resolve '@analytics/customerio'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./lib/analytics/index.ts
+./components/providers/AnalyticsProvider.tsx
+
+./lib/analytics/posthog-client.ts
+Module not found: Can't resolve 'posthog-js'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./lib/analytics/index.ts
+./components/providers/AnalyticsProvider.tsx
+
+
+> Build failed because of webpack errors
+nexpocket@cloud-2:~/indexnowjs$ npm install
+npm error code ETARGET
+npm error notarget No matching version found for @analytics/customerio@^1.3.0.
+npm error notarget In most cases you or one of your dependencies are requesting
+npm error notarget a package version that doesn't exist.
+npm error A complete log of this run can be found in: /home/nexpocket/.npm/_logs/2025-10-06T18_32_46_401Z-debug-0.log
+nexpocket@cloud-2:~/indexnowjs

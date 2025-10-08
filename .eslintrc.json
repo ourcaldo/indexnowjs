@@ -1,0 +1,37 @@
+  {
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "plugins": ["local-rules"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "Literal[value=/#[0-9A-Fa-f]{3,6}$/]",
+        "message": "❌ Hardcoded hex colors are not allowed. Use CSS variables from globals.css or Tailwind semantic colors instead."
+      }
+    ],
+    "local-rules/no-console-in-api": ["error", {
+      "allowedMethods": ["time", "timeEnd"],
+      "strictMode": false
+    }],
+    "local-rules/no-unsafe-error-handling": "error"
+  },
+  "overrides": [
+    {
+      "files": ["app/globals.css", "tailwind.config.ts"],
+      "rules": {
+        "no-restricted-syntax": "off"
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "rules": {
+        "local-rules/no-console-in-api": "off",
+        "local-rules/no-unsafe-error-handling": "warn"
+      }
+    }
+  ]
+}
