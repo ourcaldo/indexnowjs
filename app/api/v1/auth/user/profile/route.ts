@@ -16,7 +16,7 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
         reason: 'User fetching their own profile with package information',
         metadata: { includePackageInfo: true, endpoint: '/api/v1/auth/user/profile' },
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'indb_auth_user_profiles', operationType: 'select' },
       async (db) => {

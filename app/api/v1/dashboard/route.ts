@@ -9,38 +9,15 @@ import { ErrorHandlingService, ErrorType } from '@/lib/monitoring/error-handling
 
 export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
   try {
-    // Create user-authenticated Supabase client (respects RLS)
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-          },
-        },
-      }
-    )
-
-    // Get authenticated user (RLS automatically applies)
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      const error = ErrorHandlingService.createError(
-        ErrorType.AUTH,
-        new Error('User session invalid'),
-        { statusCode: 401, context: { endpoint: '/api/v1/dashboard' } }
-      )
-      return formatError(error)
-    }
+    // Use authenticated supabase client from auth wrapper
+    const supabase = auth.supabase
+    const userId = auth.userId
 
     // Execute all queries in parallel using user session security wrapper
     const dashboardQueryResult = await SecureServiceRoleWrapper.executeWithUserSession(
       supabase,
       {
-        userId: user.id,
+        userId: userId,
         operation: 'get_dashboard_data',
         source: 'dashboard',
         reason: 'User fetching their complete dashboard data',
@@ -49,7 +26,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
           queryType: 'parallel_dashboard_queries'
         },
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'multiple_tables', operationType: 'select' },
       async (db) => {
@@ -145,12 +122,14 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
       recentKeywordsResult
     ] = dashboardQueryResult
 
-    const authUserResult = { data: user, error: null }
+    // Get user data for email info
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    const authUserResult = { data: authUser, error: null }
 
     const [serviceAccountsResult, activeJobsResult] = await SecureServiceRoleWrapper.executeWithUserSession(
       supabase,
       {
-        userId: user.id,
+        userId: userId,
         operation: 'get_dashboard_statistics',
         source: 'dashboard',
         reason: 'User fetching their service account and job statistics for dashboard',
@@ -159,7 +138,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
           statsType: 'service_accounts_and_jobs'
         },
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'multiple_tables', operationType: 'select' },
       async (db) => {
@@ -280,7 +259,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
       settings = await SecureServiceRoleWrapper.executeWithUserSession(
         supabase,
         {
-          userId: user.id,
+          userId: userId,
           operation: 'create_default_user_settings',
           source: 'dashboard',
           reason: 'Creating default user settings for new user',
@@ -296,7 +275,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
           const { data } = await db
             .from('indb_auth_user_settings')
             .insert({
-              user_id: user.id,
+              user_id: userId,
               timeout_duration: 30000,
               retry_attempts: 3,
               email_job_completion: true,
@@ -328,7 +307,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
         const trialPackages = await SecureServiceRoleWrapper.executeWithUserSession(
           supabase,
           {
-            userId: user.id,
+            userId: userId,
             operation: 'get_trial_packages',
             source: 'dashboard',
             reason: 'User checking available trial packages',

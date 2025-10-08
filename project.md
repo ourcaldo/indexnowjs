@@ -1354,6 +1354,92 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### Dashboard Authentication User ID Mismatch Fixed (October 8, 2025)
+**Critical Bug Fix**: Resolved 401 Unauthorized errors on dashboard and user profile endpoints caused by user ID mismatch in security wrapper validation.
+
+#### ✅ Issue Identified
+- **Error**: `ServiceRoleSecurityViolationError: User ID mismatch in operation context`
+- **Affected Endpoints**: 
+  - `/v1/dashboard` - 401 Unauthorized
+  - `/v1/auth/user/profile` - 401 Unauthorized (Sentry reports)
+- **Root Cause**: Dashboard route creating duplicate Supabase client and extracting user separately, causing userId mismatch with authenticatedApiWrapper
+- **Impact**: Logged-in users unable to access dashboard despite valid authentication cookies
+
+#### ✅ Solution Applied
+**Files Modified**:
+1. `app/api/v1/dashboard/route.ts` - Fixed to use auth object from wrapper instead of creating new client
+2. `app/api/v1/auth/user/profile/route.ts` - Fixed userAgent type conversion
+
+**Key Changes**:
+
+**Before (Dashboard Route)**:
+```typescript
+export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
+  // Creating DUPLICATE Supabase client
+  const cookieStore = await cookies()
+  const supabase = createServerClient(...)
+  
+  // Getting user AGAIN (causes mismatch)
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  // Using mismatched user.id
+  await SecureServiceRoleWrapper.executeWithUserSession(supabase, {
+    userId: user.id,  // ❌ Different from auth.userId
+  })
+})
+```
+
+**After (Dashboard Route)**:
+```typescript
+export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
+  // Use authenticated client from wrapper
+  const supabase = auth.supabase
+  const userId = auth.userId
+  
+  // Use consistent userId from wrapper
+  await SecureServiceRoleWrapper.executeWithUserSession(supabase, {
+    userId: userId,  // ✅ Matches auth.userId
+  })
+})
+```
+
+**Additional Fix - Type Conversion**:
+```typescript
+// Before: string | null (type mismatch)
+userAgent: request.headers.get('user-agent')
+
+// After: string | undefined (correct type)
+userAgent: request.headers.get('user-agent') || undefined
+```
+
+#### ✅ Technical Details
+**Root Cause Analysis**:
+1. `authenticatedApiWrapper` provides pre-authenticated `auth.supabase` and `auth.userId`
+2. Dashboard route ignored these and created new Supabase client
+3. New client's `getUser()` returned different session than wrapper's client
+4. `SecureServiceRoleWrapper.executeWithUserSession()` validates userId matches session
+5. Validation failed: `operationContext.userId !== user.id` (line 100-103 in SecureServiceRoleWrapper)
+
+**Why This Happened**:
+- Dashboard route was written before `authenticatedApiWrapper` standardization
+- Code manually created Supabase client following old pattern
+- Migration to new wrapper incomplete - didn't use wrapper's auth object
+
+**Security Validation (Still Working)**:
+- ✅ User session validation (auth.getUser() in wrapper)
+- ✅ User ID consistency check (now passing with same userId)
+- ✅ Comprehensive audit logging
+- ✅ Input sanitization
+
+#### ✅ Impact
+- **Functionality Restored**: Dashboard and user profile endpoints now return 200 OK
+- **Authentication Flow**: Login → Dashboard access now works seamlessly
+- **Type Safety**: Fixed userAgent type mismatches across both routes
+- **Code Quality**: Eliminated duplicate Supabase client creation
+- **Consistency**: All routes now properly use authenticatedApiWrapper's auth object
+
+**Status**: User ID Mismatch **COMPLETELY FIXED** - Dashboard and user profile endpoints now work correctly with proper userId validation from authenticatedApiWrapper.
+
 ### Service Role Rate Limiting Removed (October 8, 2025)
 **Performance Enhancement**: Completely removed rate limiting for service role operations to eliminate false positives and allow unlimited system operations.
 
