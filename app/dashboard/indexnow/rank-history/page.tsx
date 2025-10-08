@@ -286,7 +286,7 @@ export default function RankHistoryPage() {
       })
       if (!response.ok) throw new Error('Failed to fetch domains')
       const data = await response.json()
-      return data.success ? data.data : []
+      return data.success ? (data.data?.data || []) : []
     }
   })
 
@@ -326,7 +326,7 @@ export default function RankHistoryPage() {
         credentials: 'include'
       })
       const data = await response.json()
-      return data.success ? data.data : []
+      return data.success ? (data.data?.data || []) : []
     },
     enabled: !!selectedDomainId
   })
@@ -352,7 +352,7 @@ export default function RankHistoryPage() {
         credentials: 'include'
       })
       const data = await response.json()
-      return data.success ? data.data : []
+      return data.success ? (data.data?.data || []) : []
     },
     enabled: !!startDate && !!endDate && !!selectedDomainId
   })
@@ -385,7 +385,7 @@ export default function RankHistoryPage() {
   }, [keywordsData, rankHistoryData])
 
   const domains = domainsWithCounts || []
-  const countries = countriesData?.data || []
+  const countries = countriesData?.data?.data || []
 
   // Set default selected domain
   useEffect(() => {

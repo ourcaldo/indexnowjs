@@ -194,8 +194,8 @@ export default function AddKeywords() {
     onError: handleApiError
   })
 
-  const domains = domainsData?.data || []
-  const countries = countriesData?.data || []
+  const domains = domainsData?.data?.data || []
+  const countries = countriesData?.data?.data || []
 
   // Parse keywords from textarea
   const getKeywordsList = () => {

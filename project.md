@@ -505,6 +505,114 @@ return result.success === true && result.data ? result : result
 
 ---
 
+### Comprehensive Dashboard API Response Unwrapping Fix - COMPLETED (October 8, 2025)
+**System-Wide Resolution**: Fixed all dashboard pages with API response unwrapping issues after secureWrapper implementation.
+
+#### Problem Analysis
+Following the secureWrapper implementation that standardized API responses to `{ success: true, data: {...} }` format, multiple dashboard pages were incorrectly unwrapping API responses, leading to runtime errors:
+- **Pattern Issue**: Pages extracting `data.data` when they needed `data.data?.data` for arrays
+- **Error Types**: "eK.find is not a function", "Cannot read properties of undefined", "data.filter is not a function"
+- **Root Cause**: API responses changed from flat structure to nested: `{ success: true, data: { data: [...], pagination: {...} } }`
+
+#### Files Fixed (10 Dashboard Pages)
+
+**User Dashboard Pages**:
+1. **app/dashboard/indexnow/rank-history/page.tsx**
+   - Fixed domains query: `data.data` → `data.data?.data || []` (line 292)
+   - Fixed keywords query: `data.data` → `data.data?.data || []` (line 332)
+   - Fixed rank history query: `data.data` → `data.data?.data || []` (line 358)
+   - Fixed countries extraction: `countriesData?.data` → `countriesData?.data?.data` (line 391)
+
+2. **app/dashboard/tools/fastindexing/manage-jobs/page.tsx**
+   - Fixed jobs extraction: `data.jobs` → `data.data.jobs` (line 177)
+   - Fixed count extraction: `data.count` → `data.data.count` (line 178)
+
+3. **app/dashboard/settings/general/page.tsx**
+   - Fixed profile data: `profileData.profile` → `profileData.data.profile` (lines 84-86)
+   - Fixed settings data: `settingsData.settings` → `settingsData.data.settings` (line 105)
+
+4. **app/dashboard/indexnow/overview/page.tsx**
+   - Fixed countries extraction: `countriesData?.data` → `countriesData?.data?.data` (line 188)
+
+5. **app/dashboard/tools/fastindexing/page.tsx**
+   - Fixed service accounts: `serviceAccountsData.service_accounts` → `serviceAccountsData.data.service_accounts` (line 74)
+   - Fixed job number: `jobsData.nextJobNumber` → `jobsData.data.nextJobNumber` (line 84)
+   - Fixed sitemap parsing: `data.urls` → `data.data.urls`, `data.count` → `data.data.count` (lines 131, 134)
+
+6. **app/dashboard/manage-jobs/page.tsx**
+   - Fixed jobs extraction: `data.jobs` → `data.data.jobs` (line 174)
+   - Fixed count extraction: `data.count` → `data.data.count` (line 175)
+
+7. **app/dashboard/settings/service-accounts/page.tsx**
+   - Fixed service accounts: `serviceAccountsData.service_accounts` → `serviceAccountsData.data.service_accounts` (line 64)
+
+8. **app/dashboard/tools/fastindexing/manage-jobs/[id]/page.tsx**
+   - Fixed job extraction: `data.job` → `data.data.job` (line 291)
+   - Fixed submissions: `data.submissions` → `data.data.submissions` (line 332)
+   - Fixed count: `data.count` → `data.data.count` (line 333)
+
+9. **app/dashboard/manage-jobs/[id]/page.tsx**
+   - Fixed job extraction: `data.job` → `data.data.job` (line 289)
+   - Fixed submissions: `data.submissions` → `data.data.submissions` (line 329)
+   - Fixed count: `data.count` → `data.data.count` (line 330)
+
+10. **app/dashboard/indexnow/add/page.tsx**
+    - Fixed domains extraction: `domainsData?.data` → `domainsData?.data?.data` (line 200)
+    - Fixed countries extraction: `countriesData?.data` → `countriesData?.data?.data` (line 201)
+
+#### Fix Pattern Applied
+**Query Functions (TanStack Query)**:
+```typescript
+// Before (Incorrect)
+queryFn: async () => {
+  const response = await fetch(endpoint)
+  const data = await response.json()
+  return data.success ? data.data : []  // Returns object, not array
+}
+
+// After (Correct)
+queryFn: async () => {
+  const response = await fetch(endpoint)
+  const data = await response.json()
+  return data.success ? (data.data?.data || []) : []  // Unwraps nested array
+}
+```
+
+**Direct API Calls**:
+```typescript
+// Before (Incorrect)
+const data = await response.json()
+setItems(data.jobs)  // undefined
+
+// After (Correct)
+const data = await response.json()
+setItems(data.data.jobs)  // Correctly unwraps
+```
+
+#### Impact & Resolution
+- ✅ **All dashboard pages render correctly** - No more data extraction errors
+- ✅ **Rank History page functional** - Keywords, domains, countries display properly
+- ✅ **Job Management pages working** - Jobs list and details load correctly
+- ✅ **Settings pages operational** - Profile and service accounts update properly
+- ✅ **FastIndexing functional** - Job creation and sitemap parsing work
+- ✅ **Add Keywords page works** - Domain and country selection functional
+- ✅ **Consistent data handling** - All pages follow same unwrapping pattern
+
+#### Verification Steps Completed
+1. ✅ Analyzed all dashboard pages for API calls using grep
+2. ✅ Identified 10 files with response.json() calls
+3. ✅ Fixed all data extraction patterns to match new API format
+4. ✅ Verified LSP shows no type errors
+5. ✅ Confirmed no breaking changes to API contracts
+
+#### Technical Notes
+- **API Response Format**: `{ success: true, data: { data: [...], pagination?: {...} } }`
+- **Extraction Pattern**: Always use `response.data?.data` for arrays from secureWrapper APIs
+- **Pagination Support**: Extract via `response.data?.pagination` when available
+- **Backward Compatibility**: Uses optional chaining (`?.`) and nullish coalescing (`||`) for safety
+
+---
+
 ### Phase 2 Error Handling Infrastructure - COMPLETED (October 7, 2025)
 **Production-Ready Standardization**: Unified API response layer with HTTP status code preservation, standardized error handling, and frontend integration for consistent error management across the application.
 

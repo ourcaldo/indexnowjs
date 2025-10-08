@@ -285,7 +285,7 @@ export default function JobDetailsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setJob(data.job);
+        setJob(data.data.job);
       } else {
         addToast({
           title: 'Error',
@@ -326,8 +326,8 @@ export default function JobDetailsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setSubmissions(data.submissions);
-        setTotalSubmissions(data.count);
+        setSubmissions(data.data.submissions);
+        setTotalSubmissions(data.data.count);
       }
     } catch (error) {
       console.error('Error loading submissions:', error);

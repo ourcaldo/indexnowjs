@@ -58,7 +58,7 @@ export default function ServiceAccountsSettingsPage() {
       
       if (serviceAccountsResponse.ok) {
         const serviceAccountsData = await serviceAccountsResponse.json()
-        setServiceAccounts(serviceAccountsData.service_accounts || [])
+        setServiceAccounts(serviceAccountsData.data.service_accounts || [])
       }
     } catch (error) {
       console.error('Error loading data:', error)

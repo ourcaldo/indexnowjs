@@ -68,7 +68,7 @@ export default function IndexNowPage() {
       
       if (serviceAccountsResponse.ok) {
         const serviceAccountsData = await serviceAccountsResponse.json()
-        setServiceAccounts(serviceAccountsData.service_accounts || [])
+        setServiceAccounts(serviceAccountsData.data.service_accounts || [])
       }
 
       // Load job count for auto-generating job names
@@ -78,7 +78,7 @@ export default function IndexNowPage() {
       
       if (jobsResponse.ok) {
         const jobsData = await jobsResponse.json()
-        setNextJobNumber(jobsData.nextJobNumber || 1)
+        setNextJobNumber(jobsData.data.nextJobNumber || 1)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -125,10 +125,10 @@ export default function IndexNowPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setParsedUrls(data.urls)
+        setParsedUrls(data.data.urls)
         addToast({
           title: 'Success',
-          description: `Found ${data.count} URLs in sitemap`,
+          description: `Found ${data.data.count} URLs in sitemap`,
           type: 'success'
         })
       } else {

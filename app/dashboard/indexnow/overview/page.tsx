@@ -182,7 +182,7 @@ export default function IndexNowOverview() {
   })
 
   const domains = dashboardData?.rankTracking?.domains || []
-  const countries = countriesData?.data || []
+  const countries = countriesData?.data?.data || []
   // Fix: Extract the nested data array from the new API response format
   const keywords = keywordsData?.data?.data || []
   const allKeywords = keywordCountsData?.data?.data || []

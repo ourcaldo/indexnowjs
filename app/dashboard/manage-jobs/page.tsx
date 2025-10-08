@@ -168,8 +168,8 @@ export default function ManageJobsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setJobs(data.jobs);
-        setTotalCount(data.count);
+        setJobs(data.data.jobs);
+        setTotalCount(data.data.count);
       } else {
         addToast({
           title: 'Error',

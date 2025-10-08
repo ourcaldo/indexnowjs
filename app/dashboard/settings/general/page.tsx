@@ -78,9 +78,9 @@ export default function GeneralSettingsPage() {
       if (profileResponse.ok) {
         const profileData = await profileResponse.json()
         setProfileForm({
-          full_name: profileData.profile.full_name || '',
-          phone_number: profileData.profile.phone_number || '',
-          email_notifications: profileData.profile.email_notifications || false
+          full_name: profileData.data.profile.full_name || '',
+          phone_number: profileData.data.profile.phone_number || '',
+          email_notifications: profileData.data.profile.email_notifications || false
         })
       } else if (profileResponse.status === 404) {
         // Profile doesn't exist, create default values
@@ -99,7 +99,7 @@ export default function GeneralSettingsPage() {
       
       if (settingsResponse.ok) {
         const settingsData = await settingsResponse.json()
-        const settings = settingsData.settings
+        const settings = settingsData.data.settings
         setNotifications({
           jobCompletion: settings.email_job_completion || false,
           failures: settings.email_job_failure || false,
