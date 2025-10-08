@@ -15,6 +15,7 @@ export interface AuthenticatedRequest {
     email: string
   }
   userId: string
+  supabase: any
 }
 
 /**
@@ -56,37 +57,17 @@ export async function authenticateRequest(
       }
     )
 
-    // Get authenticated user using secure wrapper with RLS
-    const user = await SecureServiceRoleWrapper.executeWithUserSession(
-      supabase,
-      {
-        userId: 'pending_validation',
-        operation: 'api_middleware_auth',
-        source: 'lib/core/api-middleware',
-        reason: 'API middleware validating user authentication token',
-        metadata: {
-          endpoint: endpoint || 'unknown',
-          method: method || 'unknown',
-          hasToken: !!token
-        },
-        ipAddress: undefined,
-        userAgent: undefined
-      },
-      { table: 'auth.users', operationType: 'select' },
-      async (db) => {
-        // Set the session with provided token for authentication
-        await db.auth.setSession({
-          access_token: token,
-          refresh_token: ''
-        })
-        
-        const { data: { user }, error: authError } = await db.auth.getUser()
-        if (authError || !user) {
-          throw new Error('Invalid authentication token')
-        }
-        return user
-      }
-    )
+    // Set the session with provided token for authentication
+    await supabase.auth.setSession({
+      access_token: token,
+      refresh_token: ''
+    })
+    
+    // Get authenticated user directly (don't use SecureServiceRoleWrapper here - it validates userId match)
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      throw new Error('Invalid authentication token')
+    }
 
     // Log successful authentication
     logger.debug({
@@ -100,7 +81,8 @@ export async function authenticateRequest(
       success: true, 
       data: { 
         user: { id: user.id, email: user.email! },
-        userId: user.id 
+        userId: user.id,
+        supabase: supabase
       } 
     }
   } catch (error) {
