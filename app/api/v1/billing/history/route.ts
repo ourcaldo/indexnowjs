@@ -1,28 +1,10 @@
 import { NextRequest } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { logger } from '@/lib/monitoring/error-handling'
 import { authenticatedApiWrapper } from '@/lib/core/api-response-middleware'
 import { formatSuccess } from '@/lib/core/api-response-formatter'
 
-export const GET = authenticatedApiWrapper(async (request: NextRequest, user) => {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          // No-op for GET requests
-        },
-      },
-    }
-  )
-
+export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
   const url = new URL(request.url)
   const page = parseInt(url.searchParams.get('page') || '1')
   const limit = parseInt(url.searchParams.get('limit') || '20')
@@ -60,9 +42,9 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, user) =>
   
   try {
     const result = await SecureServiceRoleWrapper.executeWithUserSession(
-      supabase,
+      auth.supabase,
       {
-        userId: user.id,
+        userId: auth.userId,
         operation: 'get_billing_history',
         source: 'billing/history',
         reason: 'User fetching their billing transaction history',
@@ -110,9 +92,9 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, user) =>
   
   try {
     const statsResult = await SecureServiceRoleWrapper.executeWithUserSession(
-      supabase,
+      auth.supabase,
       {
-        userId: user.id,
+        userId: auth.userId,
         operation: 'get_billing_statistics',
         source: 'billing/history',
         reason: 'User fetching their billing transaction statistics',

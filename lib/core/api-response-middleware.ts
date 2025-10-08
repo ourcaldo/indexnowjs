@@ -132,11 +132,22 @@ export function adminApiWrapper<T = any>(
  *   const data = await fetchUserData(auth.userId)
  *   return formatSuccess(data)
  * })
+ * 
+ * @example Dynamic routes
+ * export const GET = authenticatedApiWrapper(async (request, auth, { params }) => {
+ *   const { id } = await params
+ *   const data = await fetchData(id)
+ *   return formatSuccess(data)
+ * })
  */
 export function authenticatedApiWrapper<T = any>(
-  handler: (request: NextRequest, auth: AuthenticatedRequest) => Promise<ApiSuccessResponse<T> | ApiErrorResponse>
+  handler: (
+    request: NextRequest, 
+    auth: AuthenticatedRequest, 
+    context?: { params: Promise<any> }
+  ) => Promise<ApiSuccessResponse<T> | ApiErrorResponse>
 ) {
-  return async (request: NextRequest): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: { params: Promise<any> }): Promise<NextResponse> => {
     const endpoint = new URL(request.url).pathname
     const method = request.method
 
@@ -158,8 +169,8 @@ export function authenticatedApiWrapper<T = any>(
         userEmail: authResult.data.user.email
       }, `Authenticated API access: ${method} ${endpoint}`)
 
-      // Execute handler and get standardized response
-      const response = await handler(request, authResult.data)
+      // Execute handler and get standardized response (pass context for dynamic routes)
+      const response = await handler(request, authResult.data, context)
       
       // Return with appropriate status code
       if (response.success) {

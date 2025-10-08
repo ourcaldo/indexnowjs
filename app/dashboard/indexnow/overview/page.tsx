@@ -88,7 +88,10 @@ export default function IndexNowOverview() {
       if (!response.ok) throw new Error('Failed to fetch countries')
       const result = await response.json()
       // Handle new API response format: { success: true, data: {...} }
-      return result.success === true && result.data ? result : result
+      if (result.success === true && result.data) {
+        return result.data
+      }
+      return result
     }
   })
 
@@ -123,7 +126,10 @@ export default function IndexNowOverview() {
       if (!response.ok) throw new Error('Failed to fetch keywords')
       const result = await response.json()
       // Handle new API response format: { success: true, data: { data: [...], pagination: {...} } }
-      return result.success === true && result.data ? result : result
+      if (result.success === true && result.data) {
+        return result.data
+      }
+      return result
     }
   })
 
@@ -142,7 +148,10 @@ export default function IndexNowOverview() {
       if (!response.ok) throw new Error('Failed to fetch keyword counts')
       const result = await response.json()
       // Handle new API response format: { success: true, data: { data: [...], pagination: {...} } }
-      return result.success === true && result.data ? result : result
+      if (result.success === true && result.data) {
+        return result.data
+      }
+      return result
     }
   })
 
@@ -176,7 +185,10 @@ export default function IndexNowOverview() {
       if (!response.ok) throw new Error('Failed to fetch domain keywords for stats')
       const result = await response.json()
       // Handle new API response format: { success: true, data: { data: [...], pagination: {...} } }
-      return result.success === true && result.data ? result : result
+      if (result.success === true && result.data) {
+        return result.data
+      }
+      return result
     },
     enabled: !!selectedDomainId
   })

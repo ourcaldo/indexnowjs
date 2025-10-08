@@ -1,35 +1,17 @@
 import { NextRequest } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { getUserCurrency } from '@/lib/utils/currency-utils'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { logger } from '@/lib/monitoring/error-handling'
 import { authenticatedApiWrapper } from '@/lib/core/api-response-middleware'
 import { formatSuccess } from '@/lib/core/api-response-formatter'
 
-export const GET = authenticatedApiWrapper(async (request: NextRequest, user) => {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          // No-op for GET requests
-        },
-      },
-    }
-  )
-
+export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
   let userProfile = null
   try {
     userProfile = await SecureServiceRoleWrapper.executeWithUserSession(
-      supabase,
+      auth.supabase,
       {
-        userId: user.id,
+        userId: auth.userId,
         operation: 'get_billing_user_profile',
         source: 'billing/overview',
         reason: 'User fetching their billing profile with package information',
@@ -59,9 +41,9 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, user) =>
   let subscriptionError = null
   try {
     currentSubscription = await SecureServiceRoleWrapper.executeWithUserSession(
-      supabase,
+      auth.supabase,
       {
-        userId: user.id,
+        userId: auth.userId,
         operation: 'get_active_subscription',
         source: 'billing/overview',
         reason: 'User fetching their active billing subscription for overview',
@@ -95,9 +77,9 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, user) =>
   let statsError = null
   try {
     billingStats = await SecureServiceRoleWrapper.executeWithUserSession(
-      supabase,
+      auth.supabase,
       {
-        userId: user.id,
+        userId: auth.userId,
         operation: 'get_billing_statistics',
         source: 'billing/overview',
         reason: 'User fetching their billing statistics for overview',
@@ -124,9 +106,9 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, user) =>
   let transactionsError = null
   try {
     recentTransactions = await SecureServiceRoleWrapper.executeWithUserSession(
-      supabase,
+      auth.supabase,
       {
-        userId: user.id,
+        userId: auth.userId,
         operation: 'get_recent_transactions',
         source: 'billing/overview',
         reason: 'User fetching their recent billing transactions for overview',
