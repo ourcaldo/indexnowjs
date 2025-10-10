@@ -6,8 +6,10 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
 
-export const GET = publicApiWrapper(async (request: NextRequest, context?: any) => {
-  const packageId = context?.params?.id
+export const GET = publicApiWrapper(async (request: NextRequest, context?: { params: Promise<any> }) => {
+  // Get packageId from context params (Next.js 15 dynamic routes)
+  const params = context?.params ? await context.params : null
+  const packageId = params?.id
 
   if (!packageId) {
     const error = await ErrorHandlingService.createError(

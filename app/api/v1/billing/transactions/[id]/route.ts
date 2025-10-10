@@ -9,8 +9,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export const GET = authenticatedApiWrapper(async (request: NextRequest, auth, context?: any) => {
-  const transactionId = context?.params?.id
+export const GET = authenticatedApiWrapper(async (request: NextRequest, auth, context?: { params: Promise<any> }) => {
+  const params = context?.params ? await context.params : null
+  const transactionId = params?.id
 
   if (!transactionId) {
     const error = await ErrorHandlingService.createError(

@@ -613,6 +613,143 @@ setItems(data.data.jobs)  // Correctly unwraps
 
 ---
 
+### Checkout Page API Authentication & Validation Fix - COMPLETED (October 10, 2025)
+**Critical Fix**: Resolved checkout page authentication and validation errors preventing users from completing payment transactions.
+
+#### Problem Identified
+After implementing secureWrapper and global error handling, the checkout page encountered two critical API failures:
+
+1. **Midtrans Config API (401 Unauthorized)**:
+   - Endpoint: `GET /api/v1/billing/midtrans-config`
+   - Error: "Please log in to access this feature" despite user being authenticated
+   - Root Cause: `authenticatedApiWrapper` signature mismatch - handler expected `user` parameter but wrapper provides `auth` object with structure `{ userId, user: { id, email }, supabase }`
+
+2. **Package Details API (400 Bad Request)**:
+   - Endpoint: `GET /api/v1/billing/packages/{id}`
+   - Error: "Package ID is required" even though ID was in URL
+   - Root Cause: `publicApiWrapper` didn't support `context` parameter for Next.js 15 dynamic routes, so `context?.params?.id` was undefined
+   - Sentry error: "Package ID is required" with ID visible in URL path
+
+#### Technical Analysis
+
+**Authentication Flow Issue (Midtrans Config)**:
+```typescript
+// BEFORE (Incorrect - Line 7 of midtrans-config/route.ts)
+export const GET = authenticatedApiWrapper(async (request: NextRequest, user) => {
+  const midtransGateway = await SecureServiceRoleWrapper.executeSecureOperation({
+    userId: user.id,  // ❌ user.id is undefined - 'user' is not the correct structure
+    userEmail: user.email  // ❌ user.email is undefined
+  }, ...)
+})
+
+// AFTER (Correct)
+export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
+  const midtransGateway = await SecureServiceRoleWrapper.executeSecureOperation({
+    userId: auth.userId,  // ✅ Correctly uses auth.userId
+    userEmail: auth.user.email  // ✅ Correctly uses auth.user.email
+  }, ...)
+})
+```
+
+**Dynamic Route Context Issue (Packages API)**:
+```typescript
+// BEFORE (Incorrect - publicApiWrapper didn't support context)
+export function publicApiWrapper<T = any>(
+  handler: (request: NextRequest) => Promise<ApiSuccessResponse<T> | ApiErrorResponse>
+) {
+  return async (request: NextRequest): Promise<NextResponse> => {
+    // ❌ context parameter not passed to handler
+    const response = await handler(request)
+  }
+}
+
+// Packages API trying to use context
+export const GET = publicApiWrapper(async (request: NextRequest, context?: any) => {
+  const packageId = context?.params?.id  // ❌ Always undefined - context not passed
+})
+
+// AFTER (Correct - publicApiWrapper now supports dynamic routes)
+export function publicApiWrapper<T = any>(
+  handler: (request: NextRequest, context?: { params: Promise<any> }) => Promise<...>
+) {
+  return async (request: NextRequest, context?: { params: Promise<any> }): Promise<...> => {
+    // ✅ context passed through to handler
+    const response = await handler(request, context)
+  }
+}
+
+// Packages API correctly extracts params
+export const GET = publicApiWrapper(async (request: NextRequest, context?: { params: Promise<any> }) => {
+  const params = context?.params ? await context.params : null  // ✅ Next.js 15 dynamic routes
+  const packageId = params?.id  // ✅ Correctly extracts ID
+})
+```
+
+#### Files Modified
+
+**Core Infrastructure**:
+1. **lib/core/api-response-middleware.ts** (Line 226-242)
+   - Updated `publicApiWrapper` signature to support `context?: { params: Promise<any> }` parameter
+   - Now passes context through to handler for Next.js 15 dynamic route support
+   - Added JSDoc example for dynamic routes usage
+
+**Billing APIs**:
+2. **app/api/v1/billing/midtrans-config/route.ts** (Line 10)
+   - Fixed handler parameter from `user` to `auth` to match `authenticatedApiWrapper` contract
+   - Updated all references: `user.id` → `auth.userId`, `user.email` → `auth.user.email`
+
+3. **app/api/v1/billing/packages/[id]/route.ts** (Lines 12-15)
+   - Added proper context parameter handling for Next.js 15 dynamic routes
+   - Added `await context.params` to extract parameters (Next.js 15 requirement)
+   - Fixed packageId extraction: `context?.params?.id` → `(await context?.params)?.id`
+
+4. **app/api/v1/billing/orders/[id]/route.ts** (Lines 20-62, 88)
+   - Fixed handler parameter from `user` to `auth` to match `authenticatedApiWrapper` contract
+   - Updated all references: `user.id` → `auth.userId` (4 occurrences)
+   - Added proper context parameter handling for Next.js 15 dynamic routes with validation
+   - Fixed params extraction: `context.params` → `await context?.params` with null check
+
+5. **app/api/v1/billing/transactions/[id]/route.ts** (Lines 15-17)
+   - Fixed context parameter type from `context?: any` to `context?: { params: Promise<any> }`
+   - Added proper params extraction: `const params = await context?.params`, `const transactionId = params?.id`
+
+#### Impact & Resolution
+
+**Checkout Flow Fixed**:
+- ✅ **Authentication works** - Midtrans config API now correctly identifies authenticated users
+- ✅ **Package loading works** - Package details API correctly extracts ID from URL path
+- ✅ **Payment initialization works** - Midtrans SDK loads with correct configuration
+- ✅ **Payment gateways load** - Gateway selection displays properly
+- ✅ **User profile data loads** - Auto-fill works for checkout form
+
+**API Response Format Verified**:
+- ✅ Midtrans config returns: `{ success: true, data: { client_key, environment } }`
+- ✅ Package details return: `{ success: true, data: { id, name, price, ... } }`
+- ✅ Frontend properly unwraps: `packageResult?.success === true && packageResult.data ? packageResult.data : packageResult`
+
+**Error Handling Improved**:
+- ✅ Authentication errors return structured 401 with clear user message
+- ✅ Validation errors return structured 400 with error ID for tracking
+- ✅ All errors logged to Sentry with full context
+- ✅ SecureServiceRoleWrapper audit logs capture all database operations
+
+#### Verification Steps Completed
+1. ✅ Fixed `authenticatedApiWrapper` parameter signature mismatch in midtrans-config
+2. ✅ Added dynamic route context support to `publicApiWrapper`
+3. ✅ Updated packages/[id] to properly extract params from Next.js 15 context
+4. ✅ Verified checkout page loads all required data (config, package, gateways, profile)
+5. ✅ Confirmed API response format matches frontend expectations
+6. ✅ Tested authentication flow with Authorization header handling
+
+#### Technical Notes
+- **Next.js 15 Dynamic Routes**: Params must be awaited from context: `await context.params`
+- **Wrapper Signature**: `authenticatedApiWrapper` provides `auth: AuthenticatedRequest` not raw `user`
+- **AuthenticatedRequest Structure**: `{ userId: string, user: { id, email }, supabase }`
+- **Context Support**: All wrappers now support optional context for dynamic routes
+- **Backward Compatibility**: Non-dynamic routes work unchanged (context is optional)
+
+---
+
 ### Phase 2 Error Handling Infrastructure - COMPLETED (October 7, 2025)
 **Production-Ready Standardization**: Unified API response layer with HTTP status code preservation, standardized error handling, and frontend integration for consistent error management across the application.
 

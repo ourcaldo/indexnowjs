@@ -205,17 +205,25 @@ export function authenticatedApiWrapper<T = any>(
  * Public API wrapper - No authentication required
  * Automatically standardizes all responses to ApiResponse format
  * Includes comprehensive error handling and request logging
+ * Supports dynamic routes with context parameter
  * 
  * @example
  * export const GET = publicApiWrapper(async (request) => {
  *   const data = await fetchPublicData()
  *   return formatSuccess(data)
  * })
+ * 
+ * @example Dynamic routes
+ * export const GET = publicApiWrapper(async (request, context) => {
+ *   const { id } = await context.params
+ *   const data = await fetchData(id)
+ *   return formatSuccess(data)
+ * })
  */
 export function publicApiWrapper<T = any>(
-  handler: (request: NextRequest) => Promise<ApiSuccessResponse<T> | ApiErrorResponse>
+  handler: (request: NextRequest, context?: { params: Promise<any> }) => Promise<ApiSuccessResponse<T> | ApiErrorResponse>
 ) {
-  return async (request: NextRequest): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: { params: Promise<any> }): Promise<NextResponse> => {
     const endpoint = new URL(request.url).pathname
     const method = request.method
 
@@ -227,8 +235,8 @@ export function publicApiWrapper<T = any>(
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
       }, `Public API access: ${method} ${endpoint}`)
 
-      // Execute handler and get standardized response
-      const response = await handler(request)
+      // Execute handler and get standardized response (pass context for dynamic routes)
+      const response = await handler(request, context)
       
       // Return with appropriate status code
       if (response.success) {

@@ -16,10 +16,16 @@ function getBaseDomain(): string {
 
 export const GET = authenticatedApiWrapper(async (
   request: NextRequest,
-  user,
-  context: { params: Promise<{ id: string }> }
+  auth,
+  context?: { params: Promise<{ id: string }> }
 ) => {
-  const { id } = await context.params
+  const params = context?.params ? await context.params : null
+  const id = params?.id
+  
+  if (!id) {
+    throw new Error('Order ID is required')
+  }
+  
   logger.info({ data: [id] }, '[ORDER-API] Received order ID:')
 
   const cookieStore = await cookies()
@@ -48,14 +54,14 @@ export const GET = authenticatedApiWrapper(async (
     }
   )
   
-  logger.info({ data: [user.id] }, '[ORDER-API] User authenticated:')
+  logger.info({ data: [auth.userId] }, '[ORDER-API] User authenticated:')
 
-  logger.info({ data: [id, 'user_id:', user.id] }, '[ORDER-API] Searching for order ID:')
+  logger.info({ data: [id, 'user_id:', auth.userId] }, '[ORDER-API] Searching for order ID:')
   
   const transaction = await SecureServiceRoleWrapper.executeWithUserSession(
     supabase,
     {
-      userId: user.id,
+      userId: auth.userId,
       operation: 'get_user_order_details',
       source: 'billing/orders/[id]',
       reason: 'User retrieving their order details',
@@ -76,7 +82,7 @@ export const GET = authenticatedApiWrapper(async (
           package:indb_payment_packages(id, name, description, features, quota_limits)
         `)
         .eq('id', id)
-        .eq('user_id', user.id)
+        .eq('user_id', auth.userId)
         .single()
 
       logger.info({ data: [{

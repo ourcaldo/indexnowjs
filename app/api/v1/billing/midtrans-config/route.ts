@@ -4,17 +4,17 @@ import { logger } from '@/lib/monitoring/error-handling'
 import { authenticatedApiWrapper } from '@/lib/core/api-response-middleware'
 import { formatSuccess } from '@/lib/core/api-response-formatter'
 
-export const GET = authenticatedApiWrapper(async (request: NextRequest, user) => {
+export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
   const midtransGateway = await SecureServiceRoleWrapper.executeSecureOperation(
     {
-      userId: user.id,
+      userId: auth.userId,
       operation: 'get_midtrans_gateway_config',
       source: 'billing/midtrans-config',
       reason: 'User requesting Midtrans payment gateway configuration for checkout',
       metadata: {
         endpoint: '/api/v1/billing/midtrans-config',
         gatewaySlug: 'midtrans',
-        userEmail: user.email
+        userEmail: auth.user.email
       },
       ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
       userAgent: request.headers.get('user-agent') || undefined
