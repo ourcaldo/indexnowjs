@@ -111,7 +111,9 @@ export default function BillingHistoryPage() {
         throw new Error('Failed to load billing history')
       }
 
-      const data = await response.json()
+      const result = await response.json()
+      // API returns: { success: true, data: { transactions: [...], summary: {...}, pagination: {...} } }
+      const data = result?.success === true && result.data ? result.data : result
       setHistoryData(data)
     } catch (error) {
       console.error('Error loading billing history:', error)

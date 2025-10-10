@@ -131,7 +131,9 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
       })
 
       if (response.ok) {
-        const data = await response.json()
+        const result = await response.json()
+        // API returns: { success: true, data: { siteSettings: {...}, packages: { packages: [...], count: N } } }
+        const data = result?.success === true && result.data ? result.data : result
         if (data.packages && data.packages.packages && Array.isArray(data.packages.packages)) {
           let packagesData = data.packages.packages.map((pkg: any) => ({
             ...pkg,

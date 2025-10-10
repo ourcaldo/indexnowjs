@@ -137,7 +137,9 @@ export default function CheckoutPage() {
           throw new Error('Failed to fetch user profile')
         }
 
-        const profileData = await profileResponse.json()
+        const profileResult = await profileResponse.json()
+        // API returns: { success: true, data: { profile: {...} } }
+        const profileData = profileResult?.success === true && profileResult.data ? profileResult.data : profileResult
         const userProfile = profileData.profile
 
         // Auto-populate user information from full profile
@@ -182,11 +184,15 @@ export default function CheckoutPage() {
           throw new Error('Failed to load checkout data')
         }
 
-        const packageData = await packageResponse.json()
-        const gatewaysData = await gatewaysResponse.json()
+        const packageResult = await packageResponse.json()
+        const gatewaysResult = await gatewaysResponse.json()
+        
+        // API returns: { success: true, data: {...} }
+        const packageData = packageResult?.success === true && packageResult.data ? packageResult.data : packageResult
+        const gatewaysData = gatewaysResult?.success === true && gatewaysResult.data ? gatewaysResult.data : gatewaysResult
 
-        setSelectedPackage(packageData.data)
-        setPaymentGateways(gatewaysData.gateways || [])
+        setSelectedPackage(packageData.data || packageData)
+        setPaymentGateways(gatewaysData.gateways || gatewaysData || [])
 
         // Check trial eligibility if needed
         if (isTrialFlow) {
