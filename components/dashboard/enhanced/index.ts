@@ -1,4 +1,6 @@
 export { StatCard } from './StatCard'
+export { UsageChart } from './UsageChart' 
+export { RankingDistribution } from './RankingDistribution'
 export { StatusBadge } from './StatusBadge'
 export { PositionChange } from './PositionChange'
 export { DataTable } from './DataTable'
