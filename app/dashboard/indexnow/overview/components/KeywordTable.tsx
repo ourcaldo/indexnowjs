@@ -38,7 +38,7 @@ export const KeywordTable = ({
   searchTerm,
   keywordsLoading
 }: KeywordTableProps) => {
-  if (keywordsLoading) {
+  if (keywordsLoading && keywords.length === 0) {
     return (
       <Card>
         <div className="flex items-center justify-center py-12">
