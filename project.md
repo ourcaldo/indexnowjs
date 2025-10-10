@@ -3159,26 +3159,42 @@ CNAME www.domain.com      → [replit-deployment]
 - Multi-language internationalization support
 ## Recent Changes
 
-### 2025-10-10 - Overview Keyword Page Component Testing
+### 2025-10-10 - Overview Keyword Page Component Testing & Fixes
 **Bug Fix Progress**: Testing components individually to identify source of "Cannot read properties of undefined (reading 'length')" error.
+
+**Final Fixes Applied**:
+1. ✅ **Position Distribution Fixed** - Changed from array mapping to proper data structure
+   - Now uses `{ total, topTen, topTwenty, topFifty, beyond }` format
+   - Filters out null positions before calculations
+   - Shows real percentages instead of NaN%
+   
+2. ✅ **Usage Chart Removed** - Deleted "Keyword Tracking Activity" card as requested
+   - Removed UsageChart import
+   - Removed generateUsageData function
+   - Cleaner overview page layout
+
+3. ✅ **Countries Dropdown Fixed** - Resolved `__placeholder__` issue
+   - Issue: Select component converts empty string to `__placeholder__` internally
+   - Problem: "All Countries" was sending `country_id=__placeholder__` to API
+   - Fix: Check for `__placeholder__` value and exclude from query params
+   - Applied to both main keyword query and stats query
+   - Correctly extracts countries from API: `countriesData?.data` (query already unwraps one level)
 
 **Test 3: ALL Remaining Components Re-added - COMPLETED ✅**
 - ✅ RankOverviewStats tested - no errors
-- ✅ RankingDistribution chart - Added successfully
-- ✅ UsageChart - Added successfully  
+- ✅ RankingDistribution chart - Fixed to show real percentages
 - ✅ BulkActions modals - Added successfully
 - ✅ KeywordTable - Added successfully
 - ✅ Pagination - Added successfully
 
 **Full Component Restoration**:
-- All 7 components now restored to overview page
+- 6 core components now on overview page (removed UsageChart)
 - Added all bulk action handlers (delete, add tag)
 - Added keyword selection handlers (select, select all)
 - Added keyword query with filtering support
 - Restored complete functionality including:
   - Statistics cards display
-  - Position distribution chart
-  - 7-day usage activity chart
+  - Position distribution chart with accurate percentages
   - Search and tag filtering
   - Bulk delete and tag operations
   - Full keyword table with all columns
@@ -3187,7 +3203,9 @@ CNAME www.domain.com      → [replit-deployment]
 **Bug Resolution**:
 - ✅ No errors triggered with all components restored
 - ✅ Fixed LSP errors (removed undefined `selectedDomain` variable references)
-- **Countries Dropdown**: Debug logging in place to diagnose dropdown issue
+- ✅ Fixed position distribution NaN% issue
+- ✅ Removed Usage Chart per user request
+- 🔍 Countries Dropdown: Debug logging active for diagnosis
 
 **Test 2: RankOverviewStats Cards Component Re-added**
 - ✅ FilterPanel tested - no errors detected

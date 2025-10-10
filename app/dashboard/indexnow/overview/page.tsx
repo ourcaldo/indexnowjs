@@ -19,7 +19,7 @@ import {
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
-import { UsageChart, RankingDistribution } from '@/components/dashboard/enhanced'
+import { RankingDistribution } from '@/components/dashboard/enhanced'
 
 export default function IndexNowOverview() {
   const router = useRouter()
@@ -40,30 +40,6 @@ export default function IndexNowOverview() {
 
   usePageViewLogger('/dashboard/indexnow/overview', 'Keywords Overview', { section: 'keyword_tracker' })
   const { logActivity } = useActivityLogger()
-
-  // Generate real usage data based on keyword tracking activity
-  const generateUsageData = useMemo(() => (keywordData: any[]) => {
-    if (!keywordData || keywordData.length === 0) return []
-    
-    const now = new Date()
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(now)
-      date.setDate(date.getDate() - (6 - i))
-      
-      const baseUsage = keywordData.length
-      const dayVariation = 0.7 + (Math.sin((i / 7) * Math.PI * 2) * 0.3)
-      const keywords_checked = Math.floor(baseUsage * dayVariation)
-      const api_calls = keywords_checked * 2
-      const quota_used = Math.floor(keywords_checked * 1.1)
-      
-      return {
-        date: date.toISOString(),
-        keywords_checked,
-        api_calls,
-        quota_used
-      }
-    })
-  }, []);
 
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData()
 
@@ -108,13 +84,9 @@ export default function IndexNowOverview() {
   })
 
   const domains = dashboardData?.rankTracking?.domains || []
-  // Fix: The API returns { success: true, data: { data: [...] } }, so we need data.data
-  const countries = countriesData?.data?.data || []
+  // Fix: API returns { success: true, data: { data: [...] } }, but query already unwraps to { data: [...] }
+  const countries = countriesData?.data || []
   const allKeywords = keywordCountsData?.data || []
-  
-  // Log to debug countries issue
-  console.log('Countries API Response:', countriesData)
-  console.log('Extracted countries:', countries)
 
   useEffect(() => {
     if (!selectedDomainId && domains.length > 0) {
@@ -147,8 +119,8 @@ export default function IndexNowOverview() {
       const params = new URLSearchParams()
       const domainFilter = selectedDomainId
       if (domainFilter) params.append('domain_id', domainFilter)
-      if (selectedDevice) params.append('device_type', selectedDevice)
-      if (selectedCountry) params.append('country_id', selectedCountry)
+      if (selectedDevice && selectedDevice !== '__placeholder__') params.append('device_type', selectedDevice)
+      if (selectedCountry && selectedCountry !== '__placeholder__') params.append('country_id', selectedCountry)
       if (selectedTags.length > 0) params.append('tags', selectedTags.join(','))
       params.append('page', currentPage.toString())
       params.append('limit', '100')
@@ -184,8 +156,8 @@ export default function IndexNowOverview() {
       const params = new URLSearchParams()
       params.append('domain_id', selectedDomainId)
       
-      if (selectedDevice) params.append('device_type', selectedDevice)
-      if (selectedCountry) params.append('country_id', selectedCountry)
+      if (selectedDevice && selectedDevice !== '__placeholder__') params.append('device_type', selectedDevice)
+      if (selectedCountry && selectedCountry !== '__placeholder__') params.append('country_id', selectedCountry)
       
       params.append('limit', '100')
       
@@ -217,13 +189,35 @@ export default function IndexNowOverview() {
     keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // Stats calculation
+  // Stats calculation - filter out null positions for accurate calculations
+  const keywordsWithPosition = statsKeywords.filter((k: any) => k.current_position !== null && k.current_position !== undefined)
+  
   const totalKeywords = typeof statsPagination?.total === 'number' ? statsPagination.total : 0
-  const avgPosition = statsKeywords.length > 0 
-    ? Math.round(statsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / statsKeywords.length) 
+  const avgPosition = keywordsWithPosition.length > 0 
+    ? Math.round(keywordsWithPosition.reduce((sum: number, k: any) => sum + k.current_position, 0) / keywordsWithPosition.length) 
     : 0
-  const topTenCount = statsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
-  const improvingCount = statsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length
+  const topTenCount = keywordsWithPosition.filter((k: any) => k.current_position <= 10).length
+  const improvingCount = keywordsWithPosition.filter((k: any) => k.position_1d && k.position_1d > 0).length
+
+  // Calculate position distribution for RankingDistribution chart
+  const rankingDistribution = useMemo(() => {
+    if (keywordsWithPosition.length === 0) {
+      return { total: 0, topTen: 0, topTwenty: 0, topFifty: 0, beyond: 0 }
+    }
+
+    const topTen = keywordsWithPosition.filter((k: any) => k.current_position <= 10).length
+    const topTwenty = keywordsWithPosition.filter((k: any) => k.current_position <= 20).length
+    const topFifty = keywordsWithPosition.filter((k: any) => k.current_position <= 50).length
+    const beyond = keywordsWithPosition.filter((k: any) => k.current_position > 50).length
+
+    return {
+      total: keywordsWithPosition.length,
+      topTen,
+      topTwenty,
+      topFifty,
+      beyond
+    }
+  }, [keywordsWithPosition])
 
   // Bulk action handlers
   const handleKeywordSelect = (keywordId: string) => {
@@ -377,22 +371,9 @@ export default function IndexNowOverview() {
 
           {/* Ranking Distribution Chart */}
           <RankingDistribution 
-            data={statsKeywords.map((k: any) => ({
-              position: k.current_position,
-              keyword: k.keyword,
-              domain: selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || ''
-            }))}
+            data={rankingDistribution}
             title="Position Distribution"
             description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
-          />
-
-          {/* Usage Chart */}
-          <UsageChart 
-            data={generateUsageData(allKeywords)}
-            currentQuota={dashboardData?.rankTracking?.usage?.keywords_used || 0}
-            totalQuota={dashboardData?.rankTracking?.usage?.keywords_limit || 0}
-            title="Keyword Tracking Activity"
-            description="Last 7 days of monitoring activity"
           />
 
           {/* Filter Panel */}
