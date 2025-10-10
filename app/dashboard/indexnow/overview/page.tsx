@@ -19,7 +19,6 @@ import {
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
-import { RankingDistribution } from '@/components/dashboard/enhanced'
 
 export default function IndexNowOverview() {
   const router = useRouter()
@@ -364,17 +363,6 @@ export default function IndexNowOverview() {
             avgPosition={avgPosition}
             topTenCount={topTenCount}
             improvingCount={improvingCount}
-          />
-
-          {/* Ranking Distribution Chart */}
-          <RankingDistribution 
-            data={statsKeywords.map((k: any) => ({
-              position: k.current_position,
-              keyword: k.keyword,
-              domain: selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || ''
-            }))}
-            title="Position Distribution"
-            description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
           />
 
           {/* Filter Panel */}
