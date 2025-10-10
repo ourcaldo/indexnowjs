@@ -613,6 +613,80 @@ setItems(data.data.jobs)  // Correctly unwraps
 
 ---
 
+### Content Security Policy (CSP) Fix for Midtrans Payment Integration - COMPLETED (October 10, 2025)
+**Critical Fix**: Resolved CSP violations blocking Midtrans payment scripts on checkout page.
+
+#### Problem Identified
+Browser was blocking Midtrans payment scripts due to Content Security Policy restrictions:
+
+1. **Blocked Scripts**:
+   - `https://api.midtrans.com/v2/assets/js/midtrans-new-3ds.min.js` - 3DS authentication SDK
+   - `https://app.sandbox.midtrans.com/snap/snap.js` - Snap payment SDK (sandbox)
+   - `https://app.midtrans.com/snap/snap.js` - Snap payment SDK (production)
+
+2. **CSP Error**: "Refused to load the script because it violates the following Content Security Policy directive: script-src..."
+
+#### Root Cause
+The CSP configuration in `next.config.js` only allowed scripts from analytics providers (Google Analytics, Posthog, Sentry, Customer.io) but didn't include Midtrans domains required for payment processing.
+
+#### Solution Implemented
+
+**File Modified**: `next.config.js` (Line 89)
+
+Added Midtrans domains to three CSP directives:
+
+1. **script-src** - Allows loading Midtrans JavaScript SDKs:
+   - `https://api.midtrans.com` - 3DS authentication scripts
+   - `https://app.sandbox.midtrans.com` - Sandbox Snap.js
+   - `https://app.midtrans.com` - Production Snap.js
+
+2. **connect-src** - Allows API calls to Midtrans:
+   - `https://api.midtrans.com` - Payment API calls
+   - `https://app.sandbox.midtrans.com` - Sandbox API endpoints
+   - `https://app.midtrans.com` - Production API endpoints
+
+3. **frame-src** - Allows Midtrans 3DS iframes:
+   - `https://api.midtrans.com` - 3DS authentication frames
+   - `https://app.sandbox.midtrans.com` - Sandbox payment frames
+   - `https://app.midtrans.com` - Production payment frames
+
+#### CSP Policy Structure (Updated)
+```
+script-src: ... https://api.midtrans.com https://app.sandbox.midtrans.com https://app.midtrans.com
+connect-src: ... https://api.midtrans.com https://app.sandbox.midtrans.com https://app.midtrans.com
+frame-src: 'self' https://api.midtrans.com https://app.sandbox.midtrans.com https://app.midtrans.com
+```
+
+#### Impact & Resolution
+
+**Payment Flow Fixed**:
+- ✅ **3DS SDK loads** - Authentication scripts load without CSP errors
+- ✅ **Snap.js loads** - Payment gateway SDK loads properly (both sandbox & production)
+- ✅ **API calls work** - Midtrans API requests not blocked by CSP
+- ✅ **3DS iframes work** - Authentication frames can be embedded
+- ✅ **Complete payment flow** - End-to-end payment processing now functional
+
+**Security Maintained**:
+- ✅ CSP still enforces strict origin policies
+- ✅ Only explicitly allowed Midtrans domains permitted
+- ✅ Other security headers remain unchanged
+- ✅ No reduction in overall security posture
+
+#### Verification Steps
+1. ✅ Identified blocked scripts from browser console CSP errors
+2. ✅ Added Midtrans domains to `script-src`, `connect-src`, and `frame-src` directives
+3. ✅ Tested both sandbox and production Midtrans environments
+4. ✅ Verified 3DS authentication flow works with iframes
+5. ✅ Confirmed no other CSP violations remain
+
+#### Technical Notes
+- **Restart Required**: Changes to `next.config.js` require app restart to take effect
+- **Multi-Environment**: Added both sandbox (`app.sandbox.midtrans.com`) and production (`app.midtrans.com`) domains
+- **Complete Coverage**: Added to all relevant CSP directives (script-src, connect-src, frame-src) for full payment flow support
+- **3DS Support**: Frame-src directive specifically added to support 3D Secure authentication iframes
+
+---
+
 ### Checkout Page API Authentication & Validation Fix - COMPLETED (October 10, 2025)
 **Critical Fix**: Resolved checkout page authentication and validation errors preventing users from completing payment transactions.
 
