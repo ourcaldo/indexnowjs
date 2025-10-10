@@ -19,7 +19,7 @@ import {
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
-import { UsageChart, RankingDistribution } from '@/components/dashboard/enhanced'
+import { RankingDistribution } from '@/components/dashboard/enhanced'
 
 export default function IndexNowOverview() {
   const router = useRouter()
@@ -44,31 +44,6 @@ export default function IndexNowOverview() {
   // Activity logging
   usePageViewLogger('/dashboard/indexnow/overview', 'Keywords Overview', { section: 'keyword_tracker' })
   const { logActivity } = useActivityLogger()
-
-  // Generate real usage data based on keyword tracking activity
-  const generateUsageData = useMemo(() => (keywordData: any[]) => {
-    if (!keywordData || keywordData.length === 0) return []
-    
-    const now = new Date()
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(now)
-      date.setDate(date.getDate() - (6 - i))
-      
-      // Use ALL keywords for usage calculation (no filters) - usage is account-wide
-      const baseUsage = keywordData.length
-      const dayVariation = 0.7 + (Math.sin((i / 7) * Math.PI * 2) * 0.3) // Realistic weekly pattern
-      const keywords_checked = Math.floor(baseUsage * dayVariation)
-      const api_calls = keywords_checked * 2 // Assume 2 API calls per keyword check
-      const quota_used = Math.floor(keywords_checked * 1.1) // Slightly higher than checked
-      
-      return {
-        date: date.toISOString(),
-        keywords_checked,
-        api_calls,
-        quota_used
-      }
-    })
-  }, []);
 
   // Use merged dashboard API for better performance and to prevent loading glitches
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData()
@@ -400,15 +375,6 @@ export default function IndexNowOverview() {
             }))}
             title="Position Distribution"
             description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
-          />
-
-          {/* Usage Chart */}
-          <UsageChart 
-            data={generateUsageData(allKeywords)}
-            currentQuota={dashboardData?.rankTracking?.usage?.keywords_used || 0}
-            totalQuota={dashboardData?.rankTracking?.usage?.keywords_limit || 0}
-            title="Keyword Tracking Activity"
-            description="Last 7 days of monitoring activity"
           />
 
           {/* Filter Panel */}
