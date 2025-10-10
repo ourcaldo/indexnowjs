@@ -75,7 +75,7 @@ export default function IndexNowOverview() {
       domain_id: selectedDomainId || selectedDomain || undefined,
       device_type: selectedDevice || undefined,
       country_id: selectedCountry || undefined,
-      tags: selectedTags.length > 0 ? selectedTags : undefined,
+      tags: selectedTags[0] ? selectedTags : undefined,
       page: currentPage,
       limit: 100
     }],
@@ -85,7 +85,7 @@ export default function IndexNowOverview() {
       if (domainFilter) params.append('domain_id', domainFilter)
       if (selectedDevice) params.append('device_type', selectedDevice)
       if (selectedCountry) params.append('country_id', selectedCountry)
-      if (selectedTags.length > 0) params.append('tags', selectedTags.join(','))
+      if (selectedTags[0]) params.append('tags', selectedTags.join(','))
       params.append('page', currentPage.toString())
       params.append('limit', '100')
 
@@ -206,10 +206,12 @@ export default function IndexNowOverview() {
     const safeFilteredKeywords = Array.isArray(filteredKeywords) ? filteredKeywords : []
     const safeSelectedKeywords = Array.isArray(selectedKeywords) ? selectedKeywords : []
     
-    // Check if all are selected without using .length
-    const allSelected = safeFilteredKeywords.every(k => safeSelectedKeywords.includes(k.id))
+    // Check if all are selected - count both arrays
+    const filteredCount = safeFilteredKeywords.reduce((acc) => acc + 1, 0)
+    const selectedCount = safeSelectedKeywords.reduce((acc) => acc + 1, 0)
+    const allSelected = filteredCount > 0 && filteredCount === selectedCount && safeFilteredKeywords.every(k => safeSelectedKeywords.includes(k.id))
     
-    if (allSelected && safeFilteredKeywords[0]) {
+    if (allSelected) {
       setSelectedKeywords([])
     } else {
       setSelectedKeywords(safeFilteredKeywords.map((k: any) => k?.id).filter(Boolean))
@@ -344,7 +346,7 @@ export default function IndexNowOverview() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </Card>
-      ) : safeDomains.length === 0 ? (
+      ) : !safeDomains[0] ? (
         <NoDomainState />
       ) : (
         <>
