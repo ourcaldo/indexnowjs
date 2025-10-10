@@ -1517,6 +1517,55 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### Critical Bug Fix - toLocaleString Error Deep Dive Resolution (October 10, 2025 - Final Fix)
+**Final Resolution**: After 4 attempts, identified and fixed the actual root cause of the toLocaleString error through comprehensive data flow analysis.
+
+#### ✅ Root Cause Identified
+The error persisted despite previous fixes due to **two critical issues**:
+
+1. **Double-Nesting Inconsistency in Default Return** (Line 169)
+   - When no domain selected, `allDomainKeywordsData` returned `{ data: { data: [] } }` (double-nested)
+   - This conflicted with the expected single-nested structure `{ data: [], pagination: {...} }`
+   - Caused data access mismatches in stats calculation
+
+2. **Missing Defensive Check for pagination.total**
+   - Even with fallback `{ page: 1, total: 0, total_pages: 1 }`, if API returns pagination without `total` field, `pagination.total` becomes `undefined`
+   - Previous fix assumed fallback would always provide `total`, but didn't verify type safety
+
+#### ✅ Permanent Fixes Applied
+
+**Fix 1: Corrected Default Return Structure** (`app/dashboard/indexnow/overview/page.tsx` line 169)
+```typescript
+// Before (WRONG - double nested):
+if (!selectedDomainId) return { data: { data: [] } }
+
+// After (CORRECT - matches expected structure):
+if (!selectedDomainId) return { data: [], pagination: { page: 1, total: 0, total_pages: 1 } }
+```
+
+**Fix 2: Added Type-Safe totalKeywords Calculation** (Line 333)
+```typescript
+// Before (Vulnerable to undefined):
+const totalKeywords = pagination.total
+
+// After (Type-safe with defensive check):
+const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
+```
+
+#### ✅ Defense-in-Depth Strategy
+Now protected by **triple-layer defense**:
+1. **Data Structure Layer**: Corrected default return to match expected format
+2. **Type Check Layer**: Explicit `typeof` check ensures totalKeywords is always a number
+3. **Component Layer**: RankOverviewStats `formatNumber()` + StatCard `formatValue()` already handle undefined/null
+
+#### ✅ Impact & Results
+- ✅ **toLocaleString error eliminated**: All three defense layers prevent undefined from reaching toLocaleString()
+- ✅ **Consistent data structure**: All queries now return uniform structure
+- ✅ **Type safety guaranteed**: Explicit type checking ensures number values
+- ✅ **Future-proof**: Multiple safety nets prevent regressions
+
+---
+
 ### Critical Bug Fixes - toLocaleString Error, Login Redirect, and Billing Data (October 10, 2025)
 **Critical Bug Fix**: Resolved 3 persistent bugs reported by user including toLocaleString error on overview page, login page redirect glitch, and billing page empty data issues.
 

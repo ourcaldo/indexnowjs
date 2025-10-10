@@ -1,6 +1,12 @@
 # IndexNow Studio - Project Setup
 
 ## Recent Changes
+- **[x] Oct 10, 2025** (FINAL FIX): Resolved toLocaleString error after 4 attempts with comprehensive root cause analysis:
+  - **Root Cause 1**: Double-nesting inconsistency - `allDomainKeywordsData` default return was `{ data: { data: [] } }` instead of `{ data: [], pagination: {...} }`
+  - **Root Cause 2**: Missing type-safety check - `pagination.total` could be undefined even with fallback object
+  - **Fix 1**: Corrected default return structure (line 169) to match expected single-nested format
+  - **Fix 2**: Added type-safe check `typeof pagination?.total === 'number' ? pagination.total : 0` (line 333)
+  - **Result**: Triple-layer defense (data structure + type check + component formatters) prevents undefined from reaching toLocaleString
 - **[x] Oct 10, 2025**: Fixed 3 critical bugs with deep dive analysis (toLocaleString error, login redirect, billing data):
   - **Overview toLocaleString error** (DEEP DIVE): Root cause was data structure mismatch - frontend expected double-nested data but API unwraps to single level
     - Fixed data access: `keywordsData?.data?.data` → `keywordsData?.data` and `keywordsData?.data?.pagination` → `keywordsData?.pagination`

@@ -163,7 +163,7 @@ export default function IndexNowOverview() {
       country_id: selectedCountry || undefined
     }],
     queryFn: async () => {
-      if (!selectedDomainId) return { data: { data: [] } }
+      if (!selectedDomainId) return { data: [], pagination: { page: 1, total: 0, total_pages: 1 } }
       
       const { data: { session } } = await supabase.auth.getSession()
       const params = new URLSearchParams()
@@ -326,7 +326,8 @@ export default function IndexNowOverview() {
   )
 
   // Stats calculation using ALL keywords for the domain (not affected by pagination)
-  const totalKeywords = pagination.total
+  // Defensive: Ensure totalKeywords is always a number, never undefined/null
+  const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
   const avgPosition = statsKeywords.length > 0 
     ? Math.round(statsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / statsKeywords.length) 
     : 0
