@@ -3159,6 +3159,83 @@ CNAME www.domain.com      → [replit-deployment]
 - Multi-language internationalization support
 ## Recent Changes
 
+### 2025-10-10 - IndexNow Overview Page UI/UX Enhancements (COMPLETED)
+**UI/UX Improvements**: Enhanced the indexnow/overview page with better filter behavior, visual feedback, loading states, and mobile responsiveness.
+
+#### ✅ Issues Fixed
+
+**1. Redundant Filter Selection Prevention**
+- **Issue**: "All Countries" and "All Devices" options could be selected again when already active, causing unnecessary database requests
+- **Solution**: Added change detection handlers (`handleDeviceChange`, `handleCountryChange`) that check if value actually changed before calling state setters
+- **Impact**: Prevents redundant API calls and improves performance
+- **Files Modified**: `components/shared/DeviceCountryFilter.tsx`
+
+**2. Active Option Visual Feedback**
+- **Issue**: Active filter options showed checkmarks which was confusing UX
+- **Solution**: Implemented disabled state with muted styling (`bg-muted/50 dark:bg-muted/30 text-muted-foreground`) for active options instead of checkmarks
+- **Impact**: Clearer visual indication of current selection, better user experience
+- **Files Modified**: `components/shared/DeviceCountryFilter.tsx`
+
+**3. Table Loading State Bug**
+- **Issue**: When API returns empty data `{"success": true, "data": {"data": [], "pagination": {...}}}`, table still showed loading spinner instead of "No keywords added" message
+- **Solution**: Changed loading condition from `keywordsLoading` to `keywordsLoading && keywords.length === 0` to properly handle empty responses
+- **Impact**: Empty state correctly displayed when no data exists, better user feedback
+- **Files Modified**: `app/dashboard/indexnow/overview/components/KeywordTable.tsx`
+
+**4. Mobile Responsive Header**
+- **Issue**: Overview page header (domain selector, device/country filters, Add Keywords button) was not responsive on mobile devices
+- **Solution**: Implemented responsive flex layout with breakpoint-specific stacking:
+  - Mobile (< lg): Vertical stack with full-width components
+  - Small screens (sm): Filters and button side-by-side
+  - Large screens (>= lg): Full horizontal layout
+- **Impact**: Improved mobile user experience with proper component spacing and usability
+- **Files Modified**: `app/dashboard/indexnow/overview/page.tsx`
+
+#### ✅ Technical Details
+
+**Change Detection Pattern**:
+```typescript
+const handleDeviceChange = (value: string) => {
+  if (value !== selectedDevice) {
+    onDeviceChange(value)
+  }
+}
+```
+
+**Active Option Styling**:
+```typescript
+disabled={selectedCountry === country.id}
+className={selectedCountry === country.id 
+  ? 'bg-muted/50 dark:bg-muted/30 text-muted-foreground cursor-not-allowed' 
+  : 'hover:bg-slate-50 ...'
+}
+```
+
+**Loading State Logic**:
+```typescript
+// Only show spinner if loading AND no data yet (first load)
+if (keywordsLoading && keywords.length === 0) {
+  return <LoadingSpinner />
+}
+```
+
+**Responsive Layout**:
+```typescript
+// Header stacks on mobile, horizontal on large screens
+className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+```
+
+#### ✅ Impact & Results
+- ✅ **Performance**: Eliminated redundant API requests from filter reselection
+- ✅ **UX**: Clearer visual feedback for active filters with muted styling
+- ✅ **Reliability**: Proper empty state display instead of infinite loading
+- ✅ **Mobile Experience**: Responsive layout works on all device sizes
+- ✅ **Code Quality**: Well-structured, maintainable code with proper conditional rendering
+
+**Status**: IndexNow Overview Page UI/UX Enhancements **COMPLETED** - All 4 issues resolved with architect review approval.
+
+---
+
 ### 2025-10-10 - Overview Keyword Page Component Testing & Fixes
 **Bug Fix Progress**: Testing components individually to identify source of "Cannot read properties of undefined (reading 'length')" error.
 
