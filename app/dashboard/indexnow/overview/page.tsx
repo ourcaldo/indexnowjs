@@ -309,7 +309,7 @@ export default function IndexNowOverview() {
   // Get keyword count for each domain
   const getDomainKeywordCount = (domainId: string) => {
     const safeAllKeywords = Array.isArray(allKeywords) ? allKeywords : []
-    return safeAllKeywords.filter((k: any) => k?.domain_id === domainId).length
+    return safeAllKeywords.filter((k: any) => k?.domain_id === domainId).reduce((acc) => acc + 1, 0)
   }
   // Fix: Extract pagination from the new API response format (after unwrapping)
   const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
@@ -402,9 +402,9 @@ export default function IndexNowOverview() {
           />
 
           {/* Bulk Actions Bar */}
-          {Array.isArray(selectedKeywords) && selectedKeywords[0] && (
+          {selectedKeywords && selectedKeywords[0] && (
             <BulkActions
-              selectedCount={selectedKeywords.length}
+              selectedCount={selectedKeywords.filter(Boolean).reduce((acc) => acc + 1, 0)}
               onDelete={() => setShowDeleteConfirm(true)}
               onAddTag={() => setShowTagModal(true)}
               onCancelSelection={() => setSelectedKeywords([])}
