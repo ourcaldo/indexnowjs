@@ -183,7 +183,7 @@ export const BillingHistory = ({
         <div>
           <h2 className="text-lg font-semibold text-foreground">Billing History</h2>
           <p className="text-sm text-muted-foreground">
-            {historyData?.summary.total_transactions || 0} transactions • {formatCurrency(historyData?.summary.total_amount_spent || 0, 'USD')} total spent
+            {historyData?.summary?.total_transactions || 0} transactions • {formatCurrency(historyData?.summary?.total_amount_spent || 0, 'USD')} total spent
           </p>
         </div>
         <Button variant="outline" onClick={resetFilters}>

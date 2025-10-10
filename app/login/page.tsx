@@ -18,6 +18,21 @@ export default function Login() {
   const [isMagicLinkMode, setIsMagicLinkMode] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
   
+  // Check if user is already authenticated and redirect to dashboard
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const currentUser = await authService.getCurrentUser()
+        if (currentUser) {
+          router.push('/dashboard')
+        }
+      } catch (error) {
+        // User not authenticated, stay on login page
+      }
+    }
+    checkAuth()
+  }, [router])
+  
   // Check for auth callback errors in URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)

@@ -19,7 +19,7 @@ export const RankOverviewStats = ({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StatCard
         title="Total Keywords"
-        value={totalKeywords.toLocaleString()}
+        value={(totalKeywords || 0).toLocaleString()}
         variant="info"
         icon={<Search className="w-6 h-6" />}
         description="Keywords being tracked"

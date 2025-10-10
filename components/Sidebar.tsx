@@ -61,7 +61,7 @@ const Sidebar = ({ isOpen, onToggle, onCollapse, user, isCollapsed = false }: Si
   const handleLogout = async () => {
     try {
       await authService.signOut()
-      router.push('/')
+      window.location.href = '/login'
     } catch (error) {
       console.error('Logout failed:', error)
     }

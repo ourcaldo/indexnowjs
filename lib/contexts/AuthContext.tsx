@@ -51,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authService.signOut()
       setUser(null)
-      router.push('/login')
+      window.location.href = '/login'
     } catch (error) {
       console.error('Sign out error:', error)
     }
