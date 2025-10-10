@@ -9,16 +9,23 @@ import { useDashboardData } from '@/hooks/useDashboardData'
 import { usePageViewLogger } from '@/hooks/useActivityLogger'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { Card, Button } from '@/components/dashboard/ui'
+import { FilterPanel } from './components'
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
 
 export default function IndexNowOverview() {
   const router = useRouter()
+  const [searchTerm, setSearchTerm] = useState('')
   const [selectedDevice, setSelectedDevice] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showDomainsManager, setShowDomainsManager] = useState(false)
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
+  const [selectedKeywords, setSelectedKeywords] = useState<string[]>([])
+  const [showActionsMenu, setShowActionsMenu] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showTagModal, setShowTagModal] = useState(false)
 
   usePageViewLogger('/dashboard/indexnow/overview', 'Keywords Overview', { section: 'keyword_tracker' })
 
@@ -125,6 +132,19 @@ export default function IndexNowOverview() {
               </Button>
             </div>
           </div>
+
+          {/* Filter Panel */}
+          <FilterPanel
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedTags={selectedTags}
+            setSelectedTags={setSelectedTags}
+            selectedKeywords={selectedKeywords}
+            setShowActionsMenu={setShowActionsMenu}
+            setShowDeleteConfirm={setShowDeleteConfirm}
+            setShowTagModal={setShowTagModal}
+            showActionsMenu={showActionsMenu}
+          />
         </>
       )}
     </div>
