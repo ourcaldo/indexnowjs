@@ -327,32 +327,35 @@ export default function IndexNowOverview() {
         <NoDomainState />
       ) : (
         <>
-          <div className="flex items-center justify-between mb-6">
-            <SharedDomainSelector
-              domains={domains}
-              selectedDomainId={selectedDomainId}
-              selectedDomainInfo={selectedDomainInfo}
-              isOpen={showDomainsManager}
-              onToggle={() => setShowDomainsManager(!showDomainsManager)}
-              onDomainSelect={setSelectedDomainId}
-              getDomainKeywordCount={getDomainKeywordCount}
-              showKeywordCount={true}
-              addDomainRoute="/dashboard/indexnow/add"
-              placeholder="Select Domain"
-            />
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div className="w-full lg:w-auto">
+              <SharedDomainSelector
+                domains={domains}
+                selectedDomainId={selectedDomainId}
+                selectedDomainInfo={selectedDomainInfo}
+                isOpen={showDomainsManager}
+                onToggle={() => setShowDomainsManager(!showDomainsManager)}
+                onDomainSelect={setSelectedDomainId}
+                getDomainKeywordCount={getDomainKeywordCount}
+                showKeywordCount={true}
+                addDomainRoute="/dashboard/indexnow/add"
+                placeholder="Select Domain"
+              />
+            </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
               <DeviceCountryFilter
                 selectedDevice={selectedDevice}
                 selectedCountry={selectedCountry}
                 countries={countries}
                 onDeviceChange={setSelectedDevice}
                 onCountryChange={setSelectedCountry}
+                className="flex-1 sm:flex-initial"
               />
               
               <Button
                 onClick={() => router.push('/dashboard/indexnow/add')}
-                className="btn-hover whitespace-nowrap"
+                className="btn-hover whitespace-nowrap w-full sm:w-auto"
                 data-testid="button-add-keywords"
               >
                 <Plus className="w-4 h-4 mr-2" />
