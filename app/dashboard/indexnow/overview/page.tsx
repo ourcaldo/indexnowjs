@@ -167,7 +167,7 @@ export default function IndexNowOverview() {
     enabled: !!selectedDomainId
   })
 
-  // Extract base data with safety checks
+  // Extract base data with safety checks - NO .length calls anywhere
   const domains = dashboardData?.rankTracking?.domains || []
   const countries = countriesData?.data?.data || []
 
@@ -181,9 +181,9 @@ export default function IndexNowOverview() {
   // Additional safety checks for domains
   const safeDomains = Array.isArray(domains) ? domains : []
 
-  // Set default selected domain if none selected
+  // Set default selected domain if none selected - NO .length call
   useEffect(() => {
-    if (!selectedDomainId && safeDomains.length > 0) {
+    if (!selectedDomainId && Array.isArray(safeDomains) && safeDomains[0]) {
       setSelectedDomainId(safeDomains[0].id)
     }
   }, [safeDomains, selectedDomainId])
@@ -203,15 +203,22 @@ export default function IndexNowOverview() {
   }
 
   const handleSelectAll = () => {
-    if (selectedKeywords.length === filteredKeywords.length) {
+    const safeFilteredKeywords = Array.isArray(filteredKeywords) ? filteredKeywords : []
+    const safeSelectedKeywords = Array.isArray(selectedKeywords) ? selectedKeywords : []
+    
+    // Check if all are selected without using .length
+    const allSelected = safeFilteredKeywords.every(k => safeSelectedKeywords.includes(k.id))
+    
+    if (allSelected && safeFilteredKeywords[0]) {
       setSelectedKeywords([])
     } else {
-      setSelectedKeywords(filteredKeywords.map((k: any) => k.id))
+      setSelectedKeywords(safeFilteredKeywords.map((k: any) => k?.id).filter(Boolean))
     }
   }
 
   const handleBulkDelete = async () => {
-    if (selectedKeywords.length === 0) return
+    const safeSelectedKeywords = Array.isArray(selectedKeywords) ? selectedKeywords : []
+    if (!safeSelectedKeywords[0]) return
 
     setIsDeleting(true)
     try {
@@ -222,16 +229,18 @@ export default function IndexNowOverview() {
           'Authorization': `Bearer ${session?.access_token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ keywordIds: selectedKeywords })
+        body: JSON.stringify({ keywordIds: safeSelectedKeywords })
       })
 
       if (response.ok) {
+        const keywordCount = safeSelectedKeywords.filter(Boolean).reduce((acc) => acc + 1, 0)
+        
         // Log activity
         await logActivity({
           eventType: 'keyword_bulk_delete',
-          actionDescription: `Bulk deleted ${selectedKeywords.length} keywords from ${selectedDomainInfo?.domain_name || 'domain'}`,
+          actionDescription: `Bulk deleted ${keywordCount} keywords from ${selectedDomainInfo?.domain_name || 'domain'}`,
           metadata: {
-            keywordCount: selectedKeywords.length,
+            keywordCount: keywordCount,
             domainId: selectedDomainId,
             domainName: selectedDomainInfo?.domain_name
           }
@@ -249,7 +258,8 @@ export default function IndexNowOverview() {
   }
 
   const handleAddTag = async () => {
-    if (selectedKeywords.length === 0 || !newTag.trim()) return
+    const safeSelectedKeywords = Array.isArray(selectedKeywords) ? selectedKeywords : []
+    if (!safeSelectedKeywords[0] || !newTag.trim()) return
 
     setIsAddingTag(true)
     try {
@@ -261,19 +271,21 @@ export default function IndexNowOverview() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
-          keywordIds: selectedKeywords,
+          keywordIds: safeSelectedKeywords,
           tag: newTag.trim()
         })
       })
 
       if (response.ok) {
+        const keywordCount = safeSelectedKeywords.filter(Boolean).reduce((acc) => acc + 1, 0)
+        
         // Log activity
         await logActivity({
           eventType: 'keyword_tag_add',
-          actionDescription: `Added tag "${newTag.trim()}" to ${selectedKeywords.length} keywords`,
+          actionDescription: `Added tag "${newTag.trim()}" to ${keywordCount} keywords`,
           metadata: {
             tag: newTag.trim(),
-            keywordCount: selectedKeywords.length,
+            keywordCount: keywordCount,
             domainId: selectedDomainId,
             domainName: selectedDomainInfo?.domain_name
           }
@@ -312,11 +324,16 @@ export default function IndexNowOverview() {
   // Defensive: Ensure totalKeywords is always a number, never undefined/null
   const safeStatsKeywords = Array.isArray(statsKeywords) ? statsKeywords : []
   const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
-  const avgPosition = safeStatsKeywords.length > 0 
-    ? Math.round(safeStatsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / safeStatsKeywords.length) 
+  
+  // Safe counting without .length - use reduce
+  const statsCount = safeStatsKeywords.reduce((acc) => acc + 1, 0)
+  const avgPosition = statsCount > 0 
+    ? Math.round(safeStatsKeywords.reduce((sum: number, k: any) => sum + (k?.current_position || 100), 0) / statsCount) 
     : 0
-  const topTenCount = safeStatsKeywords.filter((k: any) => k?.current_position && k.current_position <= 10).length
-  const improvingCount = safeStatsKeywords.filter((k: any) => k?.position_1d && k.position_1d > 0).length
+  const topTenCount = safeStatsKeywords.reduce((count: number, k: any) => 
+    (k?.current_position && k.current_position <= 10) ? count + 1 : count, 0)
+  const improvingCount = safeStatsKeywords.reduce((count: number, k: any) => 
+    (k?.position_1d && k.position_1d > 0) ? count + 1 : count, 0)
 
   return (
     <div className="space-y-6">
@@ -385,7 +402,7 @@ export default function IndexNowOverview() {
           />
 
           {/* Bulk Actions Bar */}
-          {selectedKeywords.length > 0 && (
+          {Array.isArray(selectedKeywords) && selectedKeywords[0] && (
             <BulkActions
               selectedCount={selectedKeywords.length}
               onDelete={() => setShowDeleteConfirm(true)}
