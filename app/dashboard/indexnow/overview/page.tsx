@@ -167,15 +167,16 @@ export default function IndexNowOverview() {
     enabled: !!selectedDomainId
   })
 
+  // Extract base data with safety checks
   const domains = dashboardData?.rankTracking?.domains || []
   const countries = countriesData?.data?.data || []
 
-  // Extract keywords array - API returns { success: true, data: { data: [...], pagination: {...} } }
-  // After unwrapping success in query, we get { data: [...], pagination: {...} }
-  // CRITICAL: Ensure these are ALWAYS arrays to prevent filter/length errors
-  const keywords = Array.isArray(keywordsData?.data) ? keywordsData.data : []
-  const allKeywords = Array.isArray(keywordCountsData?.data) ? keywordCountsData.data : []
-  const statsKeywords = Array.isArray(allDomainKeywordsData?.data) ? allDomainKeywordsData.data : []
+  // CRITICAL FIX: The API returns { data: [...], pagination: {...} } after unwrapping success
+  // We need to access .data property which contains the actual array
+  // Initialize as empty arrays if undefined to prevent filter/length errors
+  const keywords = keywordsData?.data || []
+  const allKeywords = keywordCountsData?.data || []
+  const statsKeywords = allDomainKeywordsData?.data || []
 
   // Additional safety checks for domains
   const safeDomains = Array.isArray(domains) ? domains : []
@@ -295,24 +296,27 @@ export default function IndexNowOverview() {
 
   // Get keyword count for each domain
   const getDomainKeywordCount = (domainId: string) => {
-    return allKeywords.filter((k: any) => k.domain_id === domainId).length
+    const safeAllKeywords = Array.isArray(allKeywords) ? allKeywords : []
+    return safeAllKeywords.filter((k: any) => k?.domain_id === domainId).length
   }
   // Fix: Extract pagination from the new API response format (after unwrapping)
   const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
 
-  // Filter keywords by search term - keywords is now guaranteed to be an array
-  const filteredKeywords = keywords.filter((keyword: any) =>
-    keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter keywords by search term - with triple safety check
+  const safeKeywordsForFilter = Array.isArray(keywords) ? keywords : []
+  const filteredKeywords = safeKeywordsForFilter.filter((keyword: any) =>
+    keyword?.keyword?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Stats calculation using ALL keywords for the domain (not affected by pagination)
   // Defensive: Ensure totalKeywords is always a number, never undefined/null
+  const safeStatsKeywords = Array.isArray(statsKeywords) ? statsKeywords : []
   const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
-  const avgPosition = statsKeywords.length > 0 
-    ? Math.round(statsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / statsKeywords.length) 
+  const avgPosition = safeStatsKeywords.length > 0 
+    ? Math.round(safeStatsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / safeStatsKeywords.length) 
     : 0
-  const topTenCount = statsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
-  const improvingCount = statsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length // Positive means improved position
+  const topTenCount = safeStatsKeywords.filter((k: any) => k?.current_position && k.current_position <= 10).length
+  const improvingCount = safeStatsKeywords.filter((k: any) => k?.position_1d && k.position_1d > 0).length
 
   return (
     <div className="space-y-6">
