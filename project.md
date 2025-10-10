@@ -1517,6 +1517,147 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### Critical Bug Fixes - toLocaleString Error, Login Redirect, and Billing Data (October 10, 2025)
+**Critical Bug Fix**: Resolved 3 persistent bugs reported by user including toLocaleString error on overview page, login page redirect glitch, and billing page empty data issues.
+
+#### ✅ Issues Fixed
+
+**1. Overview Page toLocaleString Error** (Reported 3 times)
+- **Root Cause**: StatCard component didn't handle `null` or `undefined` values defensively when calling `toLocaleString()`
+- **Error**: `TypeError: Cannot read properties of undefined (reading 'toLocaleString')`
+- **Impact**: Dashboard overview page crashed when stats data was undefined
+
+**2. Login Page Redirect Glitch**
+- **Root Cause**: Auth check happened after component render, causing login form to flash before redirect
+- **Issue**: Authenticated users briefly saw login page (few seconds) before redirecting to dashboard
+- **Impact**: Poor UX with visible page flash/glitch
+
+**3. Billing Page Empty Data**
+- **Root Cause**: After secureWrapper implementation, API responses changed to `{ success: true, data: {...} }` format, but billing page loaders didn't unwrap responses
+- **Issue**: Package info, plans, and transaction history showed as empty
+- **Impact**: Users couldn't view billing information or subscription details
+
+#### ✅ Fixes Applied
+
+**1. Fixed StatCard Component** (`components/dashboard/enhanced/StatCard.tsx`)
+- Added defensive `formatValue()` helper function to handle null/undefined values
+- Returns '0' for null or undefined values instead of crashing
+- Prevents toLocaleString errors across all stat displays
+
+**Before**:
+```typescript
+<p className="text-2xl font-bold text-foreground">
+  {typeof value === 'number' ? value.toLocaleString() : value}
+</p>
+```
+
+**After**:
+```typescript
+const formatValue = (val: StatCardProps['value']) => {
+  if (val === null || val === undefined) return '0'
+  return typeof val === 'number' ? val.toLocaleString() : val
+}
+
+<p className="text-2xl font-bold text-foreground">
+  {formatValue(value)}
+</p>
+```
+
+**2. Fixed Login Page Redirect** (`app/login/page.tsx`)
+- Added `isCheckingAuth` state to prevent render during auth check
+- Changed `router.push` to `router.replace` for cleaner navigation
+- Returns `null` while checking auth to prevent login form flash
+
+**Before**:
+```typescript
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const currentUser = await authService.getCurrentUser()
+      if (currentUser) {
+        router.push('/dashboard')  // ❌ Allows page render before redirect
+      }
+    } catch (error) {
+      // User not authenticated, stay on login page
+    }
+  }
+  checkAuth()
+}, [router])
+
+return (
+  <div>...login form...</div>  // ❌ Renders immediately
+)
+```
+
+**After**:
+```typescript
+const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const currentUser = await authService.getCurrentUser()
+      if (currentUser) {
+        router.replace('/dashboard')  // ✅ Replace instead of push
+        return
+      }
+      setIsCheckingAuth(false)
+    } catch (error) {
+      setIsCheckingAuth(false)
+    }
+  }
+  checkAuth()
+}, [router])
+
+if (isCheckingAuth) {
+  return null  // ✅ Don't render until auth check complete
+}
+
+return (
+  <div>...login form...</div>
+)
+```
+
+**3. Fixed Billing Page API Response Unwrapping** (`app/dashboard/settings/plans-billing/page.tsx`)
+- Fixed `loadBillingData()` to unwrap `{ success: true, data: {...} }` response
+- Fixed `loadDashboardData()` to unwrap response before extracting billing info
+- Fixed `loadBillingHistory()` to unwrap response before setting history data
+
+**Before**:
+```typescript
+const loadBillingData = async () => {
+  const response = await fetch(BILLING_ENDPOINTS.OVERVIEW, {...})
+  const data = await response.json()  // ❌ Not unwrapped
+  setBillingData(data)
+}
+```
+
+**After**:
+```typescript
+const loadBillingData = async () => {
+  const response = await fetch(BILLING_ENDPOINTS.OVERVIEW, {...})
+  const result = await response.json()
+  const data = result?.success === true && result.data ? result.data : result  // ✅ Unwrap response
+  setBillingData(data)
+}
+```
+
+#### ✅ Impact & Results
+- ✅ **Overview page stable**: No more toLocaleString crashes, stats display correctly even with undefined values
+- ✅ **Login UX improved**: Authenticated users go directly to dashboard without seeing login form flash
+- ✅ **Billing page functional**: Package info, plans, and transaction history now display correctly
+- ✅ **Defensive programming**: StatCard now handles edge cases preventing future similar errors
+- ✅ **Consistent API handling**: All billing loaders properly unwrap standardized API response format
+
+#### 📝 Implementation Notes
+- **Defensive Pattern**: `formatValue()` helper in StatCard provides template for handling undefined values in other components
+- **Auth Check Pattern**: Login page pattern (loading state + router.replace + return null) can be reused for other auth-protected pages
+- **Response Unwrapping**: Centralized unwrap helper recommended for future implementation to ensure uniform handling across all fetch calls
+
+**Status**: All 3 critical bugs **COMPLETELY RESOLVED** - Overview page renders without errors, login redirect is instant without flash, and billing page displays all data correctly.
+
+---
+
 ### API Response Format & Frontend Unwrapping Issues Fixed (October 8, 2025, 16:40 UTC)
 **Critical Bug Fix**: Resolved multiple issues related to standardized API response format `{ success: true, data: {...} }` implementation where frontend pages weren't properly unwrapping responses.
 

@@ -29,6 +29,11 @@ export const StatCard = ({
   showTrend = true
 }: StatCardProps) => {
   
+  const formatValue = (val: StatCardProps['value']) => {
+    if (val === null || val === undefined) return '0'
+    return typeof val === 'number' ? val.toLocaleString() : val
+  }
+  
   const getTrendIcon = () => {
     if (!change || change === 0) return <Minus className="w-3 h-3" />
     return change > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />
@@ -79,7 +84,7 @@ export const StatCard = ({
             </p>
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-foreground">
-                {typeof value === 'number' ? value.toLocaleString() : value}
+                {formatValue(value)}
               </p>
               {showTrend && change !== undefined && (
                 <Badge variant="outline" className={`flex items-center gap-1 ${getTrendColor()}`}>

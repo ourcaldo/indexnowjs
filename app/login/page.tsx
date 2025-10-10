@@ -17,6 +17,7 @@ export default function Login() {
   const [error, setError] = useState("")
   const [isMagicLinkMode, setIsMagicLinkMode] = useState(false)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   
   // Check if user is already authenticated and redirect to dashboard
   useEffect(() => {
@@ -24,10 +25,12 @@ export default function Login() {
       try {
         const currentUser = await authService.getCurrentUser()
         if (currentUser) {
-          router.push('/dashboard')
+          router.replace('/dashboard')
+          return
         }
+        setIsCheckingAuth(false)
       } catch (error) {
-        // User not authenticated, stay on login page
+        setIsCheckingAuth(false)
       }
     }
     checkAuth()
@@ -177,6 +180,10 @@ export default function Login() {
     
     return () => window.removeEventListener('resize', checkIfMobile)
   }, [])
+
+  if (isCheckingAuth) {
+    return null
+  }
 
   return (
     <div className={`min-h-screen flex ${isMobile ? 'flex-col' : 'flex-row'} font-sans`}>

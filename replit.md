@@ -1,11 +1,10 @@
 # IndexNow Studio - Project Setup
 
 ## Recent Changes
-- **[x] Oct 10, 2025**: Fixed 5 critical authentication and UI bugs:
-  - Login page now redirects authenticated users to dashboard
-  - Sign out properly refreshes the page using window.location.href
-  - Fixed overview page toLocaleString error on undefined stats
-  - Fixed billing page total_transactions undefined error with optional chaining
+- **[x] Oct 10, 2025**: Fixed 3 critical bugs (toLocaleString error, login redirect glitch, billing empty data):
+  - StatCard: Added defensive formatValue() to handle null/undefined values preventing toLocaleString crashes
+  - Login page: Fixed redirect glitch - now uses router.replace() with loading state to prevent login form flash for authenticated users
+  - Billing page: Fixed API response unwrapping in loadBillingData, loadDashboardData, and loadBillingHistory to properly extract data from { success: true, data: {...} } format
 
 ## Overview
 IndexNow Studio is a Next.js application designed for SEO rank tracking and seamless integration with the IndexNow API. Its primary purpose is to provide businesses with a robust platform for monitoring their search engine rankings, managing content, and accelerating content indexing through IndexNow. The project aims to offer a comprehensive solution for SEO professionals and content creators, enhancing visibility and driving organic traffic.

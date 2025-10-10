@@ -207,7 +207,8 @@ export default function BillingPage() {
 
       if (!response.ok) throw new Error('Failed to load billing data')
 
-      const data = await response.json()
+      const result = await response.json()
+      const data = result?.success === true && result.data ? result.data : result
       setBillingData(data)
     } catch (error) {
       handleApiError(error)
@@ -233,7 +234,8 @@ export default function BillingPage() {
 
       if (!response.ok) throw new Error('Failed to load dashboard data')
 
-      const data = await response.json()
+      const result = await response.json()
+      const data = result?.success === true && result.data ? result.data : result
       
       // Extract packages data from dashboard response
       if (data.billing) {
@@ -279,7 +281,8 @@ export default function BillingPage() {
 
       if (!response.ok) throw new Error('Failed to load billing history')
 
-      const data = await response.json()
+      const result = await response.json()
+      const data = result?.success === true && result.data ? result.data : result
       setHistoryData(data)
     } catch (error) {
       handleApiError(error)
