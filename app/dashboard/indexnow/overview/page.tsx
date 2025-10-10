@@ -169,15 +169,16 @@ export default function IndexNowOverview() {
 
   const domains = dashboardData?.rankTracking?.domains || []
   const countries = countriesData?.data?.data || []
-  // Fix: Extract the nested data array from the new API response format (after unwrapping)
-  const keywords = keywordsData?.data || []
-  const allKeywords = keywordCountsData?.data || []
-  const statsKeywords = allDomainKeywordsData?.data || [] // Keywords for statistics calculation
   
-  // Additional safety checks
-  const safeKeywords = Array.isArray(keywords) ? keywords : []
+  // Extract keywords array - API returns { data: { data: [...], pagination: {...} } }
+  // After unwrapping in query, we get { data: [...], pagination: {...} }
+  // So we need to access .data to get the actual array
+  const keywords = Array.isArray(keywordsData?.data) ? keywordsData.data : []
+  const allKeywords = Array.isArray(keywordCountsData?.data) ? keywordCountsData.data : []
+  const statsKeywords = Array.isArray(allDomainKeywordsData?.data) ? allDomainKeywordsData.data : []
+  
+  // Additional safety checks for domains
   const safeDomains = Array.isArray(domains) ? domains : []
-  const safeStatsKeywords = Array.isArray(statsKeywords) ? statsKeywords : []
 
   // Set default selected domain if none selected
   useEffect(() => {
@@ -300,18 +301,18 @@ export default function IndexNowOverview() {
   const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
 
   // Filter keywords by search term
-  const filteredKeywords = safeKeywords.filter((keyword: any) =>
+  const filteredKeywords = keywords.filter((keyword: any) =>
     keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Stats calculation using ALL keywords for the domain (not affected by pagination)
   // Defensive: Ensure totalKeywords is always a number, never undefined/null
   const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
-  const avgPosition = safeStatsKeywords.length > 0 
-    ? Math.round(safeStatsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / safeStatsKeywords.length) 
+  const avgPosition = statsKeywords.length > 0 
+    ? Math.round(statsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / statsKeywords.length) 
     : 0
-  const topTenCount = safeStatsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
-  const improvingCount = safeStatsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length // Positive means improved position
+  const topTenCount = statsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
+  const improvingCount = statsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length // Positive means improved position
 
   return (
     <div className="space-y-6">
