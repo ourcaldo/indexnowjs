@@ -195,10 +195,10 @@ export default function IndexNowOverview() {
 
   const domains = dashboardData?.rankTracking?.domains || []
   const countries = countriesData?.data?.data || []
-  // Fix: Extract the nested data array from the new API response format
-  const keywords = keywordsData?.data?.data || []
-  const allKeywords = keywordCountsData?.data?.data || []
-  const statsKeywords = allDomainKeywordsData?.data?.data || [] // Keywords for statistics calculation
+  // Fix: Extract the nested data array from the new API response format (after unwrapping)
+  const keywords = keywordsData?.data || []
+  const allKeywords = keywordCountsData?.data || []
+  const statsKeywords = allDomainKeywordsData?.data || [] // Keywords for statistics calculation
 
   // Set default selected domain if none selected
   useEffect(() => {
@@ -317,8 +317,8 @@ export default function IndexNowOverview() {
   const getDomainKeywordCount = (domainId: string) => {
     return allKeywords.filter((k: any) => k.domain_id === domainId).length
   }
-  // Fix: Extract pagination from the new API response format
-  const pagination = keywordsData?.data?.pagination || { page: 1, total: 0, total_pages: 1 }
+  // Fix: Extract pagination from the new API response format (after unwrapping)
+  const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
 
   // Filter keywords by search term
   const filteredKeywords = keywords.filter((keyword: any) =>

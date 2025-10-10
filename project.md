@@ -1522,8 +1522,13 @@ USING (auth.uid() = user_id);
 
 #### ✅ Issues Fixed
 
-**1. Overview Page toLocaleString Error** (Reported 3 times)
-- **Root Cause**: StatCard component didn't handle `null` or `undefined` values defensively when calling `toLocaleString()`
+**1. Overview Page toLocaleString Error** (Reported 3 times) - **DEEP DIVE FIX**
+- **Root Cause**: Data structure mismatch between API response after unwrapping and frontend expectations
+  - API unwraps `{ success: true, data: { data: [...], pagination: {...} } }` → `{ data: [...], pagination: {...} }`
+  - Frontend was accessing `keywordsData?.data?.data` and `keywordsData?.data?.pagination` (expecting double nesting)
+  - This caused `pagination.total` to be `undefined`, which was passed to `RankOverviewStats` component
+  - RankOverviewStats called `(totalKeywords || 0).toLocaleString()` directly before passing to StatCard
+  - When `totalKeywords` was undefined from wrong data access, the error occurred
 - **Error**: `TypeError: Cannot read properties of undefined (reading 'toLocaleString')`
 - **Impact**: Dashboard overview page crashed when stats data was undefined
 
@@ -1539,29 +1544,64 @@ USING (auth.uid() = user_id);
 
 #### ✅ Fixes Applied
 
-**1. Fixed StatCard Component** (`components/dashboard/enhanced/StatCard.tsx`)
-- Added defensive `formatValue()` helper function to handle null/undefined values
-- Returns '0' for null or undefined values instead of crashing
-- Prevents toLocaleString errors across all stat displays
+**1a. Fixed Data Access Pattern** (`app/dashboard/indexnow/overview/page.tsx`)
+- Corrected data extraction from unwrapped API responses
+- Changed `keywordsData?.data?.data` → `keywordsData?.data` (3 locations)
+- Changed `keywordsData?.data?.pagination` → `keywordsData?.pagination`
+- This ensures `pagination.total` is correctly extracted instead of being undefined
 
 **Before**:
 ```typescript
-<p className="text-2xl font-bold text-foreground">
-  {typeof value === 'number' ? value.toLocaleString() : value}
-</p>
+// Wrong: Expects double-nested structure that doesn't exist after unwrapping
+const keywords = keywordsData?.data?.data || []
+const allKeywords = keywordCountsData?.data?.data || []
+const statsKeywords = allDomainKeywordsData?.data?.data || []
+const pagination = keywordsData?.data?.pagination || { page: 1, total: 0, total_pages: 1 }
 ```
 
 **After**:
 ```typescript
-const formatValue = (val: StatCardProps['value']) => {
-  if (val === null || val === undefined) return '0'
-  return typeof val === 'number' ? val.toLocaleString() : val
+// Correct: Matches unwrapped API response structure
+const keywords = keywordsData?.data || []
+const allKeywords = keywordCountsData?.data || []
+const statsKeywords = allDomainKeywordsData?.data || []
+const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
+```
+
+**1b. Fixed RankOverviewStats Component** (`app/dashboard/indexnow/overview/components/RankOverviewStats.tsx`)
+- Added defensive `formatNumber()` helper to handle undefined/null values before calling toLocaleString
+- Returns '0' for any non-numeric, undefined, or null values
+- Applied to all 4 stat cards (totalKeywords, avgPosition, topTenCount, improvingCount)
+
+**Before**:
+```typescript
+<StatCard
+  title="Total Keywords"
+  value={(totalKeywords || 0).toLocaleString()}  // ❌ Fails if totalKeywords is undefined
+  ...
+/>
+```
+
+**After**:
+```typescript
+const formatNumber = (value: number | undefined | null): string => {
+  if (value === undefined || value === null || typeof value !== 'number') {
+    return '0'
+  }
+  return value.toLocaleString()
 }
 
-<p className="text-2xl font-bold text-foreground">
-  {formatValue(value)}
-</p>
+<StatCard
+  title="Total Keywords"
+  value={formatNumber(totalKeywords)}  // ✅ Safely handles undefined
+  ...
+/>
 ```
+
+**1c. Fixed StatCard Component** (`components/dashboard/enhanced/StatCard.tsx`) - Previous Fix
+- Added defensive `formatValue()` helper function to handle null/undefined values
+- Returns '0' for null or undefined values instead of crashing
+- Provides secondary defense layer across all stat displays
 
 **2. Fixed Login Page Redirect** (`app/login/page.tsx`)
 - Added `isCheckingAuth` state to prevent render during auth check
@@ -1643,16 +1683,20 @@ const loadBillingData = async () => {
 ```
 
 #### ✅ Impact & Results
-- ✅ **Overview page stable**: No more toLocaleString crashes, stats display correctly even with undefined values
+- ✅ **Overview page stable**: Fixed data structure mismatch - pagination and keywords now extracted correctly from unwrapped API responses
+- ✅ **No more toLocaleString crashes**: Triple-layer defense with corrected data access + RankOverviewStats formatNumber + StatCard formatValue
 - ✅ **Login UX improved**: Authenticated users go directly to dashboard without seeing login form flash
 - ✅ **Billing page functional**: Package info, plans, and transaction history now display correctly
-- ✅ **Defensive programming**: StatCard now handles edge cases preventing future similar errors
-- ✅ **Consistent API handling**: All billing loaders properly unwrap standardized API response format
+- ✅ **Defensive programming**: Multiple layers of protection against undefined values throughout the stack
+- ✅ **Consistent API handling**: All loaders properly unwrap standardized API response format
 
-#### 📝 Implementation Notes
-- **Defensive Pattern**: `formatValue()` helper in StatCard provides template for handling undefined values in other components
+#### 📝 Implementation Notes & Lessons Learned
+- **Root Cause Analysis**: The bug wasn't in toLocaleString itself but in the data flow - wrong data access pattern caused undefined values to propagate through components
+- **Data Structure Validation**: Always verify actual API response structure after unwrapping vs frontend expectations - double-nesting assumptions can cause subtle bugs
+- **Defense-in-Depth**: Multiple defensive layers (correct data access + component-level formatters + display-level guards) prevent cascading failures
+- **Debugging Pattern**: When encountering "cannot read property of undefined" errors, trace the data flow backwards from the error point to find where undefined is introduced
 - **Auth Check Pattern**: Login page pattern (loading state + router.replace + return null) can be reused for other auth-protected pages
-- **Response Unwrapping**: Centralized unwrap helper recommended for future implementation to ensure uniform handling across all fetch calls
+- **Response Unwrapping Audit Needed**: Should audit all API consumers for similar double-nesting assumptions to prevent related bugs
 
 **Status**: All 3 critical bugs **COMPLETELY RESOLVED** - Overview page renders without errors, login redirect is instant without flash, and billing page displays all data correctly.
 
