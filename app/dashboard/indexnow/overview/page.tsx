@@ -173,13 +173,18 @@ export default function IndexNowOverview() {
   const keywords = keywordsData?.data || []
   const allKeywords = keywordCountsData?.data || []
   const statsKeywords = allDomainKeywordsData?.data || [] // Keywords for statistics calculation
+  
+  // Additional safety checks
+  const safeKeywords = Array.isArray(keywords) ? keywords : []
+  const safeDomains = Array.isArray(domains) ? domains : []
+  const safeStatsKeywords = Array.isArray(statsKeywords) ? statsKeywords : []
 
   // Set default selected domain if none selected
   useEffect(() => {
-    if (!selectedDomainId && domains.length > 0) {
-      setSelectedDomainId(domains[0].id)
+    if (!selectedDomainId && safeDomains.length > 0) {
+      setSelectedDomainId(safeDomains[0].id)
     }
-  }, [domains, selectedDomainId])
+  }, [safeDomains, selectedDomainId])
 
   // Clear selected keywords when domain changes
   useEffect(() => {
@@ -285,7 +290,7 @@ export default function IndexNowOverview() {
   }
 
   // Get selected domain info
-  const selectedDomainInfo = domains.find((d: any) => d.id === selectedDomainId)
+  const selectedDomainInfo = safeDomains.find((d: any) => d.id === selectedDomainId)
 
   // Get keyword count for each domain
   const getDomainKeywordCount = (domainId: string) => {
@@ -295,18 +300,18 @@ export default function IndexNowOverview() {
   const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
 
   // Filter keywords by search term
-  const filteredKeywords = keywords.filter((keyword: any) =>
+  const filteredKeywords = safeKeywords.filter((keyword: any) =>
     keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Stats calculation using ALL keywords for the domain (not affected by pagination)
   // Defensive: Ensure totalKeywords is always a number, never undefined/null
   const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
-  const avgPosition = statsKeywords.length > 0 
-    ? Math.round(statsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / statsKeywords.length) 
+  const avgPosition = safeStatsKeywords.length > 0 
+    ? Math.round(safeStatsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / safeStatsKeywords.length) 
     : 0
-  const topTenCount = statsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
-  const improvingCount = statsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length // Positive means improved position
+  const topTenCount = safeStatsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
+  const improvingCount = safeStatsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length // Positive means improved position
 
   return (
     <div className="space-y-6">
@@ -317,14 +322,14 @@ export default function IndexNowOverview() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </Card>
-      ) : domains.length === 0 ? (
+      ) : safeDomains.length === 0 ? (
         <NoDomainState />
       ) : (
         <>
           {/* Domain Section and Add Keyword Button - Same Row */}
           <div className="flex items-center justify-between mb-6">
             <SharedDomainSelector
-              domains={domains}
+              domains={safeDomains}
               selectedDomainId={selectedDomainId}
               selectedDomainInfo={selectedDomainInfo}
               isOpen={showDomainsManager}
