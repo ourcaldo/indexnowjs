@@ -9,7 +9,7 @@ import { useDashboardData } from '@/hooks/useDashboardData'
 import { usePageViewLogger } from '@/hooks/useActivityLogger'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { Card, Button } from '@/components/dashboard/ui'
-import { FilterPanel } from './components'
+import { RankOverviewStats, FilterPanel } from './components'
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
@@ -72,8 +72,13 @@ export default function IndexNowOverview() {
   })
 
   const domains = dashboardData?.rankTracking?.domains || []
+  // Fix: The API returns { success: true, data: { data: [...] } }, so we need data.data
   const countries = countriesData?.data?.data || []
   const allKeywords = keywordCountsData?.data || []
+  
+  // Log to debug countries issue
+  console.log('Countries API Response:', countriesData)
+  console.log('Extracted countries:', countries)
 
   useEffect(() => {
     if (!selectedDomainId && domains.length > 0) {
@@ -86,6 +91,53 @@ export default function IndexNowOverview() {
   const getDomainKeywordCount = (domainId: string) => {
     return allKeywords.filter((k: any) => k.domain_id === domainId).length
   }
+
+  // Fetch ALL keywords for the selected domain for statistics calculation
+  const { data: allDomainKeywordsData } = useQuery({
+    queryKey: [RANK_TRACKING_ENDPOINTS.KEYWORDS + '-stats', {
+      domain_id: selectedDomainId,
+      device_type: selectedDevice || undefined,
+      country_id: selectedCountry || undefined
+    }],
+    queryFn: async () => {
+      if (!selectedDomainId) return { data: [], pagination: { page: 1, total: 0, total_pages: 1 } }
+      
+      const { data: { session } } = await supabase.auth.getSession()
+      const params = new URLSearchParams()
+      params.append('domain_id', selectedDomainId)
+      
+      if (selectedDevice) params.append('device_type', selectedDevice)
+      if (selectedCountry) params.append('country_id', selectedCountry)
+      
+      params.append('limit', '100')
+      
+      const response = await fetch(`${RANK_TRACKING_ENDPOINTS.KEYWORDS}?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
+      if (!response.ok) throw new Error('Failed to fetch domain keywords for stats')
+      const result = await response.json()
+      if (result.success === true && result.data) {
+        return result.data
+      }
+      return result
+    },
+    enabled: !!selectedDomainId
+  })
+
+  const statsKeywords = allDomainKeywordsData?.data || []
+  const pagination = allDomainKeywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
+
+  // Stats calculation
+  const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
+  const avgPosition = statsKeywords.length > 0 
+    ? Math.round(statsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / statsKeywords.length) 
+    : 0
+  const topTenCount = statsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
+  const improvingCount = statsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length
 
   return (
     <div className="space-y-6">
@@ -132,6 +184,14 @@ export default function IndexNowOverview() {
               </Button>
             </div>
           </div>
+
+          {/* Statistics Overview */}
+          <RankOverviewStats
+            totalKeywords={totalKeywords}
+            avgPosition={avgPosition}
+            topTenCount={topTenCount}
+            improvingCount={improvingCount}
+          />
 
           {/* Filter Panel */}
           <FilterPanel
