@@ -30,7 +30,7 @@ export default function IndexNowOverview() {
   const [currentPage, setCurrentPage] = useState(1)
   const [showDomainsManager, setShowDomainsManager] = useState(false)
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
-  
+
   // New state for multiselect functionality
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([])
   const [showActionsMenu, setShowActionsMenu] = useState(false)
@@ -138,17 +138,17 @@ export default function IndexNowOverview() {
     }],
     queryFn: async () => {
       if (!selectedDomainId) return { data: [], pagination: { page: 1, total: 0, total_pages: 1 } }
-      
+
       const { data: { session } } = await supabase.auth.getSession()
       const params = new URLSearchParams()
       params.append('domain_id', selectedDomainId)
-      
+
       // Apply same filters as main keyword query for consistent stats
       if (selectedDevice) params.append('device_type', selectedDevice)
       if (selectedCountry) params.append('country_id', selectedCountry)
-      
+
       params.append('limit', '100') // Use smaller limit to avoid 400 errors
-      
+
       const response = await fetch(`${RANK_TRACKING_ENDPOINTS.KEYWORDS}?${params}`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -169,14 +169,14 @@ export default function IndexNowOverview() {
 
   const domains = dashboardData?.rankTracking?.domains || []
   const countries = countriesData?.data?.data || []
-  
+
   // Extract keywords array - API returns { success: true, data: { data: [...], pagination: {...} } }
   // After unwrapping success in query, we get { data: [...], pagination: {...} }
-  // The keywords array is in the 'data' property of the unwrapped response
-  const keywords = keywordsData?.data || []
-  const allKeywords = keywordCountsData?.data || []
-  const statsKeywords = allDomainKeywordsData?.data || []
-  
+  // CRITICAL: Ensure these are ALWAYS arrays to prevent filter/length errors
+  const keywords = Array.isArray(keywordsData?.data) ? keywordsData.data : []
+  const allKeywords = Array.isArray(keywordCountsData?.data) ? keywordCountsData.data : []
+  const statsKeywords = Array.isArray(allDomainKeywordsData?.data) ? allDomainKeywordsData.data : []
+
   // Additional safety checks for domains
   const safeDomains = Array.isArray(domains) ? domains : []
 
@@ -211,7 +211,7 @@ export default function IndexNowOverview() {
 
   const handleBulkDelete = async () => {
     if (selectedKeywords.length === 0) return
-    
+
     setIsDeleting(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -249,7 +249,7 @@ export default function IndexNowOverview() {
 
   const handleAddTag = async () => {
     if (selectedKeywords.length === 0 || !newTag.trim()) return
-    
+
     setIsAddingTag(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -300,21 +300,19 @@ export default function IndexNowOverview() {
   // Fix: Extract pagination from the new API response format (after unwrapping)
   const pagination = keywordsData?.pagination || { page: 1, total: 0, total_pages: 1 }
 
-  // Filter keywords by search term - ensure keywords is always an array
-  const safeKeywords = Array.isArray(keywords) ? keywords : []
-  const filteredKeywords = safeKeywords.filter((keyword: any) =>
+  // Filter keywords by search term - keywords is now guaranteed to be an array
+  const filteredKeywords = keywords.filter((keyword: any) =>
     keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Stats calculation using ALL keywords for the domain (not affected by pagination)
   // Defensive: Ensure totalKeywords is always a number, never undefined/null
-  const safeStatsKeywords = Array.isArray(statsKeywords) ? statsKeywords : []
   const totalKeywords = typeof pagination?.total === 'number' ? pagination.total : 0
-  const avgPosition = safeStatsKeywords.length > 0 
-    ? Math.round(safeStatsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / safeStatsKeywords.length) 
+  const avgPosition = statsKeywords.length > 0 
+    ? Math.round(statsKeywords.reduce((sum: number, k: any) => sum + (k.current_position || 100), 0) / statsKeywords.length) 
     : 0
-  const topTenCount = safeStatsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
-  const improvingCount = safeStatsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length // Positive means improved position
+  const topTenCount = statsKeywords.filter((k: any) => k.current_position && k.current_position <= 10).length
+  const improvingCount = statsKeywords.filter((k: any) => k.position_1d && k.position_1d > 0).length // Positive means improved position
 
   return (
     <div className="space-y-6">
@@ -353,7 +351,7 @@ export default function IndexNowOverview() {
                 onDeviceChange={setSelectedDevice}
                 onCountryChange={setSelectedCountry}
               />
-              
+
               <Button
                 onClick={() => router.push('/dashboard/indexnow/add')}
                 className="btn-hover whitespace-nowrap"
