@@ -405,6 +405,8 @@ export default function IndexNowOverview() {
           {/* Usage Chart */}
           <UsageChart 
             data={generateUsageData(allKeywords)}
+            currentQuota={dashboardData?.rankTracking?.usage?.keywords_used || 0}
+            totalQuota={dashboardData?.rankTracking?.usage?.keywords_limit || 0}
             title="Keyword Tracking Activity"
             description="Last 7 days of monitoring activity"
           />

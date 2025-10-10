@@ -103,7 +103,7 @@ export const UsageChart = ({
               <div className="flex items-center gap-2">
                 {quotaPercentage > 80 && <AlertCircle className="w-4 h-4 text-destructive" />}
                 <span className="text-sm font-mono text-muted-foreground">
-                  {currentQuota.toLocaleString()} / {totalQuota.toLocaleString()}
+                  {currentQuota} / {totalQuota}
                 </span>
               </div>
             </div>

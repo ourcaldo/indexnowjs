@@ -31,7 +31,7 @@ export const StatCard = ({
   
   const formatValue = (val: StatCardProps['value']) => {
     if (val === null || val === undefined) return '0'
-    return typeof val === 'number' ? val.toLocaleString() : val
+    return typeof val === 'number' ? String(val) : val
   }
   
   const getTrendIcon = () => {

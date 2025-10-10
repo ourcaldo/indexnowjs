@@ -19,7 +19,7 @@ export const RankOverviewStats = ({
     if (value === undefined || value === null || typeof value !== 'number') {
       return '0'
     }
-    return value.toLocaleString()
+    return String(value)
   }
 
   return (
