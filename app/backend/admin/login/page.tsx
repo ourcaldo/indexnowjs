@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Eye, EyeOff, Shield, AlertCircle } from 'lucide-react'
 import { useFavicon, useSiteName, useSiteLogo } from '@/hooks/use-site-settings'
 import { ADMIN_ENDPOINTS, AUTH_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
+import { AuthErrorHandler } from '@/lib/auth/auth-error-handler'
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -25,27 +26,14 @@ export default function AdminLoginPage() {
   useFavicon() // Automatically updates favicon
 
   useEffect(() => {
-    let refreshFailCount = 0
-    const maxRefreshFails = 3
-    
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      if (event === 'TOKEN_REFRESHED') {
-        refreshFailCount = 0
-      }
-      
-      if (event === 'SIGNED_OUT') {
-        await supabase.auth.signOut()
+    const authStateHandler = AuthErrorHandler.createAuthStateChangeHandler(
+      undefined,
+      () => {
         window.location.reload()
       }
-      
-      if (event === 'USER_UPDATED' && !session) {
-        refreshFailCount++
-        if (refreshFailCount >= maxRefreshFails) {
-          await supabase.auth.signOut()
-          window.location.reload()
-        }
-      }
-    })
+    )
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange(authStateHandler)
 
     const checkExistingAuth = async () => {
       try {

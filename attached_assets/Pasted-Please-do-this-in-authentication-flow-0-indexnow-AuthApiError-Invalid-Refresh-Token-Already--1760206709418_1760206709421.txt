@@ -1,0 +1,35 @@
+Please do this in authentication flow.
+
+0|indexnow | AuthApiError: Invalid Refresh Token: Already Used 0|indexnow | at bj (.next/server/middleware.js:33:29514) 0|indexnow | at async bl (.next/server/middleware.js:33:30488) 0|indexnow | at async bk (.next/server/middleware.js:33:29898) 0|indexnow | at async c (.next/server/middleware.js:33:66387) 0|indexnow | at async (.next/server/middleware.js:33:66650) { 0|indexnow | __isAuthError: true, 0|indexnow | status: 400, 0|indexnow | code: 'refresh_token_already_used' 0|indexnow | } 0|indexnow | AuthApiError: Invalid Refresh Token: Already Used 0|indexnow | at bj (.next/server/middleware.js:33:29514) 0|indexnow | at async bl (.next/server/middleware.js:33:30488) 0|indexnow | at async bk (.next/server/middleware.js:33:29898) 0|indexnow | at async c (.next/server/middleware.js:33:66387) 0|indexnow | at async (.next/server/middleware.js:33:66650) { 0|indexnow | __isAuthError: true, 0|indexnow | status: 400, 0|indexnow | code: 'refresh_token_already_used' 0|indexnow | } The current case is, my nextjs website is use Supabase, the refresh token is already invalid, but it's keep POST request to supabase endpoint
+
+The Scenario
+
+You have:
+
+A Next.js app using Supabase Auth (likely via middleware or server-side session handling).
+
+The session cookie is invalid (expired, deleted, or corrupted).
+
+The refresh token is also invalid or already used (Supabase returns code: 'refresh_token_already_used').
+
+Result:
+Your client (browser or middleware) keeps trying to refresh the session by POSTing to /auth/v1/token, but it fails repeatedly, spamming requests.
+
+he Standard Handling Pattern
+
+When both session and refresh tokens fail, the user must be treated as logged out.
+There’s no secure or valid way to recover from that state automatically.
+
+The standard approach is:
+
+Detect the “refresh_token_already_used” or “invalid_refresh_token” error.
+
+Immediately clear all stored auth state, including:
+
+Supabase auth cookies
+
+Local/session storage
+
+Any in-memory session state
+
+Redirect user to /login (or wherever your auth flow starts).
