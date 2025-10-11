@@ -1728,6 +1728,57 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### Homepage Logo Rendering Fix - API Response Unwrapping (October 11, 2025)
+**Bug Fix**: Fixed homepage logo not rendering due to incorrect API response unwrapping in `usePageData` hook.
+
+#### ✅ Issue Identified
+**Problem**: Homepage logo wasn't displaying even though the `/v1/public/settings` API returned valid data with correct logo URLs.
+
+**Root Cause**: The `usePageData` hook wasn't properly unwrapping the API response format.
+- **API Response Structure**: `{ success: true, data: { siteSettings: {...}, packages: {...} } }`
+- **Incorrect Code**: `setSiteSettings(data.siteSettings)` - tried to access `siteSettings` directly
+- **Expected**: Should unwrap `data.data.siteSettings` after the standardized API format change
+
+#### ✅ Files Fixed
+**Modified Files**:
+- `hooks/shared/usePageData.ts` - Fixed `loadSiteSettings()` function to properly unwrap API response
+
+**Before (Incorrect)**:
+```typescript
+const loadSiteSettings = async () => {
+  const response = await fetch(PUBLIC_ENDPOINTS.SETTINGS, { credentials: 'include' })
+  const data = await response.json()
+  setSiteSettings(data.siteSettings)  // ❌ Missing unwrap - undefined!
+}
+```
+
+**After (Correct)**:
+```typescript
+const loadSiteSettings = async () => {
+  const response = await fetch(PUBLIC_ENDPOINTS.SETTINGS, { credentials: 'include' })
+  const result = await response.json()
+  
+  // API returns: { success: true, data: { siteSettings: {...}, packages: {...} } }
+  // Unwrap the data property to access siteSettings
+  const actualData = result.success === true && result.data ? result.data : result
+  setSiteSettings(actualData.siteSettings)  // ✅ Correctly unwrapped
+}
+```
+
+#### ✅ Impact
+- ✅ **Homepage Logo**: Now renders correctly using `white_logo` from site settings
+- ✅ **Header Component**: Receives valid `siteSettings` data with logo URLs
+- ✅ **Consistent Pattern**: Follows same unwrapping pattern as `usePublicSettings` hook
+- ✅ **Backward Compatibility**: Fallback ensures support for old response format if needed
+
+**Data Flow**:
+1. API returns: `{ success: true, data: { siteSettings: { white_logo: "url", ... } } }`
+2. Hook unwraps: `actualData = result.data`
+3. Sets state: `setSiteSettings(actualData.siteSettings)`
+4. Header receives: `siteSettings.white_logo` → Logo renders ✅
+
+---
+
 ### Content Security Policy (CSP) Enhancement - Flexible Configuration (October 11, 2025)
 **Security Enhancement**: Updated CSP configuration to be more flexible, allowing external assets without requiring manual URL whitelisting for each external resource.
 

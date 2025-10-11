@@ -35,8 +35,12 @@ export function usePageData() {
       const response = await fetch(PUBLIC_ENDPOINTS.SETTINGS, {
         credentials: 'include'
       })
-      const data = await response.json()
-      setSiteSettings(data.siteSettings)
+      const result = await response.json()
+      
+      // API returns: { success: true, data: { siteSettings: {...}, packages: {...} } }
+      // Unwrap the data property to access siteSettings
+      const actualData = result.success === true && result.data ? result.data : result
+      setSiteSettings(actualData.siteSettings)
     } catch (error) {
       console.error('Failed to load site settings:', error)
     }
