@@ -34,56 +34,11 @@ export default function AdminLoginPage() {
     )
     
     const { data: authListener } = supabase.auth.onAuthStateChange(authStateHandler)
-
-    const checkExistingAuth = async () => {
-      try {
-        const timeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Auth check timeout')), 1500)
-        )
-
-        const authCheck = supabase.auth.getSession()
-        
-        const result = await Promise.race([authCheck, timeout]) as any
-        
-        const session = result?.data?.session
-        
-        if (!session || !session.access_token) {
-          return
-        }
-
-        const response = await fetch(ADMIN_ENDPOINTS.VERIFY_ROLE, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({ userId: session.user.id }),
-          credentials: 'include'
-        })
-
-        const roleData = await response.json()
-
-        if (response.ok && roleData.success && roleData.data?.isSuperAdmin) {
-          window.location.href = '/'
-          return
-        }
-
-        if (response.ok && roleData.success && !roleData.data?.isSuperAdmin) {
-          setError('Access denied: Super Admin privileges required. This area is restricted to Super Admins only.')
-          return
-        }
-
-      } catch (error) {
-        // Silent fail - just show login form
-      }
-    }
-
-    checkExistingAuth()
     
     return () => {
       authListener?.subscription?.unsubscribe()
     }
-  }, [router])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,7 +100,10 @@ export default function AdminLoginPage() {
         credentials: 'include'
       })
 
-      window.location.href = '/'
+      // Use router.push with a small delay to ensure cookies are set
+      setTimeout(() => {
+        router.push('/backend/admin')
+      }, 100)
       
     } catch (error: any) {
       setError(error.message || 'Login failed. Please try again.')
