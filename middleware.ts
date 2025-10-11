@@ -248,7 +248,8 @@ async function checkUserAuthentication(request: NextRequest, effectivePath: stri
     // For admin routes, check admin role using centralized service client
     if (effectivePath.startsWith('/api/system/') || 
         effectivePath.startsWith('/api/debug/') ||
-        effectivePath === '/api/revalidate') {
+        effectivePath === '/api/revalidate' ||
+        effectivePath.startsWith('/backend/admin')) {
       
       // Use secure service role wrapper for admin role verification
       const { SecureServiceRoleHelpers } = await import('./lib/services/security/SecureServiceRoleWrapper')
