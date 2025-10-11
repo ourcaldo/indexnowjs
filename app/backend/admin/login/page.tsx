@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
         const roleData = await response.json()
 
         if (response.ok && roleData.success && roleData.data?.isSuperAdmin) {
-          router.replace('/backend/admin')
+          window.location.href = '/'
           return
         }
 
@@ -127,10 +127,9 @@ export default function AdminLoginPage() {
         credentials: 'include'
       })
 
-      router.replace('/backend/admin')
+      window.location.href = '/'
       
     } catch (error: any) {
-      console.error('Admin login error:', error)
       setError(error.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
