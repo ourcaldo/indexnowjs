@@ -41,8 +41,7 @@ const nextConfig = {
         'dashboard.localhost:5000', 'backend.localhost:5000', 'api.localhost:5000', 'www.localhost:5000'
       ]
     },
-    workerThreads: false,
-    cpus: 2
+    workerThreads: false
   },
   allowedDevOrigins: [
     'localhost:5000', '0.0.0.0:5000', '127.0.0.1:5000',

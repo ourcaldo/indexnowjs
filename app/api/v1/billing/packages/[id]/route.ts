@@ -48,9 +48,9 @@ export const GET = publicApiWrapper(async (request: NextRequest, context?: { par
   const { data: { user } } = await userSupabaseClient.auth.getUser()
   const userId = user?.id || 'anonymous'
 
-  // Get package details using SecureWrapper (this is public data but needs audit logging)
-  const packageData = await SecureServiceRoleWrapper.executeWithUserSession(
-    userSupabaseClient,
+  // Get package details using SecureWrapper 
+  // Use executeSecureOperation instead of executeWithUserSession since this is public data
+  const packageData = await SecureServiceRoleWrapper.executeSecureOperation(
     {
       userId,
       operation: 'get_package_details',
@@ -62,7 +62,7 @@ export const GET = publicApiWrapper(async (request: NextRequest, context?: { par
         method: 'GET'
       },
       ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-      userAgent: request.headers.get('user-agent')
+      userAgent: request.headers.get('user-agent') || undefined
     },
     { table: 'indb_payment_packages', operationType: 'select' },
     async (db) => {

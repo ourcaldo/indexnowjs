@@ -1728,6 +1728,90 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### Billing Package Checkout Fix - Authentication Error Resolution (October 11, 2025)
+**Critical Bug Fix**: Fixed 500 error and "ServiceRoleSecurityViolationError" when users tried to checkout packages, preventing purchase flow completion.
+
+#### ✅ Issue Identified
+**Problem**: 
+1. 500 Error when requesting package details via `/v1/billing/packages/[id]`
+2. Sentry error: "ServiceRoleSecurityViolationError: Invalid user session for secure operation"
+3. Frontend showed "Package isn't found" even though package data existed in database
+
+**Root Cause**: The billing package endpoint was using `executeWithUserSession()` which REQUIRES a valid authenticated user session. However, this endpoint is called during checkout when users might not be logged in yet (anonymous users viewing packages before registration).
+
+**Error Flow**:
+- User (not logged in) tries to checkout a package
+- Frontend calls `/v1/billing/packages/[id]`
+- Backend attempts `executeWithUserSession(userSupabaseClient, { userId: 'anonymous', ... })`
+- SecureWrapper throws "Invalid user session" because 'anonymous' is not a valid authenticated session
+- Returns 500 error with generic message
+
+#### ✅ Files Fixed
+**Modified Files**:
+- `app/api/v1/billing/packages/[id]/route.ts` - Changed security wrapper method
+
+**Before (Incorrect)**:
+```typescript
+// ❌ Requires valid user session - fails for anonymous users
+const packageData = await SecureServiceRoleWrapper.executeWithUserSession(
+  userSupabaseClient,  // May not have valid session
+  { userId: 'anonymous', ... },  // Invalid session for 'anonymous'
+  { table: 'indb_payment_packages', operationType: 'select' },
+  async (db) => { /* query */ }
+)
+```
+
+**After (Correct)**:
+```typescript
+// ✅ Works for both authenticated and anonymous users
+const packageData = await SecureServiceRoleWrapper.executeSecureOperation(
+  { userId: user?.id || 'anonymous', ... },  // Accepts any userId
+  { table: 'indb_payment_packages', operationType: 'select' },
+  async (db) => { /* query */ }
+)
+```
+
+#### ✅ Why This Fix Works
+
+**executeWithUserSession vs executeSecureOperation**:
+- **executeWithUserSession**: Requires valid authenticated Supabase user session, uses RLS policies, for user-specific data
+- **executeSecureOperation**: Works with any userId (including 'anonymous'), uses service role, for public/system data
+
+**Package Details = Public Data**:
+- Package information (pricing, features, etc.) is PUBLIC data
+- Should be accessible to anonymous users browsing before registration
+- Does not require user authentication or RLS policies
+- Still needs audit logging (who viewed which package)
+
+#### ✅ Additional Fix - Build Configuration
+**Issue**: CPU limitation (`cpus: 2`) in `next.config.js` was restricting local builds on high-resource machines
+
+**Fix**: Removed `cpus: 2` from experimental configuration to allow builds to use all available CPU resources
+
+**Modified File**: `next.config.js`
+```javascript
+experimental: {
+  serverActions: { ... },
+  workerThreads: false
+  // Removed: cpus: 2  ✅
+}
+```
+
+#### ✅ Impact
+- ✅ **Checkout Flow Fixed**: Users can now view package details and proceed to checkout
+- ✅ **Anonymous Access**: Package information accessible without login (as designed)
+- ✅ **Error Eliminated**: No more ServiceRoleSecurityViolationError in Sentry
+- ✅ **Audit Logging**: Still tracks all package views (authenticated or anonymous)
+- ✅ **Build Performance**: Local builds now use all available CPU resources
+
+**Security Maintained**:
+- Audit logging still active (tracks who viewed packages)
+- Package data properly validated (only active packages returned)
+- Service role operations secured via SecureServiceRoleWrapper
+- User authentication still required for actual purchase/payment operations
+
+---
+
 ### Homepage Logo Rendering Fix - API Response Unwrapping (October 11, 2025)
 **Bug Fix**: Fixed homepage logo not rendering due to incorrect API response unwrapping in `usePageData` hook.
 
