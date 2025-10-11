@@ -383,10 +383,10 @@ export async function middleware(request: NextRequest) {
     }
   }
   
-  // Backend admin authentication protection
+  // Backend admin authentication protection (requires super_admin role)
   if (subdomain === 'backend' && !isAuthPage && pathname !== '/backend/admin/login') {
     const authResult = await checkUserAuthentication(request, '/backend/admin')
-    if (!authResult || !hasRequiredAccess(authResult.role, 'admin')) {
+    if (!authResult || !hasRequiredAccess(authResult.role, 'super_admin')) {
       const loginUrl = new URL('/backend/admin/login', request.url)
       return NextResponse.redirect(loginUrl)
     }

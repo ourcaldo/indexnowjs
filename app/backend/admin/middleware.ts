@@ -95,16 +95,16 @@ export async function adminMiddleware(request: NextRequest) {
         }
       )
 
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+      if (!profile || profile.role !== 'super_admin') {
         // Log unauthorized access attempt - insufficient permissions
         logger.warn({
           userId: user.id,
           endpoint: pathname,
           attemptedRole: profile?.role || 'none',
-          requiredRole: 'admin',
+          requiredRole: 'super_admin',
           ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
           userAgent: request.headers.get('user-agent') || 'unknown'
-        }, 'Unauthorized admin access attempt - insufficient permissions')
+        }, 'Unauthorized admin access attempt - insufficient permissions (super_admin required)')
 
         // Record failed attempt for rate limiting
         recordFailedAttempt(request)
