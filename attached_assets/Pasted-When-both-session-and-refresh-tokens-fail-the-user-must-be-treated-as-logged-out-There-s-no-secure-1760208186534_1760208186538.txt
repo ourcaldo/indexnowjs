@@ -1,0 +1,94 @@
+When both session and refresh tokens fail, the user must be treated as logged out.
+There’s no secure or valid way to recover from that state automatically.
+
+The standard approach is:
+
+Detect the “refresh_token_already_used” or “invalid_refresh_token” error.
+
+Immediately clear all stored auth state, including:
+
+Supabase auth cookies
+
+Local/session storage
+
+Any in-memory session state
+
+Redirect user to /login (or wherever your auth flow starts).
+
+🧠 Example (Next.js Middleware)
+
+If you’re using Supabase in middleware (via @supabase/auth-helpers-nextjs), you can intercept this like:
+
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { NextResponse } from "next/server";
+
+export async function middleware(req) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      // Session expired or invalid → redirect to login
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    return res;
+  } catch (err) {
+    if (err.code === "refresh_token_already_used" || err.code === "invalid_refresh_token") {
+      // Clear cookies manually (avoid infinite loops)
+      res.cookies.delete("sb-access-token");
+      res.cookies.delete("sb-refresh-token");
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    throw err; // rethrow other errors
+  }
+}
+
+🧭 If You’re Handling on the Client (React)
+
+For example, in a custom useAuth hook:
+
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+export function useAuth() {
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "TOKEN_REFRESHED") return;
+      if (event === "SIGNED_OUT" || !session) {
+        // Clear everything & redirect
+        await supabase.auth.signOut();
+        window.location.href = "/login";
+      }
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+}
+
+🚨 Why It Keeps POSTing to Supabase
+
+That happens because your code (middleware or client) keeps trying to refresh the session — Supabase SDK automatically retries token refresh when it sees an expired access token.
+
+If you never clear the bad token, it loops endlessly.
+
+So the fix is to:
+
+Detect the “already used” or “invalid refresh” error
+
+Stop calling refreshSession() again
+
+Wipe credentials and start fresh
+
+🧱 Bonus: Best Practices
+
+Short-lived access tokens (≤ 1 hour) and rotating refresh tokens (Supabase already does this).
+
+Always handle 401 or 400 with a “sign out and redirect” fallback.
+
+Do not auto-refresh indefinitely — add a retry limit (e.g., 3 attempts).
+
+Use centralized error handling so your app doesn’t need to repeat logic in every route.
