@@ -30,6 +30,7 @@ export default function AdminLayout({
 }) {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasInsufficientRole, setHasInsufficientRole] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [cookiesLoaded, setCookiesLoaded] = useState(false)
@@ -69,9 +70,16 @@ export default function AdminLayout({
     try {
       const user = await adminAuthService.getCurrentAdminUser()
       
-      if (!user?.isSuperAdmin) {
-        // Redirect to admin login if not authenticated or not super admin
+      if (!user) {
+        // No user authenticated - redirect to login
         router.push('/backend/admin/login')
+        return
+      }
+
+      if (!user.isSuperAdmin) {
+        // User is authenticated but NOT super admin - show error page
+        setHasInsufficientRole(true)
+        setIsLoading(false)
         return
       }
 
@@ -93,6 +101,43 @@ export default function AdminLayout({
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    )
+  }
+
+  // Show error page for authenticated users without super_admin role
+  if (hasInsufficientRole) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-background rounded-lg border border-border p-8 text-center">
+          <div className="mb-6">
+            <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">
+              <Shield className="h-8 w-8 text-destructive" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-3">
+            Access Denied
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            This area is restricted to Super Admin users only. Your account does not have sufficient privileges to access the backend administration panel.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={async () => {
+                await adminAuthService.signOut?.() || (window.location.href = '/login')
+              }}
+              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Sign Out
+            </button>
+            <button
+              onClick={() => window.location.href = process.env.NEXT_PUBLIC_DASHBOARD_URL || '/dashboard'}
+              className="w-full px-4 py-2 bg-secondary text-foreground border border-border rounded-lg hover:bg-secondary/80 transition-colors"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
