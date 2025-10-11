@@ -47,5 +47,9 @@ export const GET = adminApiWrapper(async (request: NextRequest, adminUser) => {
     { userId: adminUser.id, endpoint: '/api/v1/admin/packages' }
   )
 
-  return response
+  if (!response.success) {
+    return response
+  }
+
+  return formatSuccess({ packages: response.data.packages || [] })
 })

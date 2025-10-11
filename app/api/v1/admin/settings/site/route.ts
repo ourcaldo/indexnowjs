@@ -136,6 +136,7 @@ export const PATCH = adminApiWrapper(async (request: NextRequest, adminUser) => 
               sitemap_change_frequency,
               updated_at: new Date().toISOString()
             })
+            .eq('id', id)
             .select()
             .single()
 

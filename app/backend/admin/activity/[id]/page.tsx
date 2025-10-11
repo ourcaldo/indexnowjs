@@ -76,7 +76,7 @@ export default function ActivityDetailPage() {
       }
 
       const data = await response.json()
-      setActivity(data.activity)
+      setActivity(data.data?.activity || null)
     } catch (err: any) {
       setError(err.message)
     } finally {

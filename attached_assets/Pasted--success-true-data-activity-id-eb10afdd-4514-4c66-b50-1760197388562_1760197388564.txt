@@ -1,0 +1,189 @@
+{
+    "success": true,
+    "data": {
+        "activity": {
+            "id": "eb10afdd-4514-4c66-b501-9c1cccbe9775",
+            "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+            "event_type": "dashboard_data_loaded_from_merged_api",
+            "action_description": "Dashboard data loaded from merged endpoint",
+            "target_type": null,
+            "target_id": null,
+            "ip_address": "127.0.0.1",
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+            "device_info": {
+                "os": "Windows",
+                "type": "desktop",
+                "browser": "Chrome"
+            },
+            "location_data": null,
+            "success": true,
+            "error_message": null,
+            "metadata": {
+                "timestamp": "2025-10-11T11:17:34.133Z",
+                "userEmail": "aldodkris@gmail.com",
+                "has_user_data": true,
+                "deviceFormatted": "Chrome on Windows (Desktop)",
+                "has_billing_data": true,
+                "originalIpHeader": "127.0.0.1",
+                "dashboardActivity": true,
+                "has_indexing_data": true,
+                "locationFormatted": null,
+                "has_rank_tracking_data": true
+            },
+            "created_at": "2025-10-11T11:17:34.139557+00:00",
+            "user_name": "Aldo Dwi Kristian",
+            "user_email": "aldodkris@gmail.com",
+            "related_activities": [
+                {
+                    "id": "bf5d9b4e-f9ff-4e5e-b8ba-817dc86ae0c5",
+                    "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "event_type": "user_profile_update",
+                    "action_description": "Viewed detailed profile for Aldo Dwi Kristian",
+                    "target_type": "user",
+                    "target_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "ip_address": "127.0.0.1",
+                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+                    "device_info": {
+                        "os": "Windows",
+                        "type": "desktop",
+                        "browser": "Chrome"
+                    },
+                    "location_data": null,
+                    "success": true,
+                    "error_message": null,
+                    "metadata": {
+                        "action": "user_profile_view",
+                        "userRole": "super_admin",
+                        "timestamp": "2025-10-11T15:40:25.545Z",
+                        "userEmail": "aldodkris@gmail.com",
+                        "lastSignIn": "2025-10-11T15:38:24.304293Z",
+                        "adminAction": true,
+                        "profileView": true,
+                        "deviceFormatted": "Chrome on Windows (Desktop)",
+                        "locationFormatted": null
+                    },
+                    "created_at": "2025-10-11T15:40:25.551438+00:00"
+                },
+                {
+                    "id": "21809a97-a3f9-47c5-9764-8f82280ff1e2",
+                    "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "event_type": "user_security_view",
+                    "action_description": "Analyzed security profile for user 915f50e5-0902-466a-b1af-bdf19d789722 - Risk Level: low",
+                    "target_type": "user",
+                    "target_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "ip_address": "127.0.0.1",
+                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+                    "device_info": {
+                        "os": "Windows",
+                        "type": "desktop",
+                        "browser": "Chrome"
+                    },
+                    "location_data": null,
+                    "success": true,
+                    "error_message": null,
+                    "metadata": {
+                        "action": "security_analysis",
+                        "riskLevel": "low",
+                        "timestamp": "2025-10-11T15:40:25.488Z",
+                        "uniqueIPs": 1,
+                        "adminAction": true,
+                        "loginAttempts": 0,
+                        "securityScore": 100,
+                        "uniqueDevices": 1,
+                        "failedAttempts": 0,
+                        "deviceFormatted": "Chrome on Windows (Desktop)",
+                        "uniqueLocations": 0,
+                        "securityAnalysis": true,
+                        "locationFormatted": null
+                    },
+                    "created_at": "2025-10-11T15:40:25.496304+00:00"
+                },
+                {
+                    "id": "9833c435-a4c2-4527-849c-46f939a1ce4a",
+                    "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "event_type": "user_management",
+                    "action_description": "Viewed users list (21 users)",
+                    "target_type": null,
+                    "target_id": null,
+                    "ip_address": "127.0.0.1",
+                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+                    "device_info": {
+                        "os": "Windows",
+                        "type": "desktop",
+                        "browser": "Chrome"
+                    },
+                    "location_data": null,
+                    "success": true,
+                    "error_message": null,
+                    "metadata": {
+                        "action": "user_list_view",
+                        "timestamp": "2025-10-11T15:40:20.201Z",
+                        "adminUsers": 0,
+                        "totalUsers": 21,
+                        "activeUsers": 20,
+                        "adminAction": true,
+                        "userListView": true,
+                        "deviceFormatted": "Chrome on Windows (Desktop)",
+                        "superAdminUsers": 1,
+                        "locationFormatted": null
+                    },
+                    "created_at": "2025-10-11T15:40:20.207936+00:00"
+                },
+                {
+                    "id": "9a909017-7e8c-458a-a149-8fd7d3b7c5f2",
+                    "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "event_type": "admin_dashboard_view",
+                    "action_description": "Accessed admin dashboard overview with system statistics",
+                    "target_type": null,
+                    "target_id": null,
+                    "ip_address": "127.0.0.1",
+                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+                    "device_info": {
+                        "os": "Windows",
+                        "type": "desktop",
+                        "browser": "Chrome"
+                    },
+                    "location_data": null,
+                    "success": true,
+                    "error_message": null,
+                    "metadata": {
+                        "action": "view_stats",
+                        "section": "dashboard_overview",
+                        "timestamp": "2025-10-11T15:38:30.611Z",
+                        "adminEmail": "aldodkris@gmail.com",
+                        "adminDashboard": true,
+                        "deviceFormatted": "Chrome on Windows (Desktop)",
+                        "locationFormatted": null
+                    },
+                    "created_at": "2025-10-11T15:38:30.617406+00:00"
+                },
+                {
+                    "id": "640dfdf9-1801-49a3-b990-b9999dbf356b",
+                    "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "event_type": "dashboard_view",
+                    "action_description": "Session established: User session restored from stored tokens",
+                    "target_type": null,
+                    "target_id": null,
+                    "ip_address": "127.0.0.1",
+                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+                    "device_info": {
+                        "os": "Windows",
+                        "type": "desktop",
+                        "browser": "Chrome"
+                    },
+                    "location_data": null,
+                    "success": true,
+                    "error_message": null,
+                    "metadata": {
+                        "timestamp": "2025-10-11T15:38:25.809Z",
+                        "userDashboard": true,
+                        "deviceFormatted": "Chrome on Windows (Desktop)",
+                        "locationFormatted": null
+                    },
+                    "created_at": "2025-10-11T15:38:25.815237+00:00"
+                }
+            ]
+        }
+    },
+    "timestamp": "2025-10-11T15:42:04.247Z"
+}

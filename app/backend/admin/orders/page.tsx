@@ -27,7 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
 import { supabaseBrowser } from '@/lib/database'
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils'
-import { BILLING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
+import { ADMIN_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 
 interface OrderTransaction {
   id: string
@@ -123,7 +123,7 @@ export default function AdminOrdersPage() {
       if (customerSearch) params.append('customer', customerSearch)
       if (packageFilter && packageFilter !== 'all') params.append('package_id', packageFilter)
 
-      const response = await fetch(`${BILLING_ENDPOINTS.HISTORY.replace('/history', '')}/orders?${params}`, {
+      const response = await fetch(`${ADMIN_ENDPOINTS.ORDERS}?${params}`, {
         headers: {
           'Authorization': `Bearer ${session.data.session.access_token}`
         },
@@ -142,7 +142,6 @@ export default function AdminOrdersPage() {
       }
 
     } catch (error: any) {
-      console.error('Error loading orders:', error)
       setError(error.message)
       addToast({
         type: 'error',

@@ -96,7 +96,7 @@ export const ADMIN_ENDPOINTS = {
   // Settings
   SITE_SETTINGS: `${API_BASE.V1}/admin/settings/site`,
   TEST_EMAIL: `${API_BASE.V1}/admin/settings/site/test-email`,
-  PAYMENT_GATEWAYS: `${API_BASE.V1}/admin/settings/payment-gateways`,
+  PAYMENT_GATEWAYS: `${API_BASE.V1}/admin/settings/payments`,
   PAYMENT_GATEWAY_BY_ID: (id: string) => `${API_BASE.V1}/admin/settings/payments/${id}`,
   PAYMENT_GATEWAY_DEFAULT: (id: string) => `${API_BASE.V1}/admin/settings/payments/${id}/default`,
   SMTP_SETTINGS: `${API_BASE.V1}/admin/settings/smtp`,

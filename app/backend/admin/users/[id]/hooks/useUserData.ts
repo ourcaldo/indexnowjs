@@ -155,7 +155,7 @@ export function useUserData(userId: string): UseUserDataReturn {
 
   const fetchAvailablePackages = useCallback(async () => {
     try {
-      const response = await fetch(BILLING_ENDPOINTS.PACKAGES, {
+      const response = await fetch(ADMIN_ENDPOINTS.PACKAGES, {
         credentials: 'include' // Essential for cross-subdomain authentication
       })
       if (response.ok) {
@@ -163,7 +163,7 @@ export function useUserData(userId: string): UseUserDataReturn {
         setAvailablePackages(data.data?.packages || [])
       }
     } catch (error) {
-      console.error('Failed to fetch packages:', error)
+      // Error already handled by API, no need to log to user console
     }
   }, [])
 
