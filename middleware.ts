@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { adminMiddleware } from './app/backend/admin/middleware'
+import { AuthErrorHandler } from './lib/auth/auth-error-handler'
 
 // Subdomain detection and routing
 function getSubdomain(request: NextRequest): string | null {
@@ -241,7 +242,14 @@ async function checkUserAuthentication(request: NextRequest, effectivePath: stri
 
     const { data: { user }, error } = await supabase.auth.getUser()
     
-    if (error || !user) {
+    if (error) {
+      if (AuthErrorHandler.isRefreshTokenError(error)) {
+        return null
+      }
+      return null
+    }
+    
+    if (!user) {
       return null
     }
 
