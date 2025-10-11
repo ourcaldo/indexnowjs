@@ -365,6 +365,70 @@ export const HTTP_STATUS = {
 } as const
 
 /**
+ * Determine if an error is a transient service/network error
+ * vs a true authentication failure
+ */
+export function isTransientError(error: any): boolean {
+  if (!error) return false
+  
+  const errorMessage = error.message?.toLowerCase() || ''
+  const errorCode = error.code?.toLowerCase() || ''
+  const errorStatus = error.status || error.statusCode || 0
+  
+  // Network and connection errors
+  const networkErrors = [
+    'network',
+    'timeout',
+    'econnrefused',
+    'enotfound',
+    'etimedout',
+    'fetch failed',
+    'connection',
+    'socket',
+    'aborted'
+  ]
+  
+  // Service availability errors
+  const serviceErrors = [
+    'service unavailable',
+    'temporarily unavailable',
+    'server error',
+    'internal server error',
+    'bad gateway',
+    'gateway timeout'
+  ]
+  
+  // Check HTTP status codes for server errors (5xx)
+  if (errorStatus >= 500 && errorStatus < 600) {
+    return true
+  }
+  
+  // Check error message for network issues
+  for (const pattern of networkErrors) {
+    if (errorMessage.includes(pattern)) {
+      return true
+    }
+  }
+  
+  // Check error message for service issues
+  for (const pattern of serviceErrors) {
+    if (errorMessage.includes(pattern)) {
+      return true
+    }
+  }
+  
+  // Check error codes
+  const transientCodes = ['network_error', 'timeout', 'unavailable', 'server_error']
+  for (const code of transientCodes) {
+    if (errorCode.includes(code)) {
+      return true
+    }
+  }
+  
+  return false
+}
+
+/**
  * Common error patterns for consistent responses
  */
 export const CommonErrors = {
@@ -447,6 +511,18 @@ export const CommonErrors = {
       userId,
       userMessageKey: service.toLowerCase().includes('google') ? 'google_api_error' : 'default',
       metadata: { service, details }
+    }
+  ),
+
+  SERVICE_UNAVAILABLE: (service: string, details?: string, userId?: string) => ErrorHandlingService.createError(
+    ErrorType.EXTERNAL_API,
+    `Service temporarily unavailable: ${service}${details ? ` - ${details}` : ''}`,
+    {
+      severity: ErrorSeverity.HIGH,
+      statusCode: HTTP_STATUS.SERVICE_UNAVAILABLE,
+      userId,
+      userMessageKey: 'default',
+      metadata: { service, details, transient: true }
     }
   )
 }

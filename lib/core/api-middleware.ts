@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
-import { ErrorHandlingService, ErrorType, ErrorSeverity, CommonErrors, logger } from '../monitoring/error-handling'
+import { ErrorHandlingService, ErrorType, ErrorSeverity, CommonErrors, logger, isTransientError } from '../monitoring/error-handling'
 import { SecureServiceRoleWrapper } from '../services/security/SecureServiceRoleWrapper'
 import { formatSuccess, formatError } from './api-response-formatter'
 
@@ -65,7 +65,43 @@ export async function authenticateRequest(
     
     // Get authenticated user directly (don't use SecureServiceRoleWrapper here - it validates userId match)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    
+    // Handle errors from getUser() - distinguish between transient and auth failures
+    if (authError) {
+      // Check if this is a transient service/network error
+      if (isTransientError(authError)) {
+        logger.warn({
+          endpoint,
+          method,
+          errorMessage: authError.message,
+          errorCode: authError.code,
+          errorStatus: authError.status
+        }, 'Transient error during authentication - service/network issue detected')
+        
+        const structuredError = await CommonErrors.SERVICE_UNAVAILABLE(
+          'Supabase Auth',
+          authError.message
+        )
+        return { success: false, error: structuredError }
+      }
+      
+      // Otherwise, treat as authentication failure
+      logger.info({
+        endpoint,
+        method,
+        errorMessage: authError.message,
+        errorCode: authError.code
+      }, 'Authentication failed - invalid or expired token')
+      
+      throw new Error('Invalid authentication token')
+    }
+    
+    if (!user) {
+      logger.info({
+        endpoint,
+        method
+      }, 'Authentication failed - no user found')
+      
       throw new Error('Invalid authentication token')
     }
 
