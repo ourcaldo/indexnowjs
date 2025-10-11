@@ -7,22 +7,53 @@ export interface AuthErrorContext {
 }
 
 export class AuthErrorHandler {
-  private static readonly REFRESH_TOKEN_ERRORS = [
+  private static readonly REFRESH_TOKEN_ERROR_CODES = [
     'refresh_token_already_used',
     'invalid_refresh_token',
-    'refresh_token_not_found'
+    'refresh_token_not_found',
+    'invalid_grant'
+  ]
+
+  private static readonly REFRESH_ERROR_INDICATORS = [
+    'invalid',
+    'already used',
+    'not found',
+    'revoked',
+    'expired',
+    'invalid_grant'
   ]
 
   static isRefreshTokenError(error: any): boolean {
     if (!error) return false
     
     const errorCode = error?.code || error?.error_code || error?.error?.code
-    const errorMessage = error?.message || error?.error?.message || ''
+    const errorMessage = (error?.message || error?.error?.message || '').toLowerCase()
+    const errorStatus = error?.status || error?.error?.status
     
-    return (
-      this.REFRESH_TOKEN_ERRORS.includes(errorCode) ||
-      this.REFRESH_TOKEN_ERRORS.some(code => errorMessage.toLowerCase().includes(code))
+    const hasRefreshTokenCode = errorCode && this.REFRESH_TOKEN_ERROR_CODES.some(
+      code => errorCode.toLowerCase() === code || errorCode.toLowerCase().includes(code)
     )
+    
+    const messageHasRefresh = errorMessage.includes('refresh')
+    const messageHasToken = errorMessage.includes('token')
+    const messageHasErrorIndicator = this.REFRESH_ERROR_INDICATORS.some(
+      indicator => errorMessage.includes(indicator)
+    )
+    const hasRefreshTokenMessage = messageHasRefresh && messageHasToken && messageHasErrorIndicator
+    
+    const hasStatus = errorStatus !== undefined && errorStatus !== null
+    const is400or401Status = errorStatus === 400 || errorStatus === 401
+    
+    if (hasRefreshTokenCode) return true
+    
+    if (hasRefreshTokenMessage) {
+      if (hasStatus) {
+        return is400or401Status
+      }
+      return true
+    }
+    
+    return false
   }
 
   static async clearAuthState(): Promise<void> {

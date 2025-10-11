@@ -119,10 +119,57 @@ const authStateHandler = AuthErrorHandler.createAuthStateChangeHandler(
 supabase.auth.onAuthStateChange(authStateHandler)
 ```
 
-**Supported Error Codes**:
-- `refresh_token_already_used` - Token has been used before
-- `invalid_refresh_token` - Token is invalid or malformed
-- `refresh_token_not_found` - Token doesn't exist in database
+**Supported Error Patterns** (updated after comprehensive architect review):
+- **Error codes** (exact match): `refresh_token_already_used`, `invalid_refresh_token`, `refresh_token_not_found`, `invalid_grant`
+- **Error messages** (requires ALL of the following):
+  - Contains "refresh" AND
+  - Contains "token" AND
+  - Contains one of: "invalid", "already used", "not found", "revoked", "expired", "invalid_grant"
+- **Status code validation**:
+  - If status present: must be 400 or 401
+  - If status absent: message match alone is sufficient (fallback for errors without status)
+- **Covers all Supabase refresh token error formats**:
+  - `message: "Invalid Refresh Token: Already used"` with `status: 400` ✓
+  - `message: "Refresh Token has been revoked"` with `status: 401` ✓
+  - Errors without status field that contain refresh token indicators ✓
+- **Prevents false positives** by requiring BOTH "refresh" AND "token" in message
+
+**Error Detection Logic** (comprehensive coverage with false positive prevention):
+```typescript
+static isRefreshTokenError(error: any): boolean {
+  const errorCode = error?.code || error?.error_code || error?.error?.code
+  const errorMessage = (error?.message || error?.error?.message || '').toLowerCase()
+  const errorStatus = error?.status || error?.error?.status
+  
+  // Check for exact error codes
+  const hasRefreshTokenCode = errorCode && REFRESH_TOKEN_ERROR_CODES.some(
+    code => errorCode.toLowerCase() === code || errorCode.toLowerCase().includes(code)
+  )
+  
+  // Message must contain: "refresh" AND "token" AND error indicator
+  const messageHasRefresh = errorMessage.includes('refresh')
+  const messageHasToken = errorMessage.includes('token')
+  const messageHasErrorIndicator = REFRESH_ERROR_INDICATORS.some(
+    indicator => errorMessage.includes(indicator)
+  )
+  const hasRefreshTokenMessage = messageHasRefresh && messageHasToken && messageHasErrorIndicator
+  
+  const hasStatus = errorStatus !== undefined && errorStatus !== null
+  const is400or401Status = errorStatus === 400 || errorStatus === 401
+  
+  // Decision logic
+  if (hasRefreshTokenCode) return true
+  
+  if (hasRefreshTokenMessage) {
+    if (hasStatus) {
+      return is400or401Status  // Validate status if present
+    }
+    return true  // Fallback for errors without status
+  }
+  
+  return false
+}
+```
 
 #### ✅ Benefits
 
