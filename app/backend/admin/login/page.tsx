@@ -16,7 +16,6 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   
@@ -35,7 +34,6 @@ export default function AdminLoginPage() {
       }
       
       if (event === 'SIGNED_OUT') {
-        setIsCheckingAuth(false)
         await supabase.auth.signOut()
         window.location.reload()
       }
@@ -43,7 +41,6 @@ export default function AdminLoginPage() {
       if (event === 'USER_UPDATED' && !session) {
         refreshFailCount++
         if (refreshFailCount >= maxRefreshFails) {
-          setIsCheckingAuth(false)
           await supabase.auth.signOut()
           window.location.reload()
         }
@@ -53,7 +50,7 @@ export default function AdminLoginPage() {
     const checkExistingAuth = async () => {
       try {
         const timeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Auth check timeout')), 2000)
+          setTimeout(() => reject(new Error('Auth check timeout')), 1500)
         )
 
         const authCheck = supabase.auth.getSession()
@@ -65,8 +62,6 @@ export default function AdminLoginPage() {
         if (!session || !session.access_token) {
           return
         }
-
-        setIsCheckingAuth(true)
 
         const response = await fetch(ADMIN_ENDPOINTS.VERIFY_ROLE, {
           method: 'POST',
@@ -87,13 +82,11 @@ export default function AdminLoginPage() {
 
         if (response.ok && roleData.success && !roleData.data?.isSuperAdmin) {
           setError('Access denied: Super Admin privileges required. This area is restricted to Super Admins only.')
-          setIsCheckingAuth(false)
           return
         }
 
-        setIsCheckingAuth(false)
       } catch (error) {
-        setIsCheckingAuth(false)
+        // Silent fail - just show login form
       }
     }
 
@@ -171,17 +164,6 @@ export default function AdminLoginPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-secondary flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Checking authentication...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
