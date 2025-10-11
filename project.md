@@ -2,6 +2,123 @@
 
 ## Recent Changes
 
+### 2025-10-11 - Frontend Bug Fixes for API Response Format Changes (COMPLETED)
+**Critical Fix**: Resolved frontend rendering issues caused by Phase 2 API response standardization. Fixed order detail page data access, PackageSubscriptionCard toLocaleString errors, and created missing error detail page.
+
+#### ✅ Issues Fixed
+
+**1. Order Detail Page API Response Handling (CRITICAL)**
+- **Problem**: Order detail page (`app/backend/admin/orders/[id]/page.tsx`) failed to load with undefined `transaction_status` error
+- **Root Cause**: 
+  - After Phase 2 error handling standardization, API responses use `{success: true, data: {...}}` format
+  - Frontend code set `setOrderData(data)` instead of `setOrderData(data.data)`
+  - Component tried to access `orderData.order` but data structure was wrong
+- **Solution**: 
+  - Changed line 184 from `setOrderData(data)` to `setOrderData(data.data)`
+  - Now correctly unwraps nested API response structure
+
+**2. PackageSubscriptionCard toLocaleString Error (CRITICAL)**
+- **Problem**: User detail page crashed with "Cannot read property 'toLocaleString' of undefined" error
+- **Root Cause**: 
+  - PackageSubscriptionCard component called `price.toLocaleString()` without null check
+  - When pricing data structure was incomplete, `price` variable could be undefined
+  - Caused fatal rendering error on user detail page
+- **Solution**: 
+  - Added null/undefined check before calling toLocaleString (lines 120-122)
+  - Returns 'Free' if price is null or undefined
+  - Prevents crashes when pricing data is incomplete
+
+**3. Missing Error Detail Page (FEATURE GAP)**
+- **Problem**: Error detail API endpoint existed at `/api/v1/admin/errors/[id]` but no frontend page to view error details
+- **Root Cause**: 
+  - Phase 3 implementation plan included error detail page but was never created
+  - Admin could view error list but couldn't see full error details
+  - Only modal view existed, no dedicated page
+- **Solution**: 
+  - Created comprehensive error detail page at `app/backend/admin/errors/[id]/page.tsx`
+  - Includes error overview, user info, stack trace, related errors, and resolution actions
+  - Follows same design pattern as order/user detail pages with 2-column layout
+
+**4. Missing API Endpoint Constants (MINOR)**
+- **Problem**: ApiEndpoints.ts missing constants for error management endpoints
+- **Root Cause**: Error endpoints added to backend but constants not updated in frontend
+- **Solution**: 
+  - Added `ERRORS` constant for error list endpoint
+  - Added `ERROR_BY_ID(id)` function for error detail endpoint
+  - Ensures type-safe API endpoint references
+
+#### ✅ Files Modified
+
+**app/backend/admin/orders/[id]/page.tsx**
+- Line 184: Changed `setOrderData(data)` → `setOrderData(data.data)` to properly unwrap API response
+
+**app/backend/admin/users/[id]/components/PackageSubscriptionCard.tsx**
+- Lines 120-122: Added null/undefined check for price variable before calling toLocaleString()
+- Prevents crash when pricing data is incomplete or missing
+
+**lib/core/constants/ApiEndpoints.ts**
+- Line 78: Added `ERRORS: ${API_BASE.V1}/admin/errors` constant
+- Line 79: Added `ERROR_BY_ID: (id: string) => ${API_BASE.V1}/admin/errors/${id}` function
+
+**app/backend/admin/errors/[id]/page.tsx** (NEW FILE)
+- Created comprehensive error detail page with 2-column layout
+- Includes error overview, severity badge, user information, stack trace display
+- Related errors section with clickable navigation
+- Resolution actions (acknowledge/resolve) with loading states
+- Proper error handling and loading states
+- Full test ID attributes for automated testing
+
+#### ✅ Technical Details
+
+**API Response Format After Phase 2**:
+```typescript
+// Old format (before Phase 2)
+{ order: {...}, activity_history: [], transaction_history: [] }
+
+// New format (after Phase 2)
+{ 
+  success: true, 
+  data: { 
+    order: {...}, 
+    activity_history: [], 
+    transaction_history: [] 
+  } 
+}
+```
+
+**Frontend Data Access Pattern**:
+```typescript
+// Before fix
+const data = await response.json()
+setOrderData(data) // ❌ Wrong - data contains {success, data}
+
+// After fix
+const data = await response.json()
+setOrderData(data.data) // ✅ Correct - unwrap nested data
+```
+
+**Error Detail Page Features**:
+- **2-Column Layout**: Error details on left, resolution status and related errors on right
+- **Severity Badges**: Critical (red), High (orange), Medium (gray), Low (light gray)
+- **Resolution Actions**: Acknowledge button for new errors, Resolve button for all unresolved
+- **Related Errors**: Shows last 24h of similar errors (same type/user/endpoint)
+- **User Information**: Displays affected user email and full name if error is user-related
+- **Stack Trace**: Scrollable code block with syntax highlighting for debugging
+- **Navigation**: Clickable related errors navigate to their detail pages
+
+#### ✅ Testing Verification
+- ✅ Order detail page loads correctly without transaction_status errors
+- ✅ User detail page renders PackageSubscriptionCard without toLocaleString crashes
+- ✅ Error detail page accessible at `/backend/admin/errors/[id]`
+- ✅ Error detail page displays all error information correctly
+- ✅ Acknowledge and resolve actions work properly
+- ✅ Related errors navigation functions correctly
+- ✅ No TypeScript or LSP errors
+
+**Status**: Frontend API Response Format Bugs **100% FIXED** - All pages render correctly, error detail page created, proper API response unwrapping implemented.
+
+---
+
 ### 2025-10-11 - Backend Admin Infinite Login Loop Fix (COMPLETED - CRITICAL)
 **Critical Fix**: Resolved infinite redirect loop where authenticated super admins kept getting redirected back to login page.
 

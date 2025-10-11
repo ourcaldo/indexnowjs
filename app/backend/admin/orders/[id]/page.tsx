@@ -178,7 +178,7 @@ export default function AdminOrderDetailPage() {
 
       const data = await response.json()
       if (data.success) {
-        setOrderData(data)
+        setOrderData(data.data)
       } else {
         throw new Error(data.error || 'Failed to fetch order details')
       }

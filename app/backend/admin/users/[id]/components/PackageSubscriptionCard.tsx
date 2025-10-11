@@ -114,6 +114,9 @@ export function PackageSubscriptionCard({ user }: PackageSubscriptionCardProps) 
                       }
                       
                       const price = currencyData.promo_price || currencyData.regular_price
+                      if (price === undefined || price === null) {
+                        return 'Free'
+                      }
                       return price === 0 ? 'Free' : `${currency} ${price.toLocaleString()}`
                     })()}
                   </span>

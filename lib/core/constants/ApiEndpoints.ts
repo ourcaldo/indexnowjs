@@ -72,6 +72,8 @@ export const ADMIN_ENDPOINTS = {
   ACTIVITY_BY_ID: (id: string) => `${API_BASE.V1}/admin/activity/${id}`,
 
   // Error management
+  ERRORS: `${API_BASE.V1}/admin/errors`,
+  ERROR_BY_ID: (id: string) => `${API_BASE.V1}/admin/errors/${id}`,
   ERROR_STATS: `${API_BASE.V1}/admin/errors/stats`,
   CRITICAL_ERRORS: `${API_BASE.V1}/admin/errors/critical`,
 
