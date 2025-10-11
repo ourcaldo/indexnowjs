@@ -16,7 +16,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   
@@ -26,22 +26,55 @@ export default function AdminLoginPage() {
   useFavicon() // Automatically updates favicon
 
   useEffect(() => {
+    let refreshFailCount = 0
+    const maxRefreshFails = 3
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
+      if (event === 'TOKEN_REFRESHED') {
+        refreshFailCount = 0
+      }
+      
+      if (event === 'SIGNED_OUT') {
+        setIsCheckingAuth(false)
+        await supabase.auth.signOut()
+        window.location.reload()
+      }
+      
+      if (event === 'USER_UPDATED' && !session) {
+        refreshFailCount++
+        if (refreshFailCount >= maxRefreshFails) {
+          setIsCheckingAuth(false)
+          await supabase.auth.signOut()
+          window.location.reload()
+        }
+      }
+    })
+
     const checkExistingAuth = async () => {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        const timeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth check timeout')), 2000)
+        )
+
+        const authCheck = supabase.auth.getSession()
         
-        if (authError || !user) {
-          setIsCheckingAuth(false)
+        const result = await Promise.race([authCheck, timeout]) as any
+        
+        const session = result?.data?.session
+        
+        if (!session || !session.access_token) {
           return
         }
+
+        setIsCheckingAuth(true)
 
         const response = await fetch(ADMIN_ENDPOINTS.VERIFY_ROLE, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            'Authorization': `Bearer ${session.access_token}`
           },
-          body: JSON.stringify({ userId: user.id }),
+          body: JSON.stringify({ userId: session.user.id }),
           credentials: 'include'
         })
 
@@ -65,6 +98,10 @@ export default function AdminLoginPage() {
     }
 
     checkExistingAuth()
+    
+    return () => {
+      authListener?.subscription?.unsubscribe()
+    }
   }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {

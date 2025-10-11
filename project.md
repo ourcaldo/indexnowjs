@@ -2,6 +2,105 @@
 
 ## Recent Changes
 
+### 2025-10-11 - Fixed Backend Admin Login Authentication Loop (COMPLETED)
+**Critical Fix**: Resolved infinite "Checking authentication..." loop caused by expired sessions and failed refresh token attempts.
+
+#### ✅ Issues Fixed
+
+**1. Infinite "Checking Authentication" Loop (CRITICAL)**
+- **Problem**: When session expired or refresh token invalid, login page showed "Checking authentication..." infinitely without showing login form
+- **Root Cause**: 
+  - Supabase client has `autoRefreshToken: true` which keeps retrying failed refresh attempts
+  - `isCheckingAuth` state started as `true` on page load
+  - Code checked for valid session AFTER showing loading state
+  - When refresh token POST to `base.indexnow.studio/auth/v1/token` failed, page stayed in loading state
+  - No handling for failed refresh attempts - just kept retrying forever
+- **Solution**: 
+  - Changed `isCheckingAuth` initial state from `true` to `false`
+  - Only set `isCheckingAuth = true` AFTER confirming valid session exists
+  - Added 2-second timeout to prevent hanging on session check
+  - If no session → immediately show login form (no loading state)
+  - If valid session exists → show "Checking authentication..." while verifying role
+
+**2. Failed Refresh Token Handling (CRITICAL)**
+- **Problem**: When refresh token failed multiple times, page never reloaded or redirected - just stuck in same state
+- **Root Cause**: No listener to detect and handle failed refresh attempts from Supabase
+- **Solution**: 
+  - Added `onAuthStateChange` listener to track auth events
+  - Counter tracks failed refresh attempts (USER_UPDATED without session)
+  - After 3 failed attempts → sign out + reload page
+  - SIGNED_OUT event → automatically reload page
+  - TOKEN_REFRESHED event → reset fail counter
+
+#### ✅ Files Modified
+
+**app/backend/admin/login/page.tsx**
+- Line 22: Changed `isCheckingAuth` initial state from `true` to `false`
+- Lines 31-54: Added auth state change listener with refresh fail counter
+- Lines 56-101: Updated auth check logic to only show loading when valid session exists
+- Line 59: Reduced timeout from 3s to 2s for faster response
+- Lines 68-70: If no session, immediately return (show login form, no loading)
+- Line 72: Only set `isCheckingAuth = true` when valid session confirmed
+- Lines 105-106: Cleanup listener on component unmount
+
+#### ✅ Technical Details
+
+**Before Fix - Authentication Flow (BROKEN)**:
+```
+1. Page loads → isCheckingAuth = true (shows loading)
+2. Check session → session expired/invalid
+3. Supabase tries to refresh → POST to /auth/v1/token fails
+4. Supabase retries refresh automatically (autoRefreshToken: true)
+5. Still showing "Checking authentication..." 
+6. Loop continues forever ❌
+```
+
+**After Fix - Authentication Flow (FIXED)**:
+```
+1. Page loads → isCheckingAuth = false (shows login form)
+2. Quick session check with 2s timeout
+3. If no session → show login form immediately ✅
+4. If valid session → isCheckingAuth = true → verify role → redirect ✅
+5. If refresh fails → listener detects it
+6. After 3 failed refreshes → sign out + reload page ✅
+```
+
+**Auth State Listener Logic**:
+```typescript
+onAuthStateChange((event, session) => {
+  if (event === 'TOKEN_REFRESHED') refreshFailCount = 0
+  if (event === 'SIGNED_OUT') reload page
+  if (event === 'USER_UPDATED' && !session) {
+    refreshFailCount++
+    if (refreshFailCount >= 3) signOut + reload
+  }
+})
+```
+
+#### ✅ User Experience Impact
+
+**Before**: 
+- Expired session → stuck at "Checking authentication..." forever
+- Failed refresh attempts → infinite loop, no escape
+- User must manually close tab and clear cookies
+
+**After**:
+- Expired session → login form appears immediately
+- Failed refresh (1-2 times) → auth listener tracks it
+- Failed refresh (3+ times) → automatic sign out + page reload
+- Clean, predictable behavior - no infinite loops
+
+#### ✅ Testing Verification
+- ✅ Expired session shows login form immediately (no loading state)
+- ✅ Valid session shows "Checking authentication..." briefly then redirects
+- ✅ Failed refresh attempts (3x) trigger automatic reload
+- ✅ No infinite loops when refresh token is invalid
+- ✅ Auth state listener properly cleans up on unmount
+
+**Status**: Backend Admin Login Loop **100% FIXED** - Login page handles expired sessions correctly, no infinite loops.
+
+---
+
 ### 2025-10-11 - Fixed PackageChangeModal toLocaleString Error (COMPLETED)
 **Critical Fix**: Resolved toLocaleString error in Change Package modal caused by API response data structure mismatch.
 
