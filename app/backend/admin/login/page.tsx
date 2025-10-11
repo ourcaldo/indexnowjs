@@ -66,10 +66,10 @@ export default function AdminLoginPage() {
         throw new Error(roleData.error || 'Access denied: Admin privileges required')
       }
 
-      // Step 3: Verify user is admin or super_admin
-      if (!roleData.isAdmin && !roleData.isSuperAdmin) {
+      // Step 3: Verify user is SUPER ADMIN (not just admin)
+      if (!roleData.isSuperAdmin) {
         await supabase.auth.signOut()
-        throw new Error('Access denied: Admin privileges required')
+        throw new Error('Access denied: Super Admin privileges required. This area is restricted to Super Admins only.')
       }
 
       // Step 4: Set admin session and redirect
