@@ -143,7 +143,7 @@ export default function PackageManagement() {
       ...packageData,
       features: packageData.features || [],
       quota_limits: packageData.quota_limits || {},
-      pricing_tiers: packageData.pricing_tiers || {}
+      pricing_tiers: packageData.pricing_tiers
     })
 
     const updateField = (field: keyof PaymentPackage, value: any) => {
@@ -214,7 +214,7 @@ export default function PackageManagement() {
           USD: { period_label: 'Annual', regular_price: 0, promo_price: 0 }
         }
       }
-      setFormData(prev => ({ ...prev, pricing_tiers: defaultTiers }))
+      setFormData(prev => ({ ...prev, pricing_tiers: defaultTiers as any }))
     }
 
     useEffect(() => {

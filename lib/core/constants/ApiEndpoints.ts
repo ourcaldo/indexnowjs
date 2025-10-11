@@ -65,6 +65,7 @@ export const ADMIN_ENDPOINTS = {
 
   // Package management
   PACKAGES: `${API_BASE.V1}/admin/packages`,
+  PACKAGE_BY_ID: (id: string) => `${API_BASE.V1}/admin/settings/packages/${id}`,
 
   // Activity logs
   ACTIVITY: `${API_BASE.V1}/admin/activity`,
@@ -81,6 +82,8 @@ export const ADMIN_ENDPOINTS = {
 
   // CMS
   CMS_POSTS: `${API_BASE.V1}/admin/cms/posts`,
+  CMS_POST_BY_ID: (id: string) => `${API_BASE.V1}/admin/cms/posts/${id}`,
+  CMS_POST_STATUS: (id: string) => `${API_BASE.V1}/admin/cms/posts/${id}/status`,
   CMS_POSTS_VALIDATE_SLUG: `${API_BASE.V1}/admin/cms/posts/validate-slug`,
   CMS_PAGES: `${API_BASE.V1}/admin/cms/pages`,
   CMS_PAGES_VALIDATE_SLUG: `${API_BASE.V1}/admin/cms/pages/validate-slug`,
@@ -94,6 +97,8 @@ export const ADMIN_ENDPOINTS = {
   SITE_SETTINGS: `${API_BASE.V1}/admin/settings/site`,
   TEST_EMAIL: `${API_BASE.V1}/admin/settings/site/test-email`,
   PAYMENT_GATEWAYS: `${API_BASE.V1}/admin/settings/payment-gateways`,
+  PAYMENT_GATEWAY_BY_ID: (id: string) => `${API_BASE.V1}/admin/settings/payments/${id}`,
+  PAYMENT_GATEWAY_DEFAULT: (id: string) => `${API_BASE.V1}/admin/settings/payments/${id}/default`,
   SMTP_SETTINGS: `${API_BASE.V1}/admin/settings/smtp`,
   API_KEYS: `${API_BASE.V1}/admin/settings/api-keys`,
 } as const;

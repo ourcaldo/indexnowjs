@@ -1,6 +1,20 @@
 # IndexNow Studio - Project Setup
 
 ## Recent Changes
+- **[x] Oct 11, 2025**: Fixed LSP TypeScript errors in backend admin pages:
+  - **Issue**: Missing API endpoint constants causing TypeScript compilation errors in 3 files
+  - **Root Cause**: Admin pages referenced PACKAGE_BY_ID, PAYMENT_GATEWAY_BY_ID, PAYMENT_GATEWAY_DEFAULT, CMS_POST_BY_ID, and CMS_POST_STATUS endpoints that didn't exist in ADMIN_ENDPOINTS
+  - **Fixed**: Added 5 missing endpoint helpers to lib/core/constants/ApiEndpoints.ts:
+    1. PACKAGE_BY_ID: (id) => `/admin/settings/packages/${id}`
+    2. PAYMENT_GATEWAY_BY_ID: (id) => `/admin/settings/payments/${id}`
+    3. PAYMENT_GATEWAY_DEFAULT: (id) => `/admin/settings/payments/${id}/default`
+    4. CMS_POST_BY_ID: (id) => `/admin/cms/posts/${id}`
+    5. CMS_POST_STATUS: (id) => `/admin/cms/posts/${id}/status`
+  - **Fixed**: pricing_tiers initialization issue in packages page (line 149: removed empty object default, line 220: added type casting)
+  - **Result**: Zero LSP errors - clean TypeScript compilation across all backend admin pages
+- **[x] Oct 11, 2025** (VERIFIED): Fixed ALL API response format mismatches in backend/admin dashboard after implementing secureWrapper and global error handling:
+  - **Verification Complete**: All 11 files confirmed to correctly access wrapped API responses using `data.data?.XXX` pattern
+  - **Status**: Production-ready - no undefined errors or data access issues
 - **[x] Oct 11, 2025**: Fixed ALL API response format mismatches in backend/admin dashboard after implementing secureWrapper and global error handling:
   - **Root Cause**: APIs now return standardized `{success: true, data: T, timestamp: string}` format via formatSuccess() wrapper
   - **Impact**: Frontend components were accessing `data.stats` instead of `data.data.stats` causing undefined errors
