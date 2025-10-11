@@ -34,11 +34,22 @@ export type { ApiSuccessResponse, ApiErrorResponse } from './api-response-format
  *   const data = await fetchAdminData()
  *   return formatSuccess(data)
  * })
+ * 
+ * @example Dynamic routes
+ * export const GET = adminApiWrapper(async (request, adminUser, { params }) => {
+ *   const { id } = await params
+ *   const data = await fetchData(id)
+ *   return formatSuccess(data)
+ * })
  */
 export function adminApiWrapper<T = any>(
-  handler: (request: NextRequest, adminUser: { id: string; email: string | undefined }) => Promise<ApiSuccessResponse<T> | ApiErrorResponse>
+  handler: (
+    request: NextRequest, 
+    adminUser: { id: string; email: string | undefined }, 
+    context?: { params: Promise<any> }
+  ) => Promise<ApiSuccessResponse<T> | ApiErrorResponse>
 ) {
-  return async (request: NextRequest): Promise<NextResponse> => {
+  return async (request: NextRequest, context?: { params: Promise<any> }): Promise<NextResponse> => {
     const endpoint = new URL(request.url).pathname
     const method = request.method
 
@@ -87,8 +98,8 @@ export function adminApiWrapper<T = any>(
         adminEmail: adminUser.email
       }, `Admin API access: ${method} ${endpoint}`)
 
-      // Execute handler and get standardized response
-      const response = await handler(request, adminUser)
+      // Execute handler and get standardized response (pass context for dynamic routes)
+      const response = await handler(request, adminUser, context)
       
       // Return with appropriate status code
       if (response.success) {
