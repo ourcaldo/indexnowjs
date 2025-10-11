@@ -1,0 +1,163 @@
+{
+    "success": true,
+    "data": {
+        "packages": [
+            {
+                "id": "0c68e88b-55b6-4783-9a84-96bf883e9986",
+                "name": "Basic",
+                "slug": "basic",
+                "description": "Solo? Don't worry, this is will be best-fit for you",
+                "currency": "IDR",
+                "billing_period": "monthly",
+                "features": [
+                    "Max. 1 Service Account",
+                    "50 Daily Quota for FastIndexing",
+                    "50 Quota for IndexNow Keyword Rank Tracker"
+                ],
+                "quota_limits": {
+                    "daily_urls": 50,
+                    "keywords_limit": 50,
+                    "concurrent_jobs": 1,
+                    "service_accounts": 1
+                },
+                "is_active": true,
+                "sort_order": 0,
+                "created_at": "2025-08-28T16:15:17.270623+00:00",
+                "updated_at": "2025-10-11T16:23:55.272+00:00",
+                "is_popular": false,
+                "pricing_tiers": {
+                    "annual": {
+                        "IDR": {
+                            "promo_price": 150000,
+                            "period_label": "Annual",
+                            "regular_price": 180000
+                        },
+                        "USD": {
+                            "promo_price": 80,
+                            "period_label": "Annual",
+                            "regular_price": 149
+                        }
+                    },
+                    "monthly": {
+                        "IDR": {
+                            "promo_price": 25000,
+                            "period_label": "Monthly",
+                            "regular_price": 50000
+                        },
+                        "USD": {
+                            "promo_price": 9.99,
+                            "period_label": "Monthly",
+                            "regular_price": 25
+                        }
+                    }
+                },
+                "free_trial_enabled": true
+            },
+            {
+                "id": "0c198382-ecb7-4d05-9676-aa632eb542e9",
+                "name": "Premium",
+                "slug": "premium",
+                "description": "Enhanced features for professionals",
+                "currency": "IDR",
+                "billing_period": "monthly",
+                "features": [
+                    "Max 3 Service Account",
+                    "500 Daily Quota for IndexNow",
+                    "Auto Schedule Feature for IndexNow",
+                    "Auto Index with Sitemap Feature"
+                ],
+                "quota_limits": {
+                    "daily_urls": 500,
+                    "keywords_limit": 250,
+                    "concurrent_jobs": 3,
+                    "service_accounts": 3
+                },
+                "is_active": true,
+                "sort_order": 2,
+                "created_at": "2025-07-24T18:08:18.048476+00:00",
+                "updated_at": "2025-09-06T18:32:00.169+00:00",
+                "is_popular": true,
+                "pricing_tiers": {
+                    "annual": {
+                        "IDR": {
+                            "promo_price": 450000,
+                            "period_label": "Annual",
+                            "regular_price": 600000
+                        },
+                        "USD": {
+                            "promo_price": 159,
+                            "period_label": "Annual",
+                            "regular_price": 199
+                        }
+                    },
+                    "monthly": {
+                        "IDR": {
+                            "promo_price": 50000,
+                            "period_label": "Monthly",
+                            "regular_price": 75000
+                        },
+                        "USD": {
+                            "promo_price": 15,
+                            "period_label": "Monthly",
+                            "regular_price": 19
+                        }
+                    }
+                },
+                "free_trial_enabled": false
+            },
+            {
+                "id": "2a5b8559-d9d7-4832-836c-2c3908d2fd35",
+                "name": "Pro",
+                "slug": "pro",
+                "description": "Full features for agencies and enterprises",
+                "currency": "IDR",
+                "billing_period": "monthly",
+                "features": [
+                    "Unlimited Service Account",
+                    "Unlimited Daily Quota for Auto Indexing",
+                    "Auto Schedule Feature for IndexNow",
+                    "Auto Index with Sitemap Feature"
+                ],
+                "quota_limits": {
+                    "daily_urls": -1,
+                    "keywords_limit": 1500,
+                    "concurrent_jobs": 10,
+                    "service_accounts": -1
+                },
+                "is_active": true,
+                "sort_order": 3,
+                "created_at": "2025-07-24T18:08:18.048476+00:00",
+                "updated_at": "2025-08-20T15:09:54.76+00:00",
+                "is_popular": false,
+                "pricing_tiers": {
+                    "annual": {
+                        "IDR": {
+                            "promo_price": 790000,
+                            "period_label": "Annual",
+                            "regular_price": 1680000
+                        },
+                        "USD": {
+                            "promo_price": 499,
+                            "period_label": "Annual",
+                            "regular_price": 599
+                        }
+                    },
+                    "monthly": {
+                        "IDR": {
+                            "promo_price": 80000,
+                            "period_label": "Monthly",
+                            "regular_price": 140000
+                        },
+                        "USD": {
+                            "promo_price": 45,
+                            "period_label": "Monthly",
+                            "regular_price": 59
+                        }
+                    }
+                },
+                "free_trial_enabled": false
+            }
+        ]
+    },
+    "timestamp": "2025-10-11T17:24:44.462Z"
+}

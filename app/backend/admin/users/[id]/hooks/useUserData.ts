@@ -70,14 +70,27 @@ interface SecurityData {
   riskLevel: 'low' | 'medium' | 'high'
 }
 
+interface PricingTier {
+  promo_price: number
+  regular_price: number
+  period_label: string
+}
+
 interface Package {
   id: string
   name: string
   slug: string
   description: string
-  price: number
   currency: string
   billing_period: string
+  pricing_tiers?: {
+    monthly?: {
+      [currency: string]: PricingTier
+    }
+    annual?: {
+      [currency: string]: PricingTier
+    }
+  }
 }
 
 interface UseUserDataReturn {

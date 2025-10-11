@@ -2,14 +2,27 @@
 
 import { X } from 'lucide-react'
 
+interface PricingTier {
+  promo_price: number
+  regular_price: number
+  period_label: string
+}
+
 interface Package {
   id: string
   name: string
   slug: string
   description: string
-  price: number
   currency: string
   billing_period: string
+  pricing_tiers?: {
+    monthly?: {
+      [currency: string]: PricingTier
+    }
+    annual?: {
+      [currency: string]: PricingTier
+    }
+  }
 }
 
 interface PackageChangeModalProps {
@@ -32,6 +45,25 @@ export function PackageChangeModal({
   onSubmit
 }: PackageChangeModalProps) {
   if (!isOpen) return null
+
+  const getPackagePrice = (pkg: Package): string => {
+    const billingPeriod = pkg.billing_period || 'monthly'
+    const currency = pkg.currency || 'IDR'
+    
+    const tierPricing = pkg.pricing_tiers?.[billingPeriod as 'monthly' | 'annual']?.[currency]
+    
+    if (!tierPricing) {
+      return 'Free'
+    }
+    
+    const price = tierPricing.promo_price ?? tierPricing.regular_price
+    
+    if (price === null || price === undefined || price === 0) {
+      return 'Free'
+    }
+    
+    return `${currency} ${price.toLocaleString()}`
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -89,9 +121,9 @@ export function PackageChangeModal({
                   
                   <div className="text-right ml-4">
                     <p className="font-bold text-foreground">
-                      {pkg.price === 0 ? 'Free' : `${pkg.currency} ${pkg.price.toLocaleString()}`}
+                      {getPackagePrice(pkg)}
                     </p>
-                    <p className="text-xs text-muted-foreground">per {pkg.billing_period}</p>
+                    <p className="text-xs text-muted-foreground">per {pkg.billing_period || 'monthly'}</p>
                   </div>
                 </div>
 

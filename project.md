@@ -2,6 +2,89 @@
 
 ## Recent Changes
 
+### 2025-10-11 - Fixed PackageChangeModal toLocaleString Error (COMPLETED)
+**Critical Fix**: Resolved toLocaleString error in Change Package modal caused by API response data structure mismatch.
+
+#### ✅ Issue Fixed
+
+**PackageChangeModal toLocaleString Error (CRITICAL)**
+- **Problem**: Clicking "Change Package" button on user detail page caused "Cannot read property 'toLocaleString' of undefined" error
+- **Root Cause**: 
+  - API response from `/api/v1/admin/packages` returns nested `pricing_tiers` structure
+  - Frontend component expected flat `price` field that doesn't exist in API response
+  - Accessed `pkg.price.toLocaleString()` on undefined value causing crash
+  - API structure: `pricing_tiers.monthly.IDR.promo_price` vs Frontend expected: `pkg.price`
+- **Solution**: 
+  - Updated Package interface to match actual API response structure with `pricing_tiers`
+  - Created `getPackagePrice()` helper function to safely extract price from nested structure
+  - Added defensive checks for null/undefined before calling toLocaleString()
+  - Helper function returns 'Free' for missing/zero/null pricing data
+  - Applied fix to both PackageChangeModal.tsx and useUserData.ts for consistency
+
+#### ✅ Files Modified
+
+**app/backend/admin/users/[id]/components/PackageChangeModal.tsx**
+- Lines 5-26: Updated Package interface to include `pricing_tiers` instead of flat `price` field
+- Lines 49-66: Added `getPackagePrice()` helper function with proper null/undefined handling
+- Line 124: Changed direct price access to use `getPackagePrice(pkg)` helper
+- Line 126: Added fallback for `billing_period` display
+
+**app/backend/admin/users/[id]/hooks/useUserData.ts**
+- Lines 76-97: Updated Package interface to match API response structure
+
+#### ✅ Technical Details
+
+**API Response Structure**:
+```json
+{
+  "currency": "IDR",
+  "billing_period": "monthly",
+  "pricing_tiers": {
+    "monthly": {
+      "IDR": {
+        "promo_price": 25000,
+        "regular_price": 50000,
+        "period_label": "Monthly"
+      }
+    }
+  }
+}
+```
+
+**Price Extraction Logic**:
+```typescript
+const getPackagePrice = (pkg: Package): string => {
+  const billingPeriod = pkg.billing_period || 'monthly'
+  const currency = pkg.currency || 'IDR'
+  const tierPricing = pkg.pricing_tiers?.[billingPeriod]?.[currency]
+  
+  if (!tierPricing) return 'Free'
+  
+  const price = tierPricing.promo_price ?? tierPricing.regular_price
+  if (price === null || price === undefined || price === 0) return 'Free'
+  
+  return `${currency} ${price.toLocaleString()}`
+}
+```
+
+**Defense Layers**:
+1. Optional chaining for safe nested access: `pricing_tiers?.[billingPeriod]?.[currency]`
+2. Null check before accessing tierPricing
+3. Nullish coalescing for price extraction: `promo_price ?? regular_price`
+4. Triple condition check: `null || undefined || 0` returns 'Free'
+5. Only call toLocaleString() after confirming price is valid number
+
+#### ✅ Testing Verification
+- ✅ Change Package modal opens without errors
+- ✅ All package prices display correctly (Basic, Premium, Pro)
+- ✅ Handles missing pricing_tiers gracefully (shows "Free")
+- ✅ No toLocaleString errors when clicking Change Package
+- ✅ Package interface consistent across components
+
+**Status**: PackageChangeModal toLocaleString Error **100% FIXED** - Modal displays pricing correctly with proper null handling.
+
+---
+
 ### 2025-10-11 - Frontend Bug Fixes for API Response Format Changes (COMPLETED)
 **Critical Fix**: Resolved frontend rendering issues caused by Phase 2 API response standardization. Fixed order detail page data access, PackageSubscriptionCard toLocaleString errors, and created missing error detail page.
 
