@@ -1,6 +1,22 @@
 # IndexNow Studio - Project Setup
 
 ## Recent Changes
+- **[x] Oct 11, 2025**: Fixed ALL API response format mismatches in backend/admin dashboard after implementing secureWrapper and global error handling:
+  - **Root Cause**: APIs now return standardized `{success: true, data: T, timestamp: string}` format via formatSuccess() wrapper
+  - **Impact**: Frontend components were accessing `data.stats` instead of `data.data.stats` causing undefined errors
+  - **Fixed 11 files** with systematic data access updates using optional chaining:
+    1. Dashboard page: `data.stats` → `data.data?.stats`
+    2. Users page: `data.users` → `data.data?.users`
+    3. Packages Settings: `data.packages` → `data.data?.packages`
+    4. Payments Settings: `data.gateways` → `data.data?.gateways`
+    5. Site Settings: `data.settings` → `data.data?.settings`
+    6. Activity page: `data.logs` → `data.data?.logs`, `data.pagination` → `data.data?.pagination`
+    7. Orders page: `setOrdersData(data)` → `setOrdersData(data.data)`
+    8. SystemIntegration component: 3 API calls fixed for serviceAccounts, quotaUsage, apiStats
+    9. useUserData hook: 4 API calls fixed for user, activityLogs, securityData, availablePackages
+    10. CMS Posts page: `data.posts` → `data.data?.posts`
+    11. CMS Edit Post page: `data.post` → `data.data?.post`
+  - **Result**: All backend/admin pages now correctly access wrapped API responses, eliminating undefined errors
 - **[x] Oct 10, 2025** (FINAL FIX): Resolved toLocaleString error after 4 attempts with comprehensive root cause analysis:
   - **Root Cause 1**: Double-nesting inconsistency - `allDomainKeywordsData` default return was `{ data: { data: [] } }` instead of `{ data: [], pagination: {...} }`
   - **Root Cause 2**: Missing type-safety check - `pagination.total` could be undefined even with fallback object

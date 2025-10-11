@@ -73,7 +73,7 @@ export default function PackageManagement() {
       })
       if (response.ok) {
         const data = await response.json()
-        setPackages(data.packages || [])
+        setPackages(data.data?.packages || [])
       }
     } catch (error) {
       console.error('Failed to fetch packages:', error)

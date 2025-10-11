@@ -62,7 +62,7 @@ export default function AdminDashboard() {
       
       if (response.ok) {
         const data = await response.json()
-        setStats(data.stats)
+        setStats(data.data?.stats)
         // Log stats refresh if this is a manual refresh
         if (stats !== null) {
           logStatsRefresh()

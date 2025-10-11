@@ -110,7 +110,7 @@ export function useUserData(userId: string): UseUserDataReturn {
       })
       if (response.ok) {
         const data = await response.json()
-        setUser(data.user)
+        setUser(data.data?.user)
       }
     } catch (error) {
       console.error('Failed to fetch user:', error)
@@ -127,7 +127,7 @@ export function useUserData(userId: string): UseUserDataReturn {
       })
       if (response.ok) {
         const data = await response.json()
-        setActivityLogs(data.logs || [])
+        setActivityLogs(data.data?.logs || [])
       }
     } catch (error) {
       console.error('Failed to fetch user activity:', error)
@@ -144,7 +144,7 @@ export function useUserData(userId: string): UseUserDataReturn {
       })
       if (response.ok) {
         const data = await response.json()
-        setSecurityData(data.security)
+        setSecurityData(data.data?.security)
       }
     } catch (error) {
       console.error('Failed to fetch user security data:', error)
@@ -160,7 +160,7 @@ export function useUserData(userId: string): UseUserDataReturn {
       })
       if (response.ok) {
         const data = await response.json()
-        setAvailablePackages(data.packages || [])
+        setAvailablePackages(data.data?.packages || [])
       }
     } catch (error) {
       console.error('Failed to fetch packages:', error)

@@ -56,7 +56,7 @@ export default function CMSPosts() {
       })
       if (response.ok) {
         const data = await response.json()
-        setPosts(data.posts || [])
+        setPosts(data.data?.posts || [])
       }
     } catch (error) {
       console.error('Failed to fetch posts:', error)

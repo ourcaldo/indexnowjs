@@ -67,7 +67,7 @@ export default function UserManagement() {
       })
       if (response.ok) {
         const data = await response.json()
-        setUsers(data.users || [])
+        setUsers(data.data?.users || [])
       }
     } catch (error) {
       console.error('Failed to fetch users:', error)

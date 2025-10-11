@@ -136,7 +136,7 @@ export default function AdminOrdersPage() {
 
       const data = await response.json()
       if (data.success) {
-        setOrdersData(data)
+        setOrdersData(data.data)
       } else {
         throw new Error(data.error || 'Failed to fetch orders')
       }

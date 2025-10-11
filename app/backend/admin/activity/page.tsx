@@ -103,8 +103,8 @@ export default function ActivityLogsPage() {
       }
 
       const data = await response.json()
-      setLogs(data.logs || [])
-      setPagination(data.pagination || {})
+      setLogs(data.data?.logs || [])
+      setPagination(data.data?.pagination || {})
     } catch (err: any) {
       setError(err.message)
     } finally {

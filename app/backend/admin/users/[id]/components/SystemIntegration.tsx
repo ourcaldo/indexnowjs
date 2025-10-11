@@ -72,7 +72,7 @@ export function SystemIntegration({ userId, systemLoading }: SystemIntegrationPr
       
       if (accountsResponse.ok) {
         const accountsData = await accountsResponse.json()
-        setServiceAccounts(accountsData.serviceAccounts || [])
+        setServiceAccounts(accountsData.data?.serviceAccounts || [])
       }
 
       // Fetch quota usage
@@ -82,7 +82,7 @@ export function SystemIntegration({ userId, systemLoading }: SystemIntegrationPr
       
       if (quotaResponse.ok) {
         const quotaData = await quotaResponse.json()
-        setQuotaUsage(quotaData.usage || [])
+        setQuotaUsage(quotaData.data?.usage || [])
       }
 
       // Fetch API call statistics
@@ -92,7 +92,7 @@ export function SystemIntegration({ userId, systemLoading }: SystemIntegrationPr
       
       if (statsResponse.ok) {
         const statsData = await statsResponse.json()
-        setApiStats(statsData.stats || null)
+        setApiStats(statsData.data?.stats || null)
       }
 
     } catch (error) {

@@ -44,7 +44,7 @@ export default function PaymentGateways() {
       })
       if (response.ok) {
         const data = await response.json()
-        setGateways(data.gateways || [])
+        setGateways(data.data?.gateways || [])
       }
     } catch (error) {
       console.error('Failed to fetch payment gateways:', error)

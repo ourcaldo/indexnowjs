@@ -34,7 +34,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
         }
 
         const data = await response.json()
-        setPostData(data.post)
+        setPostData(data.data?.post)
       } catch (error) {
         console.error('Fetch post error:', error)
         setError(error instanceof Error ? error.message : 'Failed to fetch post')
