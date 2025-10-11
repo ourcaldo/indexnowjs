@@ -1728,6 +1728,136 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### Backend Login Role Check Fix - Super Admin Access Control (October 11, 2025, 20:00 UTC)
+**Authentication Bug Fix**: Fixed backend subdomain login flow to properly validate super_admin role and show appropriate error messages instead of redirecting non-super_admin users to dashboard subdomain.
+
+#### ✅ Issues Identified - Root Cause Analysis
+
+**Problem 1: Inconsistent Role Requirements**
+- **Middleware**: Backend subdomain middleware checked for 'admin' role (allows both admin and super_admin)
+- **Layout**: Backend layout component required 'super_admin' role specifically
+- **Login**: Backend login page checked for both 'admin' OR 'super_admin' roles
+- **Impact**: Role hierarchy inconsistency caused confusion and improper access control
+
+**Problem 2: Improper Redirect Behavior**
+- **Issue**: Non-super_admin users attempting to access backend were silently redirected without explanation
+- **Expected**: Show clear error message with action options (Sign Out, Go to Dashboard)
+- **Impact**: Poor user experience - users didn't understand why they couldn't access backend
+
+**Problem 3: Login Success Redirect**
+- **Issue**: Users with 'admin' role could authenticate successfully but would then be redirected away
+- **Root Cause**: Login page accepted 'admin' role but layout required 'super_admin'
+- **Impact**: Authentication succeeded but access was denied - confusing user flow
+
+#### ✅ Fixes Implemented
+
+**1. Backend Login Role Validation (`app/backend/admin/login/page.tsx`)**
+- **Before**: Checked `!roleData.isAdmin && !roleData.isSuperAdmin` (allowed both admin and super_admin)
+- **After**: Checks `!roleData.isSuperAdmin` (only allows super_admin)
+- **Error Message**: "Access denied: Super Admin privileges required. This area is restricted to Super Admins only."
+- **Behavior**: Sign out user immediately if not super_admin, preventing redirect loop
+
+**2. Backend Layout Error Page (`app/backend/admin/layout.tsx`)**
+- **Before**: Redirected non-super_admin users to `/backend/admin/login` using `router.push()`
+- **After**: Shows dedicated error page with clear messaging
+- **Features**:
+  - ✅ Shield icon with destructive/10 background color
+  - ✅ Clear "Access Denied" heading
+  - ✅ Explanatory message: "This area is restricted to Super Admin users only"
+  - ✅ Two action buttons:
+    - "Sign Out" - Clears session and returns to login
+    - "Go to Dashboard" - Navigates to user dashboard subdomain
+- **Benefits**: Users understand why they can't access backend and have clear next steps
+
+**3. Middleware Role Consistency (`middleware.ts`)**
+- **Before**: Line 392 checked `!hasRequiredAccess(authResult.role, 'admin')` (accepted admin or super_admin)
+- **After**: Checks `!hasRequiredAccess(authResult.role, 'super_admin')` (only super_admin)
+- **Comment**: Added clarifying comment "Backend admin authentication protection (requires super_admin role)"
+
+**4. Admin Middleware Consistency (`app/backend/admin/middleware.ts`)**
+- **Before**: Line 98 checked `profile.role !== 'admin' && profile.role !== 'super_admin'`
+- **After**: Checks `profile.role !== 'super_admin'`
+- **Logging**: Updated required role in logs from 'admin' to 'super_admin'
+- **Message**: Updated log message to clarify "super_admin required"
+
+#### ✅ Technical Implementation Details
+
+**Role Check Logic Flow**:
+```typescript
+// Login Page (BEFORE redirect)
+if (!roleData.isSuperAdmin) {
+  await supabase.auth.signOut()
+  throw new Error('Access denied: Super Admin privileges required...')
+}
+
+// Layout (AFTER authentication)
+if (!user) {
+  router.push('/backend/admin/login') // No auth → login
+} else if (!user.isSuperAdmin) {
+  setHasInsufficientRole(true) // Auth but wrong role → error page
+} else {
+  setAdminUser(user) // Correct role → allow access
+}
+```
+
+**Error Page Component**:
+```typescript
+if (hasInsufficientRole) {
+  return (
+    <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-background rounded-lg border border-border p-8 text-center">
+        {/* Shield icon + Access Denied message */}
+        {/* Sign Out button + Go to Dashboard button */}
+      </div>
+    </div>
+  )
+}
+```
+
+#### ✅ User Flow Improvements
+
+**Before (Broken Flow)**:
+1. User logs into `backend.domain.com/login` with 'admin' role
+2. Login succeeds (accepts admin OR super_admin)
+3. Redirects to `/backend/admin`
+4. Layout checks role → NOT super_admin
+5. Silently redirects to `/backend/admin/login` (redirect loop potential)
+
+**After (Fixed Flow)**:
+1. User logs into `backend.domain.com/login` with 'admin' role
+2. Login checks role → NOT super_admin
+3. Signs out user immediately
+4. Shows error: "Access denied: Super Admin privileges required..."
+5. User understands they need super_admin role
+
+**Alternative Flow (Already Logged In)**:
+1. User with 'admin' role visits `backend.domain.com`
+2. Middleware checks role → NOT super_admin → redirects to login
+3. User is already logged in → Layout checks role → NOT super_admin
+4. Shows error page with clear message and action buttons
+5. User can either sign out or go to dashboard
+
+#### ✅ Security Impact
+
+**Role Hierarchy Enforcement**:
+- ✅ Backend subdomain now consistently requires super_admin role across all layers
+- ✅ No role confusion between admin and super_admin permissions
+- ✅ Login page validates role BEFORE setting session cookies
+- ✅ Middleware and layout both enforce super_admin requirement
+
+**Audit Trail**:
+- ✅ Failed login attempts logged with "super_admin required" message
+- ✅ Rate limiting applies to failed super_admin access attempts
+- ✅ Security logs show attempted role in unauthorized access warnings
+
+#### ✅ Files Modified
+1. `app/backend/admin/login/page.tsx` - Updated role check to require super_admin only
+2. `app/backend/admin/layout.tsx` - Added error page component for insufficient role
+3. `middleware.ts` - Updated backend subdomain check to require super_admin
+4. `app/backend/admin/middleware.ts` - Updated role check and logging for super_admin
+
+**Status**: Backend Login Role Check Fix **COMPLETED** - All role validation now consistently requires super_admin, with proper error messaging and user-friendly flow.
+
 ### Billing Package Checkout Fix - Service Role Operation Parameter Error (October 11, 2025, 19:30 UTC)
 **Critical Bug Fix**: Fixed persistent checkout errors with two distinct root causes - undefined database parameter and incorrect userId handling in public package endpoint.
 
