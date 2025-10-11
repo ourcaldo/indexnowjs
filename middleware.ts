@@ -23,20 +23,21 @@ function getSubdomain(request: NextRequest): string | null {
 
 function getSubdomainRewrite(subdomain: string, pathname: string): string | null {
   // Exempt auth pages from subdomain rewriting to prevent login redirect loops
+  // Only exempt for dashboard subdomain - backend needs rewrites for its own login
   const authPages = ['/login', '/register', '/auth/', '/resend-verification']
-  const isAuthPage = authPages.some(page => pathname.startsWith(page))
+  const isDashboardAuthPage = subdomain === 'dashboard' && authPages.some(page => pathname.startsWith(page))
   
   switch (subdomain) {
     case 'dashboard':
       // Rewrite dashboard.domain.com/xyz to /dashboard/xyz
       if (pathname.startsWith('/dashboard')) return null // Already correct
-      if (isAuthPage) return null // Don't rewrite auth pages
+      if (isDashboardAuthPage) return null // Don't rewrite dashboard auth pages
       return `/dashboard${pathname === '/' ? '' : pathname}`
       
     case 'backend':
       // Rewrite backend.domain.com/xyz to /backend/admin/xyz
       if (pathname.startsWith('/backend/admin')) return null // Already correct
-      if (isAuthPage) return null // Don't rewrite auth pages
+      // Always rewrite on backend subdomain (including /login → /backend/admin/login)
       return `/backend/admin${pathname === '/' ? '' : pathname}`
       
     case 'api':
@@ -372,10 +373,11 @@ export async function middleware(request: NextRequest) {
   
   // STEP 2: Handle authentication checks BEFORE rewrites (anti-loop pattern)
   const authPages = ['/login', '/register', '/auth/', '/resend-verification']
-  const isAuthPage = authPages.some(page => pathname.startsWith(page))
+  const isDashboardAuthPage = subdomain === 'dashboard' && authPages.some(page => pathname.startsWith(page))
+  const isBackendAuthPage = subdomain === 'backend' && authPages.some(page => pathname.startsWith(page))
   
   // Dashboard authentication protection
-  if (subdomain === 'dashboard' && !isAuthPage) {
+  if (subdomain === 'dashboard' && !isDashboardAuthPage) {
     const authResult = await checkUserAuthentication(request, '/dashboard')
     if (!authResult) {
       const loginUrl = new URL('/login', request.url)
@@ -384,10 +386,11 @@ export async function middleware(request: NextRequest) {
   }
   
   // Backend admin authentication protection (requires super_admin role)
-  if (subdomain === 'backend' && !isAuthPage && pathname !== '/backend/admin/login') {
+  if (subdomain === 'backend' && !isBackendAuthPage) {
     const authResult = await checkUserAuthentication(request, '/backend/admin')
     if (!authResult || !hasRequiredAccess(authResult.role, 'super_admin')) {
-      const loginUrl = new URL('/backend/admin/login', request.url)
+      // Redirect to /login on backend subdomain (will be rewritten to /backend/admin/login internally)
+      const loginUrl = new URL('/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
   }

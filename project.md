@@ -2,17 +2,27 @@
 
 ## Recent Changes
 
-### 2025-10-11 - Backend Admin Authentication Flow Fixes (COMPLETED)
-**Critical Fix**: Resolved backend admin login redirect issues and improved authentication flow to prevent unwanted dashboard redirects for super_admin users.
+### 2025-10-11 - Backend Admin Authentication Flow Fixes (COMPLETED - FINAL)
+**Critical Fix**: Resolved all backend admin login redirect issues. Fixed middleware to properly redirect unauthenticated users to backend.domain.com/login instead of dashboard.domain.com/login.
 
 #### ✅ Issues Fixed
 
-**1. Backend Admin Login Redirect Loop**
+**1. Middleware Redirect Bug (CRITICAL FIX)**
+- **Problem**: Visiting `backend.domain.com` without login redirected to `dashboard.domain.com/login` instead of `backend.domain.com/login`
+- **Root Cause**: 
+  - Middleware redirected to `/backend/admin/login` which doesn't exist on backend subdomain
+  - Auth page exemption prevented `/login` from being rewritten to `/backend/admin/login` on backend subdomain
+- **Solution**: 
+  - Changed redirect to `/login` on backend subdomain
+  - Fixed rewrite logic to only exempt dashboard auth pages, allowing backend `/login` → `/backend/admin/login` rewrite
+  - Updated auth page detection to be subdomain-specific (`isDashboardAuthPage`, `isBackendAuthPage`)
+
+**2. Backend Admin Login Redirect Loop**
 - **Problem**: Super admin users logging in via backend.domain.com/login were being redirected to dashboard.domain.com instead of staying on backend admin
 - **Root Cause**: Login page used `window.location.href = '/backend/admin'` which could trigger competing auth redirects
 - **Solution**: Changed to `router.replace('/backend/admin')` to use Next.js router for cleaner navigation
 
-**2. Already Logged-in User Handling**
+**3. Already Logged-in User Handling**
 - **Problem**: Admin login page had no check for already-authenticated users, unlike regular login page
 - **Root Cause**: Missing useEffect auth check on page load
 - **Solution**: Added authentication check that:
@@ -22,7 +32,7 @@
   - Shows error message if authenticated but not super_admin
   - Shows login form only if not authenticated
 
-**3. Insufficient Role Message Enhancement**
+**4. Insufficient Role Message Enhancement**
 - **Problem**: Admin layout showed "Access Denied" with "Go to Dashboard" button, creating unwanted redirect
 - **Root Cause**: Design included navigation away from error page
 - **Solution**: Updated insufficient role error to:
@@ -32,6 +42,12 @@
   - No automatic or manual redirects to dashboard
 
 #### ✅ Files Modified
+
+**middleware.ts** (CRITICAL FIX)
+- Fixed backend authentication redirect: now redirects to `/login` on backend subdomain instead of `/backend/admin/login`
+- Fixed rewrite logic: only exempts dashboard auth pages from rewriting, allows backend `/login` → `/backend/admin/login`
+- Updated auth page detection to be subdomain-specific using `isDashboardAuthPage` and `isBackendAuthPage`
+- Changed backend auth check from `pathname !== '/backend/admin/login'` to `pathname !== '/login'`
 
 **app/backend/admin/login/page.tsx**
 - Added `isCheckingAuth` state and useEffect for existing auth verification
@@ -50,15 +66,22 @@
 
 #### ✅ Authentication Flow (After Fix)
 
+**Unauthenticated User Visits Backend**:
+1. User visits `backend.domain.com` (not logged in)
+2. Middleware detects: subdomain='backend', pathname='/', no auth
+3. Redirects to `backend.domain.com/login` 
+4. Middleware rewrites `/login` → `/backend/admin/login` internally
+5. Login page at `/backend/admin/login/page.tsx` renders
+6. ✅ **User stays on backend.domain.com** (no dashboard redirect)
+
 **Super Admin Login Flow**:
-1. User visits backend.domain.com → redirected to backend.domain.com/login (by middleware)
-2. Login page checks existing auth → if already logged in and super_admin, redirect to /backend/admin
-3. If not logged in, show login form
-4. User submits credentials
-5. Verify super_admin role via API
-6. Set session via API
-7. Redirect to /backend/admin using Next.js router (no window.location)
-8. Admin layout verifies super_admin role → show admin dashboard
+1. User on `backend.domain.com/login` → login page checks existing auth
+2. If already logged in and super_admin → auto-redirect to `/backend/admin`
+3. If not logged in → show login form
+4. User submits credentials → verify super_admin role via API
+5. Set session via API → redirect to `/backend/admin` using Next.js router
+6. Admin layout verifies super_admin role → show admin dashboard
+7. ✅ **User stays on backend.domain.com throughout**
 
 **Non-Super Admin Flow**:
 1. User logs in successfully
@@ -67,9 +90,9 @@
 4. User can only sign out (no dashboard redirect button)
 
 **Already Logged-in Super Admin**:
-1. Visit backend.domain.com/login
+1. Visit `backend.domain.com/login`
 2. Page detects existing auth + super_admin role
-3. Automatically redirect to /backend/admin
+3. Automatically redirect to `/backend/admin`
 4. No login form shown
 
 #### ✅ Key Improvements
