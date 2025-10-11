@@ -243,7 +243,11 @@ async function checkUserAuthentication(request: NextRequest, effectivePath: stri
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error) {
+      // Critical: Detect refresh token errors and return null to trigger redirect
+      // This prevents infinite retry loops by stopping auth checks immediately
       if (AuthErrorHandler.isRefreshTokenError(error)) {
+        // Sign out to clear local session state in Supabase client
+        await supabase.auth.signOut({ scope: 'local' })
         return null
       }
       return null
@@ -390,7 +394,17 @@ export async function middleware(request: NextRequest) {
     const authResult = await checkUserAuthentication(request, '/dashboard')
     if (!authResult) {
       const loginUrl = new URL('/login', request.url)
-      return NextResponse.redirect(loginUrl)
+      const response = NextResponse.redirect(loginUrl)
+      
+      // Clear all Supabase auth cookies to prevent retry loops
+      const cookiesToClear = request.cookies.getAll().filter(cookie => 
+        cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+      )
+      cookiesToClear.forEach(cookie => {
+        response.cookies.delete(cookie.name)
+      })
+      
+      return response
     }
   }
   
@@ -400,7 +414,17 @@ export async function middleware(request: NextRequest) {
     if (!authResult || !hasRequiredAccess(authResult.role, 'super_admin')) {
       // Redirect to /login on backend subdomain (will be rewritten to /backend/admin/login internally)
       const loginUrl = new URL('/login', request.url)
-      return NextResponse.redirect(loginUrl)
+      const response = NextResponse.redirect(loginUrl)
+      
+      // Clear all Supabase auth cookies to prevent retry loops
+      const cookiesToClear = request.cookies.getAll().filter(cookie => 
+        cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+      )
+      cookiesToClear.forEach(cookie => {
+        response.cookies.delete(cookie.name)
+      })
+      
+      return response
     }
   }
   
@@ -478,14 +502,34 @@ export async function middleware(request: NextRequest) {
   if (!authResult) {
     // No authentication - redirect to appropriate login
     const redirectUrl = new URL(protection.redirect, request.url)
-    return NextResponse.redirect(redirectUrl)
+    const response = NextResponse.redirect(redirectUrl)
+    
+    // Clear all Supabase auth cookies to prevent retry loops
+    const cookiesToClear = request.cookies.getAll().filter(cookie => 
+      cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+    )
+    cookiesToClear.forEach(cookie => {
+      response.cookies.delete(cookie.name)
+    })
+    
+    return response
   }
 
   // Check if user has required access level
   if (!hasRequiredAccess(authResult.role, protection.authLevel)) {
     // Insufficient privileges - redirect to appropriate login
     const redirectUrl = new URL(protection.redirect, request.url)
-    return NextResponse.redirect(redirectUrl)
+    const response = NextResponse.redirect(redirectUrl)
+    
+    // Clear all Supabase auth cookies to prevent retry loops
+    const cookiesToClear = request.cookies.getAll().filter(cookie => 
+      cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+    )
+    cookiesToClear.forEach(cookie => {
+      response.cookies.delete(cookie.name)
+    })
+    
+    return response
   }
 
   // User is authenticated and has required access level
