@@ -80,10 +80,37 @@ const nextConfig = {
           },
           // NOTE: All CORS headers now handled exclusively in middleware.ts for dynamic behavior
           // ENHANCEMENT #3: Advanced Security Headers
-          // Content Security Policy (CSP) - Analytics-enabled settings
+          // Content Security Policy (CSP) - Flexible settings for external assets
           {
             key: 'Content-Security-Policy',
-            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://tagmanager.google.com https://cdn.customer.io https://assets.customer.io https://app.posthog.com https://browser.sentry-cdn.com https://api.midtrans.com https://app.sandbox.midtrans.com https://app.midtrans.com; style-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://tagmanager.google.com https://fonts.googleapis.com; img-src 'self' data: https: blob: https://www.googletagmanager.com https://www.google-analytics.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: ws: http://localhost:5000 http://0.0.0.0:5000 https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://region1.analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com https://tagmanager.google.com https://track.customer.io https://app.posthog.com https://us.i.posthog.com https://eu.i.posthog.com https://o4507902913044480.ingest.us.sentry.io https://o4507902913044480.ingest.sentry.io https://api.midtrans.com https://app.sandbox.midtrans.com https://app.midtrans.com ${process.env.NEXT_PUBLIC_BASE_URL || ''} ${process.env.NEXT_PUBLIC_DASHBOARD_URL || ''} ${process.env.NEXT_PUBLIC_BACKEND_URL || ''} ${process.env.NEXT_PUBLIC_API_BASE_URL || ''}; frame-src 'self' https://api.midtrans.com https://app.sandbox.midtrans.com https://app.midtrans.com; worker-src 'self' blob:; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';`
+            value: `
+              default-src * data: blob: ws: wss:;
+              script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+              style-src 'self' 'unsafe-inline' https:;
+              img-src * data: blob:;
+              font-src * data:;
+              connect-src *;
+              frame-src *;
+              media-src *;
+              object-src 'none';
+              base-uri 'self';
+              form-action 'self';
+              report-uri https://o4510101498953728.ingest.us.sentry.io/api/4510135644979200/security/?sentry_key=f9ce6d46522bc4d89c17750fb24cf76a;
+              report-to csp-endpoint;
+            `.replace(/\s{2,}/g, ' ').trim(),
+          },
+          // CSP Violation Reporting Configuration
+          {
+            key: 'Report-To',
+            value: JSON.stringify({
+              group: 'csp-endpoint',
+              max_age: 10886400,
+              endpoints: [
+                {
+                  url: 'https://o4510101498953728.ingest.us.sentry.io/api/4510135644979200/security/?sentry_key=f9ce6d46522bc4d89c17750fb24cf76a',
+                },
+              ],
+            }),
           },
           // HTTP Strict Transport Security (HSTS) - Disabled for development behavior
           // (Removed production-only logic)

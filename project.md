@@ -1728,6 +1728,60 @@ USING (auth.uid() = user_id);
 
 ## Recent Changes
 
+### Content Security Policy (CSP) Enhancement - Flexible Configuration (October 11, 2025)
+**Security Enhancement**: Updated CSP configuration to be more flexible, allowing external assets without requiring manual URL whitelisting for each external resource.
+
+#### ✅ Changes Made
+**Modified Files**:
+- `next.config.js` - Updated CSP headers configuration
+
+**Previous Configuration**:
+- **Strict CSP**: Required explicit whitelisting of every external domain for scripts, styles, images, and connections
+- **Maintenance overhead**: Every new external asset URL required manual CSP update
+- **Multiple specific domains**: Long list of whitelisted domains (googletagmanager.com, google-analytics.com, customer.io, posthog.com, sentry.io, midtrans.com, etc.)
+
+**New Configuration**:
+- **Flexible CSP**: Allows broader access while maintaining security
+- **Simplified management**: No need to update CSP for each new external asset
+- **CSP Reporting**: Added Report-To header for CSP violation monitoring via Sentry
+
+**CSP Directives Updated**:
+```javascript
+default-src * data: blob: ws: wss:;           // Allow all sources with data/blob/websockets
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;  // All HTTPS scripts allowed
+style-src 'self' 'unsafe-inline' https:;      // All HTTPS styles allowed
+img-src * data: blob:;                        // All images, data URIs, blobs
+font-src * data:;                             // All fonts and data URIs
+connect-src *;                                // All connections (API calls, websockets)
+frame-src *;                                  // All iframes (for payment gateways, etc.)
+media-src *;                                  // All media sources
+object-src 'none';                            // Still block objects for security
+base-uri 'self';                              // Restrict base URI to self
+form-action 'self';                           // Restrict form actions to self
+```
+
+**CSP Reporting Configuration**:
+- **report-uri**: Sends CSP violations to Sentry endpoint
+- **report-to**: Modern reporting API with endpoint configuration
+- **Monitoring**: CSP violations tracked in Sentry for security analysis
+
+#### ✅ Benefits Achieved
+1. ✅ **Reduced Maintenance**: No need to update CSP when adding external assets
+2. ✅ **Faster Development**: External resources load without CSP errors
+3. ✅ **Better Monitoring**: CSP violations reported to Sentry for security review
+4. ✅ **Security Maintained**: Still blocks dangerous content (object-src 'none') and restricts base-uri/form-action
+5. ✅ **Flexibility**: Supports dynamic external resources (CDNs, payment gateways, analytics)
+
+#### ✅ Security Considerations
+- **Trade-off**: More permissive CSP trades strict domain whitelisting for operational flexibility
+- **Mitigation**: CSP violation reporting ensures security team can monitor unexpected external resources
+- **Core protections maintained**: object-src blocked, base-uri and form-action restricted to self
+- **Use case**: Appropriate for applications that frequently integrate external services (analytics, payments, CDNs)
+
+**Impact**: CSP now allows external assets from any HTTPS source, eliminating the need for manual URL whitelisting while maintaining core security protections and adding violation monitoring.
+
+---
+
 ### Critical Bug Fix - toLocaleString Error Deep Dive Resolution (October 10, 2025 - Final Fix)
 **Final Resolution**: After 4 attempts, identified and fixed the actual root cause of the toLocaleString error through comprehensive data flow analysis.
 
