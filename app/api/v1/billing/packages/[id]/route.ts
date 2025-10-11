@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { publicApiWrapper } from '@/lib/core/api-response-middleware'
 import { formatSuccess, formatError } from '@/lib/core/api-response-formatter'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
+import { supabaseAdmin } from '@/lib/database'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
@@ -24,7 +25,7 @@ export const GET = publicApiWrapper(async (request: NextRequest, context?: { par
     return formatError(error)
   }
 
-  // Create user's authenticated Supabase client for logging purposes
+  // Get user context for optional audit tracking (public endpoint, no auth required)
   const cookieStore = await cookies()
   const userSupabaseClient = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,29 +45,28 @@ export const GET = publicApiWrapper(async (request: NextRequest, context?: { par
     }
   )
 
-  // Get user context for audit logging (optional for public package data)
   const { data: { user } } = await userSupabaseClient.auth.getUser()
-  const userId = user?.id || 'anonymous'
 
-  // Get package details using SecureWrapper 
-  // Use executeSecureOperation instead of executeWithUserSession since this is public data
+  // Get package details using SecureWrapper
+  // Use 'system' userId for public operations (package viewing is public)
   const packageData = await SecureServiceRoleWrapper.executeSecureOperation(
     {
-      userId,
-      operation: 'get_package_details',
+      userId: 'system',
+      operation: 'public_get_package_details',
       source: 'billing/packages',
-      reason: 'User viewing package details for purchase consideration',
+      reason: 'Public API fetching package details for display and checkout',
       metadata: {
         packageId,
         endpoint: '/api/v1/billing/packages/[id]',
-        method: 'GET'
+        method: 'GET',
+        requestingUserId: user?.id || 'anonymous'
       },
       ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
       userAgent: request.headers.get('user-agent') || undefined
     },
     { table: 'indb_payment_packages', operationType: 'select' },
-    async (db) => {
-      const { data: packageData, error } = await db
+    async () => {
+      const { data: packageData, error } = await supabaseAdmin
         .from('indb_payment_packages')
         .select('*')
         .eq('id', packageId)
@@ -87,10 +87,10 @@ export const GET = publicApiWrapper(async (request: NextRequest, context?: { par
       'Resource not available',
       {
         severity: ErrorSeverity.LOW,
-        userId,
+        userId: user?.id,
         endpoint: '/api/v1/billing/packages/[id]',
         statusCode: 404,
-        metadata: { packageId }
+        metadata: { packageId, requestingUser: user?.id || 'anonymous' }
       }
     )
     return formatError(error)
