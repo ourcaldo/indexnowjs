@@ -2,6 +2,151 @@
 
 ## Recent Changes
 
+### 2025-10-11 - Fixed Refresh Token Error Handling (COMPLETED)
+**Critical Authentication Fix**: Implemented comprehensive error handling for `refresh_token_already_used` errors to prevent infinite refresh loops and properly clear authentication state.
+
+#### ✅ Issue Fixed
+
+**Refresh Token Already Used Error (CRITICAL)**
+- **Problem**: When refresh token becomes invalid (already used, expired, or corrupted), the Next.js app keeps making POST requests to Supabase `/auth/v1/token` endpoint, causing infinite loop
+- **Error Code**: `refresh_token_already_used` with status 400
+- **User Impact**: 
+  - Browser keeps sending failed refresh requests
+  - User stuck on page with no ability to login
+  - Auth state never clears, preventing redirect to login
+  - Session and refresh token remain in storage despite being invalid
+- **Root Cause**:
+  - Supabase client detects invalid session and tries to refresh
+  - Refresh token is already used/invalid
+  - Error not properly caught or handled
+  - Auth state (cookies, localStorage, sessionStorage) never cleared
+  - No redirect to login occurs
+
+#### ✅ Solution Implemented
+
+**1. Created Centralized AuthErrorHandler Utility** (`lib/auth/auth-error-handler.ts`)
+- Detects refresh token errors by checking error code and message
+- Clears all auth state (Supabase session, localStorage, sessionStorage)
+- Redirects to appropriate login page (admin vs user)
+- Provides reusable auth state change handler
+
+**Key Features**:
+```typescript
+// Detect refresh token errors
+static isRefreshTokenError(error: any): boolean {
+  const errorCode = error?.code || error?.error_code || error?.error?.code
+  const errorMessage = error?.message || error?.error?.message || ''
+  
+  return (
+    REFRESH_TOKEN_ERRORS.includes(errorCode) ||
+    REFRESH_TOKEN_ERRORS.some(code => errorMessage.toLowerCase().includes(code))
+  )
+}
+
+// Clear all auth state
+static async clearAuthState(): Promise<void> {
+  await supabase.auth.signOut({ scope: 'local' })
+  // Clear localStorage entries starting with 'sb-' or containing 'supabase'
+  // Clear sessionStorage entries starting with 'sb-' or containing 'supabase'
+}
+
+// Handle refresh token error
+static async handleRefreshTokenError(context: AuthErrorContext): Promise<void> {
+  await clearAuthState()
+  window.location.href = isAdminRoute ? '/backend/admin/login' : '/login'
+}
+```
+
+**2. Updated Middleware** (`middleware.ts`)
+- Added refresh token error detection in `checkUserAuthentication`
+- Returns null when refresh token error detected, triggering redirect
+- Prevents middleware from trying to use invalid session
+
+**3. Updated Admin Login Page** (`app/backend/admin/login/page.tsx`)
+- Replaced manual auth state change handler with `AuthErrorHandler.createAuthStateChangeHandler`
+- Automatically handles `TOKEN_REFRESHED`, `SIGNED_OUT`, and `USER_UPDATED` events
+- Tracks failed refresh attempts (max 3) before clearing auth state
+- Clean integration with existing auth flow
+
+**4. Updated Global AuthContext** (`lib/contexts/AuthContext.tsx`)
+- Uses `AuthErrorHandler.createAuthStateChangeHandler` for auth state management
+- Direct integration with Supabase client for proper event handling
+- Handles session updates and sign-outs with automatic cleanup
+- Maintains protected route redirect logic
+
+#### ✅ Files Modified
+
+**lib/auth/auth-error-handler.ts** (NEW FILE)
+- Lines 1-113: Complete auth error handling utility with refresh token detection, state clearing, and reusable handlers
+
+**middleware.ts**
+- Line 3: Added AuthErrorHandler import
+- Lines 248-253: Added refresh token error detection before checking user
+
+**app/backend/admin/login/page.tsx**
+- Line 16: Added AuthErrorHandler import
+- Lines 31-39: Replaced manual auth state handler with AuthErrorHandler.createAuthStateChangeHandler
+
+**lib/contexts/AuthContext.tsx**
+- Line 7: Added AuthErrorHandler import
+- Line 8: Added supabase import for direct client access
+- Lines 103-141: Replaced manual auth state change logic with AuthErrorHandler.createAuthStateChangeHandler
+
+#### ✅ Technical Implementation
+
+**Error Detection Flow**:
+```
+1. Supabase detects invalid/expired session
+2. Attempts token refresh → fails with refresh_token_already_used
+3. AuthErrorHandler.isRefreshTokenError() detects error
+4. Immediately clears all auth state (cookies, storage, session)
+5. Redirects to login page
+6. User can login fresh without old state
+```
+
+**Auth State Change Handler Pattern**:
+```typescript
+const authStateHandler = AuthErrorHandler.createAuthStateChangeHandler(
+  (session) => {
+    // Handle successful session/token refresh
+  },
+  () => {
+    // Handle sign out
+    // Clear state, redirect to login
+  }
+)
+
+supabase.auth.onAuthStateChange(authStateHandler)
+```
+
+**Supported Error Codes**:
+- `refresh_token_already_used` - Token has been used before
+- `invalid_refresh_token` - Token is invalid or malformed
+- `refresh_token_not_found` - Token doesn't exist in database
+
+#### ✅ Benefits
+
+**Security**:
+- ✅ Properly clears all auth state on invalid token
+- ✅ Prevents session fixation by forcing fresh login
+- ✅ Removes all stored credentials (cookies, localStorage, sessionStorage)
+
+**User Experience**:
+- ✅ No more infinite refresh request loops
+- ✅ Automatic redirect to login when token invalid
+- ✅ Clean slate for re-authentication
+- ✅ Works across both admin and user authentication flows
+
+**Code Quality**:
+- ✅ Centralized error handling logic
+- ✅ Reusable across all auth contexts
+- ✅ Consistent behavior in middleware, pages, and global context
+- ✅ Proper TypeScript typing with error context
+
+**Status**: Refresh Token Error Handling **COMPLETELY FIXED** - Invalid refresh tokens now properly clear auth state and redirect to login, preventing infinite loops.
+
+---
+
 ### 2025-10-11 - Removed Checking Authentication State (COMPLETED)
 **Critical UX Fix**: Completely removed "Checking authentication..." loading state that was glitching and appearing even when login form was displayed.
 
