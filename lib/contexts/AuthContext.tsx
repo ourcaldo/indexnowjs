@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { authService, AuthUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
+import { AuthErrorHandler } from '@/lib/auth/auth-error-handler'
+import { supabase } from '@/lib/database'
 
 // Global auth state to persist across route changes
 let globalAuthState: {
@@ -95,9 +97,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
 
-    // Listen for login/logout
-    const { data: { subscription } } = authService.onAuthStateChange(async (supabaseUser) => {
-      if (!supabaseUser) {
+    // Listen for login/logout with refresh token error handling
+    const authStateHandler = AuthErrorHandler.createAuthStateChangeHandler(
+      (session) => {
+        if (session?.user) {
+          const authUser: AuthUser = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name,
+            emailVerification: session.user.email_confirmed_at ? true : false,
+          }
+          setUser(authUser)
+          setLoading(false)
+          setAuthChecked(true)
+        }
+      },
+      () => {
         setUser(null)
         setLoading(false)
         setAuthChecked(true)
@@ -117,20 +132,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             router.push('/login')
           }
         }
-      } else {
-        // Convert Supabase user to AuthUser format
-        const authUser: AuthUser = {
-          id: supabaseUser.id,
-          email: supabaseUser.email,
-          name: (supabaseUser as any).user_metadata?.full_name,
-          emailVerification: (supabaseUser as any).email_confirmed_at ? true : false,
-        }
-        
-        setUser(authUser)
-        setLoading(false)
-        setAuthChecked(true)
       }
-    })
+    )
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(authStateHandler)
 
     return () => subscription?.unsubscribe();
   }, [initialized])
