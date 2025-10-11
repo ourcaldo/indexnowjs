@@ -184,7 +184,8 @@ export class SecureServiceRoleWrapper {
     }
     
     // Validate user exists and is authentic
-    if (context.userId !== 'system') {
+    // Skip validation for 'system' and 'anonymous' users
+    if (context.userId !== 'system' && context.userId !== 'anonymous') {
       try {
         const { data: authUser, error } = await supabaseAdmin.auth.admin.getUserById(context.userId)
         if (error || !authUser?.user) {
