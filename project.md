@@ -1748,13 +1748,14 @@ USING (auth.uid() = user_id);
 **CSP Directives Updated**:
 ```javascript
 default-src * data: blob: ws: wss:;           // Allow all sources with data/blob/websockets
-script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;  // All HTTPS scripts allowed
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:;  // All HTTPS scripts + blob URLs
 style-src 'self' 'unsafe-inline' https:;      // All HTTPS styles allowed
 img-src * data: blob:;                        // All images, data URIs, blobs
 font-src * data:;                             // All fonts and data URIs
 connect-src *;                                // All connections (API calls, websockets)
 frame-src *;                                  // All iframes (for payment gateways, etc.)
 media-src *;                                  // All media sources
+worker-src blob: 'self';                      // Workers from blob URLs and self
 object-src 'none';                            // Still block objects for security
 base-uri 'self';                              // Restrict base URI to self
 form-action 'self';                           // Restrict form actions to self
@@ -1764,6 +1765,12 @@ form-action 'self';                           // Restrict form actions to self
 - **report-uri**: Sends CSP violations to Sentry endpoint
 - **report-to**: Modern reporting API with endpoint configuration
 - **Monitoring**: CSP violations tracked in Sentry for security analysis
+
+**Worker Support Fix**:
+- **Issue**: Browser console error "Refused to create a worker from 'blob:...' because it violates CSP directive"
+- **Root Cause**: `worker-src` was not explicitly set, causing fallback to `script-src` which didn't allow blob: URLs
+- **Fix**: Added `worker-src blob: 'self';` directive and `blob:` to `script-src`
+- **Result**: Web Workers now function correctly with blob URLs
 
 #### ✅ Benefits Achieved
 1. ✅ **Reduced Maintenance**: No need to update CSP when adding external assets
