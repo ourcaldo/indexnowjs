@@ -370,7 +370,7 @@ export const AdminSidebar = ({ isOpen, onToggle, onCollapse, user, isCollapsed =
                 <Shield className="h-4 w-4 text-white" />
               </div>
             )}
-            <h1 className="ml-2 text-lg font-bold text-brand-primary">IndexNow</h1>
+            <h1 className="ml-2 text-lg font-bold text-brand-primary">{siteName}</h1>
           </div>
           {user && (
             <p className="text-sm text-brand-text truncate max-w-32">{user.email}</p>

@@ -38,8 +38,8 @@ export default function AdminLayout({
   const router = useRouter()
   const pathname = usePathname()
 
-  // Check if we're on the login page
-  const isLoginPage = pathname === '/backend/admin/login'
+  // Check if we're on the login page (after middleware redirect, pathname is /login not /backend/admin/login)
+  const isLoginPage = pathname === '/login'
 
   useEffect(() => {
     // Skip auth check for login page

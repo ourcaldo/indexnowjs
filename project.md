@@ -2,6 +2,88 @@
 
 ## Recent Changes
 
+### 2025-10-11 - Backend Admin UI and Authentication Fixes (COMPLETED)
+**Critical Fix**: Resolved backend admin login authentication error, sidebar visibility issue, and hardcoded site name in mobile header.
+
+#### ✅ Issues Fixed
+
+**1. Login Authentication Error (CRITICAL FIX)**
+- **Problem**: Admin users with valid `super_admin` role couldn't login. Error showed "Access denied: Super Admin privileges required" even though API confirmed `isSuperAdmin: true`
+- **Root Cause**: 
+  - Login page code accessed wrong property: `roleData.isSuperAdmin` instead of `roleData.data.isSuperAdmin`
+  - API response structure uses `formatSuccess()` which wraps data: `{ success: true, data: { isSuperAdmin: true, ... } }`
+  - Code checked flat property instead of nested `data` object
+- **Solution**: 
+  - Fixed both useEffect auth check (line 53, 58) and handleSubmit (line 115) in login page
+  - Changed `roleData.isSuperAdmin` → `roleData.data?.isSuperAdmin` with optional chaining
+  - Now correctly reads `isSuperAdmin` from nested API response structure
+
+**2. Sidebar Visibility on Login Page (UI BUG)**
+- **Problem**: Admin sidebar showed on login page when user not authenticated, breaking UI/UX
+- **Root Cause**: 
+  - Middleware redirects `backend.domain.com/backend/admin/login` → `backend.domain.com/login`
+  - Layout checked `pathname === '/backend/admin/login'` but actual pathname is `/login` after redirect
+  - Login page check failed, sidebar rendered incorrectly
+- **Solution**: 
+  - Fixed pathname check in layout: `/backend/admin/login` → `/login`
+  - Added comment explaining middleware redirect behavior
+  - Sidebar now correctly hidden on login page
+
+**3. Hardcoded Site Name in Mobile Header**
+- **Problem**: Mobile header showed hardcoded "IndexNow" instead of dynamic site name from settings
+- **Root Cause**: Line 373 in AdminSidebar used hardcoded string instead of `siteName` variable
+- **Solution**: 
+  - Changed `<h1>IndexNow</h1>` → `<h1>{siteName}</h1>`
+  - Now uses dynamic site name from `useSiteName()` hook
+  - Consistent with rest of application branding
+
+#### ✅ Files Modified
+
+**app/backend/admin/login/page.tsx**
+- Fixed API response property access in useEffect auth check (lines 53, 58)
+- Fixed API response property access in handleSubmit (line 115)
+- Changed `roleData.isSuperAdmin` → `roleData.data?.isSuperAdmin` with optional chaining
+
+**app/backend/admin/layout.tsx**
+- Fixed login page detection: `pathname === '/backend/admin/login'` → `pathname === '/login'`
+- Added comment explaining middleware redirect causes pathname to be `/login`
+
+**components/AdminSidebar.tsx**
+- Fixed hardcoded site name in mobile header (line 376)
+- Changed `<h1>IndexNow</h1>` → `<h1>{siteName}</h1>`
+
+#### ✅ Technical Details
+
+**API Response Structure** (verify-role endpoint):
+```json
+{
+  "success": true,
+  "data": {
+    "isAdmin": true,
+    "isSuperAdmin": true,
+    "role": "super_admin",
+    "name": "Aldo Dwi Kristian"
+  },
+  "timestamp": "2025-10-11T13:17:28.285Z"
+}
+```
+
+**Middleware Redirect Flow**:
+1. User visits `backend.domain.com/backend/admin/login`
+2. Middleware canonical URL cleanup redirects to `backend.domain.com/login`
+3. Middleware rewrites `/login` → `/backend/admin/login` internally
+4. Layout component sees pathname as `/login` (not `/backend/admin/login`)
+
+#### ✅ Testing Verification
+- ✅ Admin users with `super_admin` role can now login successfully
+- ✅ Sidebar hidden on login page when not authenticated
+- ✅ Mobile header displays dynamic site name instead of hardcoded "IndexNow"
+- ✅ No console errors or TypeScript issues
+
+**Status**: Backend Admin UI and Authentication **100% FIXED** - Login works correctly, sidebar visibility fixed, dynamic branding implemented.
+
+---
+
 ### 2025-10-11 - Backend Admin Authentication Flow Fixes (COMPLETED - FINAL)
 **Critical Fix**: Resolved all backend admin login redirect issues. Fixed middleware to properly redirect unauthenticated users to backend.domain.com/login instead of dashboard.domain.com/login.
 

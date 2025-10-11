@@ -47,12 +47,12 @@ export default function AdminLoginPage() {
 
         const roleData = await response.json()
 
-        if (response.ok && roleData.success && roleData.isSuperAdmin) {
+        if (response.ok && roleData.success && roleData.data?.isSuperAdmin) {
           router.replace('/backend/admin')
           return
         }
 
-        if (response.ok && roleData.success && !roleData.isSuperAdmin) {
+        if (response.ok && roleData.success && !roleData.data?.isSuperAdmin) {
           setError('Access denied: Super Admin privileges required. This area is restricted to Super Admins only.')
           setIsCheckingAuth(false)
           return
@@ -109,7 +109,7 @@ export default function AdminLoginPage() {
       }
 
       // Step 3: Verify user is SUPER ADMIN (not just admin)
-      if (!roleData.isSuperAdmin) {
+      if (!roleData.data?.isSuperAdmin) {
         await supabase.auth.signOut()
         throw new Error('Access denied: Super Admin privileges required. This area is restricted to Super Admins only.')
       }
