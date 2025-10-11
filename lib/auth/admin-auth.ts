@@ -283,7 +283,7 @@ async function getServerAdminUser(request?: NextRequest): Promise<AdminUser | nu
 
       console.log('Server auth: Profile query result via SecureWrapper:', { profile })
     } catch (error) {
-      console.log('Server auth: Failed to get user profile', error.message)
+      console.log('Server auth: Failed to get user profile', error instanceof Error ? error.message : String(error))
       return null
     }
 

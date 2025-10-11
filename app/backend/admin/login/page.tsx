@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-// import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Shield, AlertCircle } from 'lucide-react'
 import { useFavicon, useSiteName, useSiteLogo } from '@/hooks/use-site-settings'
 import { ADMIN_ENDPOINTS, AUTH_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
@@ -17,6 +16,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [error, setError] = useState('')
   const router = useRouter()
   
@@ -24,6 +24,48 @@ export default function AdminLoginPage() {
   const siteName = useSiteName()
   const logoUrl = useSiteLogo(true) // Always use full logo for admin login
   useFavicon() // Automatically updates favicon
+
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError || !user) {
+          setIsCheckingAuth(false)
+          return
+        }
+
+        const response = await fetch(ADMIN_ENDPOINTS.VERIFY_ROLE, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          },
+          body: JSON.stringify({ userId: user.id }),
+          credentials: 'include'
+        })
+
+        const roleData = await response.json()
+
+        if (response.ok && roleData.success && roleData.isSuperAdmin) {
+          router.replace('/backend/admin')
+          return
+        }
+
+        if (response.ok && roleData.success && !roleData.isSuperAdmin) {
+          setError('Access denied: Super Admin privileges required. This area is restricted to Super Admins only.')
+          setIsCheckingAuth(false)
+          return
+        }
+
+        setIsCheckingAuth(false)
+      } catch (error) {
+        setIsCheckingAuth(false)
+      }
+    }
+
+    checkExistingAuth()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,7 +114,7 @@ export default function AdminLoginPage() {
         throw new Error('Access denied: Super Admin privileges required. This area is restricted to Super Admins only.')
       }
 
-      // Step 4: Set admin session and redirect
+      // Step 4: Set admin session
       await fetch(AUTH_ENDPOINTS.SESSION, {
         method: 'POST',
         headers: {
@@ -85,10 +127,7 @@ export default function AdminLoginPage() {
         credentials: 'include'
       })
 
-      // Success - redirect to admin dashboard with a small delay to ensure session is set
-      setTimeout(() => {
-        window.location.href = '/backend/admin'
-      }, 100)
+      router.replace('/backend/admin')
       
     } catch (error: any) {
       console.error('Admin login error:', error)
@@ -96,6 +135,17 @@ export default function AdminLoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

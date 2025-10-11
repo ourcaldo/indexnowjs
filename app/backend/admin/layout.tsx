@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { adminAuthService, AdminUser } from '@/lib/auth'
+import { adminAuthService, AdminUser, authService } from '@/lib/auth'
 import { AdminSidebar } from '@/components/AdminSidebar'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { ToastContainer } from '@/components/ui/toast'
+import { Shield } from 'lucide-react'
 
 // Cookie utilities for sidebar state persistence
 const getCookie = (name: string): string | null => {
@@ -116,25 +117,25 @@ export default function AdminLayout({
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-3">
-            Access Denied
+            Insufficient Role to Access Dashboard
           </h1>
           <p className="text-muted-foreground mb-6">
-            This area is restricted to Super Admin users only. Your account does not have sufficient privileges to access the backend administration panel.
+            This backend administration panel is restricted to Super Admin users only. Your current account role does not have the required privileges to access this area.
           </p>
           <div className="space-y-3">
             <button
               onClick={async () => {
-                await adminAuthService.signOut?.() || (window.location.href = '/login')
+                try {
+                  await authService.signOut()
+                  window.location.href = '/login'
+                } catch (error) {
+                  console.error('Sign out error:', error)
+                  window.location.href = '/login'
+                }
               }}
               className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               Sign Out
-            </button>
-            <button
-              onClick={() => window.location.href = process.env.NEXT_PUBLIC_DASHBOARD_URL || '/dashboard'}
-              className="w-full px-4 py-2 bg-secondary text-foreground border border-border rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              Go to Dashboard
             </button>
           </div>
         </div>

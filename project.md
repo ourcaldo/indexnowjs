@@ -1,5 +1,88 @@
 # IndexNow Studio - Project Documentation
 
+## Recent Changes
+
+### 2025-10-11 - Backend Admin Authentication Flow Fixes (COMPLETED)
+**Critical Fix**: Resolved backend admin login redirect issues and improved authentication flow to prevent unwanted dashboard redirects for super_admin users.
+
+#### ✅ Issues Fixed
+
+**1. Backend Admin Login Redirect Loop**
+- **Problem**: Super admin users logging in via backend.domain.com/login were being redirected to dashboard.domain.com instead of staying on backend admin
+- **Root Cause**: Login page used `window.location.href = '/backend/admin'` which could trigger competing auth redirects
+- **Solution**: Changed to `router.replace('/backend/admin')` to use Next.js router for cleaner navigation
+
+**2. Already Logged-in User Handling**
+- **Problem**: Admin login page had no check for already-authenticated users, unlike regular login page
+- **Root Cause**: Missing useEffect auth check on page load
+- **Solution**: Added authentication check that:
+  - Verifies if user is already logged in
+  - Checks super_admin role via API
+  - Redirects to /backend/admin if super_admin
+  - Shows error message if authenticated but not super_admin
+  - Shows login form only if not authenticated
+
+**3. Insufficient Role Message Enhancement**
+- **Problem**: Admin layout showed "Access Denied" with "Go to Dashboard" button, creating unwanted redirect
+- **Root Cause**: Design included navigation away from error page
+- **Solution**: Updated insufficient role error to:
+  - Changed title to "Insufficient Role to Access Dashboard" (as user requested)
+  - Removed "Go to Dashboard" button
+  - Only shows "Sign Out" button
+  - No automatic or manual redirects to dashboard
+
+#### ✅ Files Modified
+
+**app/backend/admin/login/page.tsx**
+- Added `isCheckingAuth` state and useEffect for existing auth verification
+- Changed redirect from `window.location.href` to `router.replace()`
+- Added loading state UI while checking authentication
+- Improved error handling for already-logged-in non-super_admin users
+
+**app/backend/admin/layout.tsx**
+- Added missing Shield icon import
+- Updated insufficient role error message title
+- Removed "Go to Dashboard" button from error page
+- Fixed authService import for sign out functionality
+
+**lib/auth/admin-auth.ts**
+- Fixed TypeScript error: proper error type checking (`error instanceof Error`)
+
+#### ✅ Authentication Flow (After Fix)
+
+**Super Admin Login Flow**:
+1. User visits backend.domain.com → redirected to backend.domain.com/login (by middleware)
+2. Login page checks existing auth → if already logged in and super_admin, redirect to /backend/admin
+3. If not logged in, show login form
+4. User submits credentials
+5. Verify super_admin role via API
+6. Set session via API
+7. Redirect to /backend/admin using Next.js router (no window.location)
+8. Admin layout verifies super_admin role → show admin dashboard
+
+**Non-Super Admin Flow**:
+1. User logs in successfully
+2. API returns role (not super_admin)
+3. Show error: "Insufficient Role to Access Dashboard"
+4. User can only sign out (no dashboard redirect button)
+
+**Already Logged-in Super Admin**:
+1. Visit backend.domain.com/login
+2. Page detects existing auth + super_admin role
+3. Automatically redirect to /backend/admin
+4. No login form shown
+
+#### ✅ Key Improvements
+- ✅ **No Jump Redirects**: Super admin stays on backend after login
+- ✅ **Proper Role Validation**: Non-super_admin users see error message only (no redirect)
+- ✅ **Better UX**: Already logged-in users auto-redirect to correct destination
+- ✅ **Cleaner Navigation**: Uses Next.js router instead of window.location
+- ✅ **TypeScript Compliance**: All LSP errors resolved
+
+**Status**: Backend Admin Authentication Flow **100% FIXED** - No more unwanted dashboard redirects, proper insufficient role handling, and improved user experience.
+
+---
+
 ## Project Overview
 IndexNow Studio is a comprehensive SEO rank tracking and IndexNow API integration platform built with Next.js 15.5.0. The application enables users to monitor keyword rankings, manage indexing jobs, and track SEO performance across multiple domains with advanced analytics and reporting capabilities.
 
