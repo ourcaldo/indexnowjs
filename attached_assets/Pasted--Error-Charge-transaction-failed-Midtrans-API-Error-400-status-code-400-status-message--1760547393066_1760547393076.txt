@@ -1,0 +1,43 @@
+# Error: Charge transaction failed: Midtrans API Error: 400 - {"status_code":"400","status_message":"One or more parameters in the payload is invalid.","validation_messages":["transaction_details.gross_amount must be between 0.01 - 999999999.00"],"id":"194a2d...
+
+**Issue ID:** 6947024344
+**Project:** indexnow
+**Date:** 15/10/2025, 23.13.01
+
+## Tags
+
+- **browser:** Chrome 141
+- **browser.name:** Chrome
+- **client_os:** Windows
+- **client_os.name:** Windows
+- **environment:** production
+- **handled:** yes
+- **level:** error
+- **mechanism:** generic
+- **os:** Ubuntu Linux 22.04
+- **os.name:** Ubuntu Linux
+- **runtime.name:** server
+- **server_name:** cloud-2
+- **transaction:** POST /v1/billing/payment
+- **url:** http://api.indexnow.studio/v1/billing/payment
+
+## Exception
+
+### Exception 1
+**Type:** Error
+**Value:** Charge transaction failed: Midtrans API Error: 400 - {"status_code":"400","status_message":"One or more parameters in the payload is invalid.","validation_messages":["transaction_details.gross_amount must be between 0.01 - 999999999.00"],"id":"194a2d...
+
+#### Stacktrace
+
+```
+ n.createChargeTransaction in /home/nexpocket/indexnowjs/.next/server/chunks/8690.js [Line 1] (In app)
+ process.processTicksAndRejections in node:internal/process/task_queues [Line 95] (Not in app)
+ F.processPayment in /home/nexpocket/indexnowjs/.next/server/app/api/v1/billing/payment/route.js [Line 1] (In app)
+ F.execute in /home/nexpocket/indexnowjs/.next/server/app/api/v1/billing/channels/bank-transfer/route.js [Line 1] (In app)
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/app/api/v1/billing/payment/route.js [Line 1] (In app)
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ rN.do in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ rN.handle in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ k in /home/nexpocket/indexnowjs/.next/server/app/api/v1/billing/payment/route.js [Line 1] (In app)
+ rN.handleResponse in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 1] (Not in app)
+```
