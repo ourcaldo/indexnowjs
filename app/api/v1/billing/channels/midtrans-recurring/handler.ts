@@ -126,11 +126,13 @@ export default class MidtransRecurringHandler extends BasePaymentHandler {
 
     // Midtrans requires minimum charge of $0.01, so use $1 for trials to meet requirement
     const chargeAmount = this.paymentData.is_trial ? 1 : amount.finalAmount;
+    const chargeCurrency = this.paymentData.is_trial ? 'USD' : amount.currency; // Always USD for $1 trial
     
     const chargeTransaction = await this.midtransService.createChargeTransaction({
       order_id: transactionId,
       amount_usd: chargeAmount, // Use $1 for trials to meet Midtrans minimum, real price for subscriptions
       token_id: this.tokenId,  // Use token from frontend Midtrans.min.js tokenization
+      currency: chargeCurrency, // Pass currency to determine if conversion is needed
       customer_details: {
         first_name: this.paymentData.customer_info.first_name,
         last_name: this.paymentData.customer_info.last_name,

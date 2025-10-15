@@ -43,6 +43,7 @@ class MidtransRecurringHandler extends BasePaymentHandler {
       order_id: orderId,
       amount_usd: amount.finalAmount,
       token_id: this.tokenId,
+      currency: amount.currency, // Pass currency to determine if conversion is needed
       customer_details: {
         first_name: this.paymentData.customer_info.first_name,
         last_name: this.paymentData.customer_info.last_name,
@@ -109,6 +110,7 @@ class MidtransRecurringHandler extends BasePaymentHandler {
       const subscription = await this.midtransService.createSubscription(amount.finalAmount, {
         name: `${this.packageData.name}_${this.paymentData.billing_period}`.toUpperCase(),
         token: savedTokenId,
+        currency: amount.currency, // Pass currency to determine if conversion is needed
         schedule: {
           interval: 1,
           interval_unit: this.paymentData.billing_period === 'monthly' ? 'month' : 'month',
@@ -126,6 +128,7 @@ class MidtransRecurringHandler extends BasePaymentHandler {
           package_id: this.paymentData.package_id,
           billing_period: this.paymentData.billing_period,
           order_id: orderId,
+          currency: amount.currency
         },
       })
 

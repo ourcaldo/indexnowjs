@@ -20,13 +20,19 @@ export class MidtransRecurringService extends PaymentGateway {
    */
   async processPayment(request: PaymentRequest): Promise<any> {
     try {
-      // IMPORTANT: Convert cents to dollars - amounts >= 100 are stored in cents (100 cents = $1.00)
-      // Typical package prices: $1-$1000 → stored as 100-100000 cents in database
-      // Threshold of 100 ensures all cent-based amounts are converted (5000 cents = $50, 80000 cents = $800)
-      const amountInDollars = request.amount_usd >= 100 ? request.amount_usd / 100 : request.amount_usd
+      // Determine if amount needs currency conversion
+      // If already in IDR, use directly; if in USD, convert to IDR
+      const currency = request.metadata?.currency || 'USD'
       
-      // Convert USD to IDR
-      const idrAmount = await convertUsdToIdr(amountInDollars)
+      let idrAmount: number
+      if (currency === 'IDR') {
+        // Already in IDR, no conversion needed
+        idrAmount = request.amount_usd
+      } else {
+        // Convert USD to IDR
+        idrAmount = await convertUsdToIdr(request.amount_usd)
+      }
+      
       const grossAmount = Math.round(idrAmount)
 
       // Create initial charge to get saved token
@@ -78,16 +84,22 @@ export class MidtransRecurringService extends PaymentGateway {
     token_id: string
     customer_details: any
     item_details: any
+    currency?: string
   }): Promise<any> {
     try {
-      // IMPORTANT: Convert cents to dollars - amounts >= 100 are stored in cents (100 cents = $1.00)
-      // Database stores prices in cents: $1 = 100, $50 = 5000, $100 = 10000, $800 = 80000
-      // Threshold of 100 catches all cent-based amounts (any package >= $1 is stored as >= 100 cents)
-      // Without this, 5000 cents would be treated as $5000 → 79M IDR (exceeds Midtrans limit)
-      const amountInDollars = params.amount_usd >= 100 ? params.amount_usd / 100 : params.amount_usd
+      // Determine if amount needs currency conversion
+      // If already in IDR, use directly; if in USD, convert to IDR
+      const currency = params.currency || 'USD'
       
-      // Convert USD to IDR
-      const idrAmount = await convertUsdToIdr(amountInDollars)
+      let idrAmount: number
+      if (currency === 'IDR') {
+        // Already in IDR, no conversion needed
+        idrAmount = params.amount_usd
+      } else {
+        // Convert USD to IDR
+        idrAmount = await convertUsdToIdr(params.amount_usd)
+      }
+      
       const grossAmount = Math.round(idrAmount)
 
       // Create charge request
@@ -173,12 +185,18 @@ export class MidtransRecurringService extends PaymentGateway {
    */
   async createSubscriptionWithAmount(amount: number, options: any): Promise<any> {
     try {
-      // IMPORTANT: Convert cents to dollars - amounts >= 100 are stored in cents (100 cents = $1.00)
-      // Ensures all cent-based subscription amounts are properly converted before IDR conversion
-      const amountInDollars = amount >= 100 ? amount / 100 : amount
+      // Determine if amount needs currency conversion
+      // If already in IDR, use directly; if in USD, convert to IDR
+      const currency = options.currency || 'USD'
       
-      // Convert USD to IDR
-      const idrAmount = await convertUsdToIdr(amountInDollars)
+      let idrAmount: number
+      if (currency === 'IDR') {
+        // Already in IDR, no conversion needed
+        idrAmount = amount
+      } else {
+        // Convert USD to IDR
+        idrAmount = await convertUsdToIdr(amount)
+      }
 
       // Calculate start time
       const startTime = options.schedule?.start_time || new Date(Date.now() + 2 * 60 * 1000)
@@ -225,12 +243,18 @@ export class MidtransRecurringService extends PaymentGateway {
    */
   async createSubscription(request: SubscriptionRequest): Promise<SubscriptionResponse> {
     try {
-      // IMPORTANT: Convert cents to dollars - amounts >= 100 are stored in cents (100 cents = $1.00)
-      // Critical for recurring subscriptions to avoid overcharging on renewals
-      const amountInDollars = request.amount_usd >= 100 ? request.amount_usd / 100 : request.amount_usd
+      // Determine if amount needs currency conversion
+      // If already in IDR, use directly; if in USD, convert to IDR
+      const currency = request.metadata?.currency || 'USD'
       
-      // Convert USD to IDR
-      const idrAmount = await convertUsdToIdr(amountInDollars)
+      let idrAmount: number
+      if (currency === 'IDR') {
+        // Already in IDR, no conversion needed
+        idrAmount = request.amount_usd
+      } else {
+        // Convert USD to IDR
+        idrAmount = await convertUsdToIdr(request.amount_usd)
+      }
 
       // Calculate start time
       const startTime = request.start_date || new Date(Date.now() + 2 * 60 * 1000)

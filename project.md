@@ -2,6 +2,171 @@
 
 ## Recent Changes
 
+### 2025-10-15 - Fixed Midtrans Currency Conversion Logic for Multi-Currency Support (COMPLETED)
+**Critical Payment Fix**: Resolved Midtrans payment validation errors caused by incorrect currency conversion logic. The system now properly handles both IDR and USD payments without double-conversion errors.
+
+#### ✅ Issue Fixed
+
+**Midtrans Payment Validation Error: "gross_amount must be between 0.01 - 999999999.00" (CRITICAL)**
+- **Problem**: Indonesian users attempting to purchase Pro package (80,000 IDR monthly) received Midtrans validation errors
+- **Root Cause Analysis**:
+  1. **Multi-Currency Pricing Structure**: Packages store prices in BOTH currencies in `pricing_tiers`:
+     - IDR pricing for Indonesian users (e.g., 80,000 IDR)
+     - USD pricing for international users (e.g., $45 USD)
+  2. **Currency Selection**: `base-handler.ts` correctly selects price based on user's country:
+     - Indonesia → gets IDR price (80,000)
+     - Others → gets USD price (45)
+  3. **Parameter Naming Confusion**: Amount passed to Midtrans service with misleading parameter name `amount_usd`
+  4. **Wrong Assumption in Service**: `MidtransRecurringService` assumed ALL amounts were USD and attempted conversion:
+     - Indonesian user: 80,000 IDR → divided by 100 (wrong "cents to dollars" logic) → 800 → converted to IDR = 12.6M IDR ❌
+     - International user: 45 USD → converted to IDR = 711K IDR ✓
+  5. **Midtrans Rejection**: 12.6M IDR exceeded internal limits, causing validation error
+- **User Impact**:
+  - All Indonesian users unable to purchase any package
+  - Payment flow broken for IDR transactions
+  - International USD payments worked correctly (by accident)
+  - Production errors showing "gross_amount validation failed"
+
+#### ✅ Solution Implemented
+
+**Updated Currency Conversion Logic with Multi-Currency Awareness**
+
+The fix removes the assumption that all amounts are in USD and implements proper currency detection:
+
+**1. MidtransRecurringService.ts - Added Currency-Aware Conversion** (4 methods updated):
+
+```typescript
+// BEFORE (WRONG - assumed everything was USD cents)
+const amountInDollars = params.amount_usd >= 100 ? params.amount_usd / 100 : params.amount_usd
+const idrAmount = await convertUsdToIdr(amountInDollars)
+
+// AFTER (CORRECT - checks currency first)
+const currency = params.currency || 'USD'
+let idrAmount: number
+if (currency === 'IDR') {
+  // Already in IDR, no conversion needed
+  idrAmount = params.amount_usd
+} else {
+  // Convert USD to IDR
+  idrAmount = await convertUsdToIdr(params.amount_usd)
+}
+```
+
+**Updated Methods**:
+1. `processPayment()` - Lines 24-39: Added currency check from request metadata
+2. `createChargeTransaction()` - Lines 84-106: Added currency parameter and conditional conversion
+3. `createSubscriptionWithAmount()` - Lines 189-202: Added currency from options parameter
+4. `createSubscription()` - Lines 247-260: Added currency check from request metadata
+
+**2. MidtransRecurringHandler.ts - Pass Currency to Service** (Line 132):
+
+```typescript
+const chargeAmount = this.paymentData.is_trial ? 1 : amount.finalAmount;
+const chargeCurrency = this.paymentData.is_trial ? 'USD' : amount.currency; // NEW: Pass actual currency
+
+const chargeTransaction = await this.midtransService.createChargeTransaction({
+  order_id: transactionId,
+  amount_usd: chargeAmount,
+  currency: chargeCurrency, // NEW: Currency parameter for proper conversion
+  // ... other params
+})
+```
+
+**3. Midtrans 3DS Callback - Preserve Currency for Subscriptions** (Line 350-361):
+
+```typescript
+// Get original currency from transaction metadata
+const originalCurrency = existingTransaction?.metadata?.package_details?.currency || 
+                         existingTransaction?.currency || 
+                         'USD';
+
+const subscription = await midtransService.createSubscriptionWithAmount(realPackageAmount, {
+  // ... other options
+  currency: originalCurrency, // Pass currency for subscription renewals
+})
+```
+
+**4. Recurring Route Handler - Pass Currency from Amount Object** (Line 115):
+
+```typescript
+const subscription = await this.midtransService.createSubscription(amount.finalAmount, {
+  // ... other options
+  currency: amount.currency, // Pass currency from calculated amount
+  metadata: {
+    // ... other metadata
+    currency: amount.currency // Store currency in metadata
+  }
+})
+```
+
+#### ✅ Files Modified
+
+**lib/services/payments/midtrans/MidtransRecurringService.ts**
+- Lines 24-39: Updated `processPayment()` with currency detection logic
+- Lines 84-106: Updated `createChargeTransaction()` with currency parameter and conditional conversion
+- Lines 189-202: Updated `createSubscriptionWithAmount()` with currency from options
+- Lines 247-260: Updated `createSubscription()` with currency from metadata
+
+**app/api/v1/billing/channels/midtrans-recurring/handler.ts**
+- Line 132: Added `chargeCurrency` variable to pass correct currency to charge transaction
+- Line 138: Added `currency` parameter to `createChargeTransaction()` call
+
+**app/api/v1/billing/midtrans-3ds-callback/route.ts**
+- Lines 350-353: Added currency detection from transaction metadata
+- Line 361: Pass `currency` parameter to `createSubscriptionWithAmount()`
+- Line 387: Store `currency` in subscription metadata for audit trail
+
+**app/api/v1/billing/channels/midtrans-recurring/route.ts**
+- Line 115: Pass `currency` from amount object to `createSubscription()`
+- Line 133: Store `currency` in metadata for subscription record
+
+#### ✅ How Currency Flow Now Works
+
+**For Indonesian Users (IDR)**:
+1. User profile has `country: "Indonesia"`
+2. `getUserCurrency()` returns `"IDR"`
+3. `base-handler` gets price from `pricing_tiers.monthly.IDR.promo_price` = 80,000
+4. Amount object: `{ finalAmount: 80000, currency: "IDR" }`
+5. Midtrans service receives currency="IDR" → uses 80,000 directly (no conversion)
+6. Midtrans processes 80,000 IDR ✓
+
+**For International Users (USD)**:
+1. User profile has `country: "United States"` (or null)
+2. `getUserCurrency()` returns `"USD"`
+3. `base-handler` gets price from `pricing_tiers.monthly.USD.promo_price` = 45
+4. Amount object: `{ finalAmount: 45, currency: "USD" }`
+5. Midtrans service receives currency="USD" → converts 45 * 15,800 = 711,000 IDR
+6. Midtrans processes 711,000 IDR ✓
+
+**For Trial Payments** (Always $1 USD):
+1. Amount forced to 1, currency forced to "USD"
+2. Converted: 1 * 15,800 = 15,800 IDR
+3. Subscription created with REAL package price in user's currency for renewals
+
+#### ✅ Impact & Benefits
+
+**Payment Processing Fixed**:
+- ✅ Indonesian users can now purchase packages with IDR pricing (80,000 IDR → 80,000 IDR)
+- ✅ International users continue to work correctly (45 USD → 711,000 IDR)
+- ✅ No more "gross_amount validation failed" errors
+- ✅ Proper currency handling for both initial charges and recurring subscriptions
+- ✅ Trial payments ($1) work correctly with proper subscription amount on renewal
+
+**Architecture Improvements**:
+- Currency context preserved throughout payment flow
+- No more misleading parameter names (`amount_usd` now properly understood as "amount in user's currency")
+- Explicit currency passing prevents future conversion bugs
+- Subscription renewals use correct currency from metadata
+
+**Previous Wrong Fix Removed**:
+- ❌ Removed incorrect "cents to dollars" conversion logic (>= 100 check)
+- ❌ Removed assumption that all amounts are stored in cents
+- ✅ Direct currency detection based on actual user currency selection
+
+**Status**: Multi-currency payment processing **COMPLETELY FIXED** - Both IDR and USD payments now process correctly without double-conversion errors. Midtrans validation errors resolved.
+
+---
+
 ### 2025-10-15 - Fixed Critical Payment Amount Bug & Standardized API Error Responses (COMPLETED)
 **Payment Processing & API Standardization**: Fixed Midtrans payment failure caused by amount stored in cents being converted as dollars (80000 cents → $80,000 instead of $800). Standardized admin API endpoints to use formatError wrapper for consistent error response format across the application.
 

@@ -344,12 +344,18 @@ export const POST = authenticatedApiWrapper(async (request: NextRequest, auth: A
       }
     }
     
+    // Determine currency for subscription - get from original transaction metadata if available
+    const originalCurrency = existingTransaction?.metadata?.package_details?.currency || 
+                            existingTransaction?.currency || 
+                            'USD'; // Default to USD if not specified
+    
     // Create subscription using saved_token_id from transaction status (NOT the original temporary token)
     const subscription = await midtransService.createSubscriptionWithAmount(realPackageAmount, {
       name: isTrialTransaction ? 
         `${realPackageForMatching.name.toUpperCase()}_TRIAL_AUTO_BILLING` : 
         `${realPackageForMatching.name}_${billing_period}`.toUpperCase(),
       token: savedTokenId, // Use the permanent saved_token_id, not the temporary token
+      currency: originalCurrency, // Pass currency to determine if conversion is needed
       schedule: {
         interval: 1,
         interval_unit: billing_period === 'monthly' ? 'month' : 'month',
@@ -374,7 +380,8 @@ export const POST = authenticatedApiWrapper(async (request: NextRequest, auth: A
         original_transaction_id: transaction_id,
         trial_type: isTrialTransaction ? 'free_trial_auto_billing' : null,
         original_trial_start: isTrialTransaction ? new Date().toISOString() : null,
-        subscription_type: 'recurring_payment'
+        subscription_type: 'recurring_payment',
+        currency: originalCurrency
       },
     })
     
