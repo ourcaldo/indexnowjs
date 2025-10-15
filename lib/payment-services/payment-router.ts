@@ -65,17 +65,6 @@ export class PaymentRouter {
 
       const result = await response.json()
       
-      // Send result to backend for logging (no browser logs)
-      fetch(`${BILLING_ENDPOINTS.PAYMENT}/debug`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          payment_method: request.payment_method,
-          result: result
-        }),
-        credentials: 'include'
-      }).catch(() => {}) // Silent fail
-      
       return result
     } catch (error) {
       throw error

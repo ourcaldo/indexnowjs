@@ -140,24 +140,17 @@ export function usePaymentProcessor({
       await processPayment({ ...paymentData, token_id: cardToken }, token)
 
     } catch (error) {
-      // For 3DS errors, handle them directly here instead of re-throwing
+      // Re-throw 3DS errors so checkout page can handle them with modal callbacks
       if (error && typeof error === 'object' && 'requires_3ds' in error) {
-        // Handle 3DS authentication directly without re-throwing
-        try {
-          const threeDSError = error as any
-          await handle3DSAuthentication(
-            threeDSError.redirect_url,
-            threeDSError.transaction_id,
-            threeDSError.order_id
-          )
-        } catch (authError) {
-          setError('3DS authentication failed')
-          setSubmitting(false)
-        }
-        return // Don't re-throw, we handled it
+        setSubmitting(false)
+        throw error
       }
-      // Error handling payment success - logged internally
-      setError('Payment completed but there was an error with the follow-up process')
+      
+      // For other errors, set error state
+      const errorMessage = error instanceof Error ? error.message : 'Payment processing failed'
+      setError(errorMessage)
+      setSubmitting(false)
+      throw error
     }
   }
 
