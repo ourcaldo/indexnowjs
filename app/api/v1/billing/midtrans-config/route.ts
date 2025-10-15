@@ -54,10 +54,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
   }
 
   return formatSuccess({
-    success: true,
-    data: {
-      client_key,
-      environment
-    }
+    client_key,
+    environment
   })
 })
