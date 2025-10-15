@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { adminApiWrapper, withDatabaseOperation } from '@/lib/core/api-response-middleware'
-import { formatSuccess } from '@/lib/core/api-response-formatter'
+import { formatSuccess, formatError } from '@/lib/core/api-response-formatter'
+import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
 import { createClient } from '@supabase/supabase-js'
 import { ActivityLogger, ActivityEventTypes } from '@/lib/monitoring'
 import { SecureServiceRoleHelpers, SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
@@ -163,10 +164,18 @@ export const GET = adminApiWrapper(async (request: NextRequest, adminUser) => {
         endpoint: '/api/v1/admin/orders',
         method: 'GET'
       }, 'Error fetching orders: No data returned')
-      return NextResponse.json(
-        { error: 'Failed to fetch orders' },
-        { status: 500 }
+      
+      const error = await ErrorHandlingService.createError(
+        ErrorType.DATABASE,
+        'Failed to fetch orders',
+        {
+          severity: ErrorSeverity.HIGH,
+          userId: adminUser.id,
+          statusCode: 500,
+          userMessageKey: 'default'
+        }
       )
+      return formatError(error)
     }
 
     // Fetch user profiles and auth data for each order using secure wrapper

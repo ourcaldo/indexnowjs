@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { backgroundWorker } from '@/lib/job-management/background-worker';
 import { requireServerSuperAdminAuth } from '@/lib/auth/server-auth'
-import { logger } from '@/lib/monitoring/error-handling';
+import { logger, ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling';
+import { formatError } from '@/lib/core/api-response-formatter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,15 +30,29 @@ export async function POST(request: NextRequest) {
     
     // Handle authentication errors
     if (error.message === 'Super admin access required') {
-      return NextResponse.json(
-        { error: 'Super admin access required' },
-        { status: 401 }
+      const authError = await ErrorHandlingService.createError(
+        ErrorType.AUTHENTICATION,
+        'Super admin access required',
+        {
+          severity: ErrorSeverity.HIGH,
+          statusCode: 401,
+          userMessageKey: 'default'
+        }
       );
+      const errorResponse = formatError(authError);
+      return NextResponse.json(errorResponse, { status: errorResponse.error.statusCode });
     }
     
-    return NextResponse.json(
-      { error: 'Failed to restart worker' },
-      { status: 500 }
+    const systemError = await ErrorHandlingService.createError(
+      ErrorType.SYSTEM,
+      error,
+      {
+        severity: ErrorSeverity.HIGH,
+        statusCode: 500,
+        userMessageKey: 'default'
+      }
     );
+    const errorResponse = formatError(systemError);
+    return NextResponse.json(errorResponse, { status: errorResponse.error.statusCode });
   }
 }
