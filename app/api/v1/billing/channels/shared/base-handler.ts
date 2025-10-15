@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/database'
-import { logger } from '@/lib/monitoring/error-handling'
+import { logger, ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
+import { formatSuccess, formatError, type ApiSuccessResponse, type ApiErrorResponse } from '@/lib/core/api-response-formatter'
 
 export interface PaymentData {
   package_id: string
@@ -128,28 +129,31 @@ export abstract class BasePaymentHandler {
   abstract processPayment(): Promise<PaymentResult>
 
   // Main execution flow
-  async execute(): Promise<NextResponse> {
+  async execute(): Promise<ApiSuccessResponse<PaymentResult> | ApiErrorResponse> {
     try {
       await this.validatePackage()
       const result = await this.processPayment()
 
-      return NextResponse.json({
-        success: result.success,
-        data: result.data,
-        message: result.message,
-        requires_redirect: result.requires_redirect,
-        redirect_url: result.redirect_url
-      })
+      return formatSuccess(result)
 
     } catch (error: any) {
       logger.error({ error: error instanceof Error ? error.message : String(error) }, `[${this.getPaymentMethodSlug()}] Error:`)
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: error.message || 'Payment processing failed'
-        },
-        { status: 500 }
+      
+      const structuredError = await ErrorHandlingService.createError(
+        ErrorType.EXTERNAL_API,
+        error,
+        {
+          severity: ErrorSeverity.HIGH,
+          userId: this.paymentData.user.id,
+          statusCode: 500,
+          metadata: {
+            payment_method: this.getPaymentMethodSlug(),
+            package_id: this.paymentData.package_id
+          },
+          userMessageKey: 'default'
+        }
       )
+      return formatError(structuredError)
     }
   }
 }

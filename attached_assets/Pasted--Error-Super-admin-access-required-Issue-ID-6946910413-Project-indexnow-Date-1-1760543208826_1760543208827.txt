@@ -1,0 +1,58 @@
+# Error: Super admin access required
+
+**Issue ID:** 6946910413
+**Project:** indexnow
+**Date:** 15/10/2025, 22.39.17
+
+## Tags
+
+- **browser:** Chrome 141
+- **browser.name:** Chrome
+- **client_os:** Windows
+- **client_os.name:** Windows
+- **environment:** production
+- **handled:** yes
+- **level:** error
+- **mechanism:** generic
+- **os:** Ubuntu Linux 22.04
+- **os.name:** Ubuntu Linux
+- **runtime.name:** server
+- **server_name:** cloud-2
+- **transaction:** POST /v1/admin/activity
+- **url:** http://api.indexnow.studio/v1/admin/activity
+
+## Exception
+
+### Exception 1
+**Type:** Error
+**Value:** Super admin access required
+
+#### Stacktrace
+
+```
+ l in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ process.processTicksAndRejections in node:internal/process/task_queues [Line 95] (Not in app)
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ rN.do in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ rN.handle in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ k in /home/nexpocket/indexnowjs/.next/server/app/api/v1/admin/activity/route.js [Line 1] (In app)
+ rN.handleResponse in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 1] (Not in app)
+ f in /home/nexpocket/indexnowjs/.next/server/app/api/v1/admin/activity/route.js [Line 1] (In app)
+ b1 in /home/nexpocket/indexnowjs/.next/server/app/api/v1/admin/activity/route.js [Line 1] (In app)
+ NextNodeServer.renderToResponseWithComponentsImpl in /home/nexpocket/indexnowjs/node_modules/next/dist/server/base-server.js [Line 1422] (Not in app)
+                    ;
+                    req.fetchMetrics = value;
+                }
+                target[prop] = value;
+                return true;
+            }
+        }) : request;
+        await handler(maybeDevRequest, response, {  <-- SUSPECT LINE
+            waitUntil: this.getWaitUntil()
+        });
+        // response is handled fully in handler
+        return null;
+    }
+    stripNextDataPath(path, stripLocale = true) {
+        if (path.includes(this.buildId)) {
+```

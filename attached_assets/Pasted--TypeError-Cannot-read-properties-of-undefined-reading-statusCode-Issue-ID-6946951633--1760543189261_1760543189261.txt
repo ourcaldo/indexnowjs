@@ -1,0 +1,73 @@
+# TypeError: Cannot read properties of undefined (reading 'statusCode')
+
+**Issue ID:** 6946951633
+**Project:** indexnow
+**Date:** 15/10/2025, 22.39.17
+
+## Tags
+
+- **browser:** Chrome 141
+- **browser.name:** Chrome
+- **client_os:** Windows
+- **client_os.name:** Windows
+- **environment:** production
+- **handled:** yes
+- **level:** error
+- **mechanism:** generic
+- **os:** Ubuntu Linux 22.04
+- **os.name:** Ubuntu Linux
+- **runtime.name:** server
+- **server_name:** cloud-2
+- **transaction:** POST /v1/billing/payment
+- **url:** http://api.indexnow.studio/v1/billing/payment
+
+## Exception
+
+### Exception 1
+**Type:** TypeError
+**Value:** Cannot read properties of undefined (reading 'statusCode')
+
+#### Stacktrace
+
+```
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ process.processTicksAndRejections in node:internal/process/task_queues [Line 95] (Not in app)
+ rN.do in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ rN.handle in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ k in /home/nexpocket/indexnowjs/.next/server/app/api/v1/billing/payment/route.js [Line 1] (In app)
+ rN.handleResponse in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 1] (Not in app)
+ g in /home/nexpocket/indexnowjs/.next/server/app/api/v1/billing/payment/route.js [Line 1] (In app)
+ O in /home/nexpocket/indexnowjs/.next/server/app/api/v1/billing/payment/route.js [Line 1] (In app)
+ NextNodeServer.renderToResponseWithComponentsImpl in /home/nexpocket/indexnowjs/node_modules/next/dist/server/base-server.js [Line 1422] (Not in app)
+                    ;
+                    req.fetchMetrics = value;
+                }
+                target[prop] = value;
+                return true;
+            }
+        }) : request;
+        await handler(maybeDevRequest, response, {  <-- SUSPECT LINE
+            waitUntil: this.getWaitUntil()
+        });
+        // response is handled fully in handler
+        return null;
+    }
+    stripNextDataPath(path, stripLocale = true) {
+        if (path.includes(this.buildId)) {
+ NextNodeServer.renderPageComponent in /home/nexpocket/indexnowjs/node_modules/next/dist/server/base-server.js [Line 1474] (Not in app)
+            appPaths,
+            // Ensuring for loading page component routes is done via the matcher.
+            shouldEnsure: false
+        });
+        if (result) {
+            (0, _tracer.getTracer)().setRootSpanAttribute('next.route', pathname);
+            try {
+                return await this.renderToResponseWithComponents(ctx, result);  <-- SUSPECT LINE
+            } catch (err) {
+                const isNoFallbackError = err instanceof _nofallbackerrorexternal.NoFallbackError;
+                if (!isNoFallbackError || isNoFallbackError && bubbleNoFallback) {
+                    throw err;
+                }
+            }
+        }
+```
