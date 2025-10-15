@@ -189,6 +189,11 @@ export const PAYMENT_ENDPOINTS = {
   MIDTRANS_WEBHOOK: `${API_BASE.V1}/payments/midtrans/webhook`,
 } as const;
 
+// Activity logging endpoints (non-admin)
+export const ACTIVITY_ENDPOINTS = {
+  LOG: `${API_BASE.V1}/activity`, // For regular users to log their own activities
+} as const;
+
 // Notification endpoints
 export const NOTIFICATION_ENDPOINTS = {
   SERVICE_ACCOUNT_QUOTA: `${API_BASE.V1}/notifications/service-account-quota`,

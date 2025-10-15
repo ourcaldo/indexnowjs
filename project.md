@@ -2,6 +2,180 @@
 
 ## Recent Changes
 
+### 2025-10-15 - Fixed Activity Logging Endpoint Authentication for Regular Users (COMPLETED)
+**Critical Authentication Fix**: Resolved "Super admin access required" errors when regular users attempted to log activities from payment/checkout pages. Created dedicated non-admin activity logging endpoint and updated all frontend hooks and backend webhooks to use proper authentication.
+
+#### ✅ Issue Fixed
+
+**Activity Logging Requires Admin Access for Regular Users (CRITICAL)**
+- **Problem**: Regular users (role: "user") on payment/checkout pages received "Super admin access required" 403 errors when trying to log activities
+- **Root Cause**:
+  - Frontend `useActivityLogger` hook called `/api/v1/admin/activity` endpoint (line 30 of hooks/useActivityLogger.ts)
+  - This endpoint used `adminApiWrapper` requiring super admin authentication (line 10 of app/api/v1/admin/activity/route.ts)
+  - Regular users on payment/checkout pages were blocked from logging their own activities
+  - Midtrans webhook also made HTTP calls to admin endpoint instead of using ActivityLogger directly
+- **User Impact**:
+  - Payment page activities (checkout initiated, payment errors, etc.) failed to log for regular users
+  - Sentry tracked multiple "Super admin access required" errors from production
+  - Activity tracking incomplete for non-admin user journeys
+  - Checkout flow analytics missing critical user behavior data
+
+#### ✅ Solution Implemented
+
+**Created Dedicated Activity Logging Endpoint for Authenticated Users** (`app/api/v1/activity/route.ts`)
+
+**1. Created New Non-Admin Activity Endpoint** (NEW FILE: `app/api/v1/activity/route.ts`)
+- Uses `authenticatedApiWrapper` instead of `adminApiWrapper` - requires authentication but NOT admin privileges
+- Accepts POST requests from any authenticated user
+- Internally uses `ActivityLogger.logActivity()` which uses service role key for secure database writes
+- Authentication: Validates Bearer token from `Authorization` header
+- Database writes: Uses `supabaseAdmin` (service role key) via `ActivityLogger` to bypass RLS for audit log writes
+
+```typescript
+export const POST = authenticatedApiWrapper(async (request: NextRequest, authenticatedUser) => {
+  const userId = authenticatedUser.user.id
+  const userEmail = authenticatedUser.user.email || ''
+  
+  await ActivityLogger.logActivity({
+    userId,
+    eventType: body.eventType,
+    actionDescription: body.actionDescription,
+    // ... other fields
+  })
+  
+  return formatSuccess({ message: 'Activity logged successfully' })
+})
+```
+
+**2. Updated API Endpoints Constants** (`lib/core/constants/ApiEndpoints.ts`)
+- Added new `ACTIVITY_ENDPOINTS` section (lines 195-198):
+```typescript
+export const ACTIVITY_ENDPOINTS = {
+  LOG: `${API_BASE.V1}/activity`, // For regular users to log their own activities
+} as const;
+```
+- Kept `ADMIN_ENDPOINTS.ACTIVITY` for admin-only GET requests (viewing all activity logs)
+- Clear separation: Admin endpoints for viewing logs, user endpoints for logging activities
+
+**3. Updated Frontend Activity Logger Hook** (`hooks/useActivityLogger.ts`)
+- Changed import from `ADMIN_ENDPOINTS` to `ACTIVITY_ENDPOINTS` (line 9)
+- Updated fetch call from `ADMIN_ENDPOINTS.ACTIVITY` to `ACTIVITY_ENDPOINTS.LOG` (line 30)
+- No changes to hook interface - all existing components work without modification
+- Still passes Bearer token for authentication
+
+**4. Fixed Midtrans Webhook to Use ActivityLogger Directly** (`app/api/midtrans/webhook/route.ts`)
+- **Before**: Made HTTP fetch call to `/api/v1/admin/activity` (lines 1009-1024)
+- **After**: Directly imports and uses `ActivityLogger.logActivity()` (lines 1010-1023)
+- **Benefits**:
+  - No HTTP overhead for internal logging
+  - No authentication issues since ActivityLogger uses service role internally
+  - More efficient and reliable
+  - Proper error handling with try/catch
+
+```typescript
+// Before (HTTP call - INEFFICIENT)
+await fetch(`${baseUrl}/api/v1/admin/activity`, {
+  method: 'POST',
+  body: JSON.stringify({...})
+})
+
+// After (Direct service call - EFFICIENT)
+const { ActivityLogger } = await import('@/lib/monitoring')
+await ActivityLogger.logActivity({
+  userId,
+  eventType,
+  actionDescription,
+  metadata
+})
+```
+
+#### ✅ Files Modified
+
+**app/api/v1/activity/route.ts** (NEW FILE)
+- Lines 1-40: Complete POST endpoint implementation using `authenticatedApiWrapper` and `ActivityLogger`
+
+**lib/core/constants/ApiEndpoints.ts**
+- Lines 195-198: Added `ACTIVITY_ENDPOINTS` constant with `LOG` endpoint for authenticated users
+- Line 71: Kept `ADMIN_ENDPOINTS.ACTIVITY` for admin GET requests (viewing logs)
+
+**hooks/useActivityLogger.ts**
+- Line 9: Changed import from `ADMIN_ENDPOINTS` to `ACTIVITY_ENDPOINTS`
+- Line 30: Updated endpoint from `ADMIN_ENDPOINTS.ACTIVITY` to `ACTIVITY_ENDPOINTS.LOG`
+
+**app/api/midtrans/webhook/route.ts**
+- Lines 1007-1029: Replaced HTTP fetch call with direct `ActivityLogger.logActivity()` import and usage
+
+#### ✅ Architecture & Security
+
+**Authentication Flow for Regular Users**:
+```
+1. User on payment/checkout page
+2. Frontend calls ACTIVITY_ENDPOINTS.LOG with Bearer token
+3. authenticatedApiWrapper validates token
+4. Extracts authenticated user (id, email)
+5. Calls ActivityLogger.logActivity(userId, ...)
+6. ActivityLogger uses supabaseAdmin (service role) to write to indb_security_activity_logs
+7. Returns success response
+```
+
+**Why Service Role is Correct for Activity Logging**:
+- Activity logs are security-sensitive audit trails
+- Must NOT be constrained by Row Level Security (RLS) policies
+- Service role allows writing to audit tables regardless of user permissions
+- `SecureServiceRoleWrapper` ensures all service role operations are audited
+- User context maintained via `userId` parameter passed to ActivityLogger
+
+**Authentication Comparison**:
+| Endpoint | Wrapper | Auth Required | Admin Required | Use Case |
+|----------|---------|---------------|----------------|----------|
+| `/v1/admin/activity` GET | `adminApiWrapper` | ✅ | ✅ Super Admin | View all activity logs (admin dashboard) |
+| `/v1/admin/activity` POST | `adminApiWrapper` | ✅ | ✅ Super Admin | Legacy - now unused |
+| `/v1/activity` POST | `authenticatedApiWrapper` | ✅ | ❌ No | Log user activities (payment, checkout, etc.) |
+
+**Database Write Pattern**:
+```typescript
+// Frontend hook sends authenticated request
+fetch(ACTIVITY_ENDPOINTS.LOG, {
+  headers: { Authorization: `Bearer ${token}` }, // User's access token
+  body: JSON.stringify({ eventType, actionDescription })
+})
+
+// Backend authenticatedApiWrapper validates user
+const auth = await authenticateRequest(request)
+// auth.user.id = validated user ID from token
+
+// ActivityLogger uses service role for database write
+await ActivityLogger.logActivity({
+  userId: auth.user.id, // From authenticated request
+  // Uses supabaseAdmin internally (service role key)
+  // Writes to indb_security_activity_logs bypassing RLS
+})
+```
+
+#### ✅ Impact & Benefits
+
+**Affected Components** (All automatically fixed):
+- ✅ `useActivityLogger` hook - Used by all dashboard pages for activity tracking
+- ✅ `usePageViewLogger` hook - Used for page view tracking across dashboard
+- ✅ Payment/checkout pages - Now successfully log user activities
+- ✅ Billing pages - Activity tracking now works for regular users
+- ✅ Midtrans webhook - More efficient with direct ActivityLogger usage
+
+**Benefits**:
+1. **Fixed Authentication**: Regular users can now log their activities without admin privileges
+2. **Proper Separation**: Admin endpoints for viewing, user endpoints for logging
+3. **Better Performance**: Webhook uses direct service call instead of HTTP
+4. **Security Maintained**: Service role used only for audit log writes with full audit trail
+5. **Analytics Complete**: All user activities now tracked including payment flows
+
+**Sentry Errors Resolved**:
+- ❌ Before: "Super admin access required" errors from payment/checkout pages
+- ✅ After: All activity logging succeeds for authenticated users
+
+**Status**: Activity Logging Authentication **COMPLETELY FIXED** - Regular users can now log their activities from payment/checkout pages. Admin activity viewing remains protected. Webhook optimized to use direct ActivityLogger service calls.
+
+---
+
 ### 2025-10-15 - Fixed Payment Handler API Response Format Compatibility with Wrapper (COMPLETED)
 **Critical Payment Processing Fix**: Resolved TypeError in payment processing caused by BasePaymentHandler returning `NextResponse` instead of standardized `ApiSuccessResponse | ApiErrorResponse` format expected by `authenticatedApiWrapper`.
 

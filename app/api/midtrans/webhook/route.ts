@@ -1001,33 +1001,25 @@ async function handleSubscriptionEvent(body: any, transaction: any, supabaseAdmi
       }
     }
 
-    // Log subscription event to activity log
+    // Log subscription event to activity log using ActivityLogger directly
     if (body.subscription.metadata?.user_id) {
       try {
-        // Use relative URL for server-side API calls
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5000'
-        const activityResponse = await fetch(`${baseUrl}/api/v1/admin/activity`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: body.subscription.metadata.user_id,
-            event_type: 'subscription_updated',
-            action: `Subscription ${eventType} - ID: ${body.subscription.id}`,
-            metadata: {
-              subscription_id: body.subscription.id,
-              event_type: eventType,
-              subscription_status: body.subscription.status,
-              amount: body.subscription.amount,
-              currency: body.subscription.currency
-            }
-          })
+        const { ActivityLogger } = await import('@/lib/monitoring')
+        
+        await ActivityLogger.logActivity({
+          userId: body.subscription.metadata.user_id,
+          eventType: 'subscription_updated',
+          actionDescription: `Subscription ${eventType} - ID: ${body.subscription.id}`,
+          metadata: {
+            subscription_id: body.subscription.id,
+            event_type: eventType,
+            subscription_status: body.subscription.status,
+            amount: body.subscription.amount,
+            currency: body.subscription.currency
+          }
         })
-
-        if (activityResponse.ok) {
-          logger.info({ message: '✅ [Subscription] Activity logged successfully' }, 'Info')
-        } else {
-          logger.error({ error: String(activityResponse.status) }, '⚠️ [Subscription] Activity logging failed with status:')
-        }
+        
+        logger.info({ message: '✅ [Subscription] Activity logged successfully' }, 'Info')
       } catch (activityError) {
         logger.error({ error: activityError instanceof Error ? activityError.message : String(activityError) }, '⚠️ [Subscription] Failed to log activity:')
       }

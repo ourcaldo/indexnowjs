@@ -6,7 +6,7 @@
 import { useEffect, useRef } from 'react'
 import { authService } from '@/lib/auth'
 import { supabase } from '@/lib/database'
-import { ADMIN_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
+import { ACTIVITY_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 
 interface ActivityLogRequest {
   eventType: string
@@ -27,7 +27,7 @@ export const useActivityLogger = () => {
       const token = (await supabase.auth.getSession()).data.session?.access_token
       if (!token) return
 
-      await fetch(ADMIN_ENDPOINTS.ACTIVITY, {
+      await fetch(ACTIVITY_ENDPOINTS.LOG, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
