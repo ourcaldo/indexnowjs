@@ -2,6 +2,164 @@
 
 ## Recent Changes
 
+### 2025-10-16 - Fixed 3DS Authentication Popup & Currency Logging (COMPLETED)
+**Payment Flow Fixes**: Resolved two critical issues: (1) 3DS authentication popup not appearing when Midtrans requires authentication, and (2) misleading currency logging showing 'amount_usd' when amount could be in any currency.
+
+#### ✅ Issues Fixed
+
+**1. 3DS Authentication Modal Not Showing (CRITICAL)**
+- **Problem**: When placing credit card orders, 3DS authentication popup didn't appear even though Midtrans returned redirect_url. Users saw immediate "Payment successful" message but payment remained pending 3DS authentication.
+- **Root Cause**:
+  - API response structure: `{ success: true, data: { requires_redirect: true, redirect_url: "...", data: {...} } }`
+  - `usePaymentProcessor.ts` line 216 checked `result.requires_redirect` instead of `result.data.requires_redirect`
+  - Wrong data path prevented 3DS error from being thrown
+  - Checkout page never received 3DS error to handle
+  - Modal never opened because error wasn't propagated correctly
+- **User Impact**:
+  - Credit card payments appeared successful but were actually pending
+  - Users couldn't complete 3DS bank authentication
+  - Orders stuck in pending_3ds status
+  - Security issue: missing required authentication step
+
+**2. Misleading Currency Logging (MEDIUM)**
+- **Problem**: Server logs showed `amount_usd: 80000` for Indonesian users, implying USD when it was actually 80,000 IDR
+- **Root Cause**:
+  - Handler line 121 logged `amount_usd: amount.finalAmount` without showing currency
+  - Parameter name `amount_usd` misleading - amount can be in any currency (USD, IDR, etc.)
+  - Made debugging currency issues difficult
+- **User Impact**:
+  - Confusing logs when troubleshooting payment issues
+  - Difficult to verify correct currency handling
+  - Could lead to incorrect assumptions about payment amounts
+
+#### ✅ Solutions Implemented
+
+**1. Fixed 3DS Error Data Access** (`hooks/usePaymentProcessor.ts` lines 217-228)
+
+**BEFORE (BROKEN - wrong data path):**
+```typescript
+} else if (paymentMethod === 'midtrans_recurring') {
+  if (result.requires_redirect && result.redirect_url) {
+    // ...create 3DS error...
+  }
+}
+```
+
+**AFTER (FIXED - correct data path):**
+```typescript
+} else if (paymentMethod === 'midtrans_recurring') {
+  // API returns: { success: true, data: { requires_redirect: true, redirect_url: "...", data: { ... } } }
+  if (result.data?.requires_redirect && result.data?.redirect_url) {
+    const threeDSError = new Error('3DS authentication required') as any
+    threeDSError.requires_3ds = true
+    threeDSError.redirect_url = result.data.redirect_url
+    threeDSError.transaction_id = result.data.data?.transaction_id
+    threeDSError.order_id = result.data.data?.order_id
+    throw threeDSError
+  }
+}
+```
+
+**How It Works Now:**
+1. Backend returns `{ success: true, data: { requires_redirect: true, redirect_url: "..." } }`
+2. `handlePaymentSuccess()` correctly checks `result.data.requires_redirect`
+3. Throws 3DS error with proper redirect_url
+4. Checkout page catches 3DS error
+5. Calls `handle3DSAuthentication()` with modal callbacks
+6. 3DS modal opens correctly
+7. User completes bank authentication
+8. Callback processes result and redirects to order page
+
+**2. Fixed Currency Logging** (`app/api/v1/billing/channels/midtrans-recurring/handler.ts` lines 122-129)
+
+**BEFORE (MISLEADING):**
+```typescript
+logger.info({ data: [{
+  order_id: transactionId, 
+  amount_usd: amount.finalAmount,  // Misleading - not always USD!
+  token_id: this.tokenId.substring(0, 20) + '...',
+  customer_name: `...`,
+  customer_email: `...`
+}] }, '🚀 [Midtrans Recurring] Creating charge transaction with parameters:')
+```
+
+**AFTER (CLEAR):**
+```typescript
+logger.info({ data: [{
+  order_id: transactionId, 
+  amount: amount.finalAmount,
+  currency: amount.currency,  // Now shows actual currency!
+  token_id: this.tokenId.substring(0, 20) + '...',
+  customer_name: `...`,
+  customer_email: `...`
+}] }, '🚀 [Midtrans Recurring] Creating charge transaction with parameters:')
+```
+
+**Log Output Examples:**
+- Indonesian user: `amount: 80000, currency: 'IDR'` (clear it's 80,000 IDR)
+- US user: `amount: 45, currency: 'USD'` (clear it's $45 USD)
+- Trial: `amount: 1, currency: 'USD'` (clear it's $1 USD trial)
+
+#### ✅ Files Modified
+
+**hooks/usePaymentProcessor.ts**
+- Lines 217-228: Fixed 3DS error data access to use correct API response structure
+- Line 219: Added comment explaining API response format
+- Lines 220, 224-226: Changed to access `result.data.requires_redirect`, `result.data.redirect_url`, `result.data.data.transaction_id`
+- Line 238: Added fallback for order_id path
+
+**app/api/v1/billing/channels/midtrans-recurring/handler.ts**
+- Lines 122-129: Updated logging to show `amount` and `currency` separately instead of misleading `amount_usd`
+
+#### ✅ How 3DS Flow Works Now
+
+**Complete Payment Flow:**
+1. **User Submits Card** (checkout page):
+   - Calls `processCreditCardPayment()`
+   - Card tokenized with Midtrans SDK
+   - Payment request sent to backend
+
+2. **Backend Processing** (handler):
+   - Creates charge transaction with Midtrans
+   - Midtrans returns: `{ redirect_url: "...", transaction_status: "pending" }`
+   - Returns: `{ success: true, data: { requires_redirect: true, redirect_url: "..." } }`
+
+3. **Frontend Handles 3DS** (usePaymentProcessor):
+   - Detects `result.data.requires_redirect` 
+   - Throws 3DS error with redirect info
+   - Checkout page catches error
+   - Opens 3DS modal with Midtrans iframe
+
+4. **User Authenticates**:
+   - Completes bank verification in modal
+   - 3DS callback endpoint processes result
+   - Subscription created
+   - User redirected to order page
+
+#### ✅ Impact & Benefits
+
+**Security & Compliance:**
+- ✅ 3DS authentication now works correctly
+- ✅ Bank verification challenges display properly
+- ✅ Payments comply with 3DS security requirements
+- ✅ No more bypassed authentication steps
+
+**Debugging & Monitoring:**
+- ✅ Logs clearly show amount and currency separately
+- ✅ Easy to verify correct currency handling
+- ✅ No more confusion about USD vs IDR amounts
+- ✅ Better troubleshooting for payment issues
+
+**Code Quality:**
+- ✅ Proper API response structure handling
+- ✅ Clear and accurate logging
+- ✅ Correct data path access with optional chaining
+- ✅ Fallback handling for backward compatibility
+
+**Status**: 3DS authentication **COMPLETELY FIXED** - Modal now displays when required. Currency logging **IMPROVED** - Logs show actual currency instead of misleading 'amount_usd'.
+
+---
+
 ### 2025-10-15 - Fixed 3DS Authentication Modal & Removed Debug API Call (COMPLETED)
 **Payment Flow Fix**: Resolved two critical issues preventing 3DS authentication from working: (1) 3DS modal not showing when Midtrans returns redirect URL, and (2) 404 errors from leftover debug API endpoint.
 

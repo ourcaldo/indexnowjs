@@ -213,13 +213,14 @@ export function usePaymentProcessor({
         })
       } else if (paymentMethod === 'midtrans_recurring') {
         // Handle 3DS authentication if required - check for requires_redirect from backend
-        if (result.requires_redirect && result.redirect_url) {
+        // API returns: { success: true, data: { requires_redirect: true, redirect_url: "...", order_id: "...", transaction_id: "..." } }
+        if (result.data?.requires_redirect && result.data?.redirect_url) {
           // Throw a special error that the component can catch and handle for 3DS
           const threeDSError = new Error('3DS authentication required') as any
           threeDSError.requires_3ds = true
-          threeDSError.redirect_url = result.redirect_url
-          threeDSError.transaction_id = result.data?.transaction_id
-          threeDSError.order_id = result.data?.order_id
+          threeDSError.redirect_url = result.data.redirect_url
+          threeDSError.transaction_id = result.data.transaction_id
+          threeDSError.order_id = result.data.order_id
 
           throw threeDSError
         }

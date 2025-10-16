@@ -118,7 +118,8 @@ export default class MidtransRecurringHandler extends BasePaymentHandler {
     // Step 1: Create charge transaction with token_id from frontend tokenization
     logger.info({ data: [{
       order_id: transactionId, 
-      amount_usd: amount.finalAmount, 
+      amount: amount.finalAmount,
+      currency: amount.currency,
       token_id: this.tokenId.substring(0, 20) + '...',
       customer_name: `${this.paymentData.customer_info.first_name} ${this.paymentData.customer_info.last_name}`,
       customer_email: this.paymentData.customer_info.email
@@ -244,11 +245,9 @@ export default class MidtransRecurringHandler extends BasePaymentHandler {
         success: true,
         requires_redirect: true,
         redirect_url: chargeTransaction.redirect_url,
-        data: {
-          order_id: transactionId,
-          transaction_id: chargeTransaction.transaction_id,
-          requires_3ds: true
-        }
+        order_id: transactionId,
+        transaction_id: chargeTransaction.transaction_id,
+        requires_3ds: true
       }
     }
 
