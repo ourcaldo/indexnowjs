@@ -51,6 +51,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
 
           db.from('indb_keyword_usage')
             .select('keywords_used, keywords_limit, period_start, period_end')
+            .eq('user_id', userId)
             .order('created_at', { ascending: false })
             .limit(1)
             .single(),
@@ -74,6 +75,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
 
           db.from('indb_keyword_domains')
             .select('*')
+            .eq('user_id', userId)
             .eq('is_active', true)
             .order('created_at', { ascending: false }),
 
@@ -103,6 +105,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
                 check_date
               )
             `)
+            .eq('user_id', userId)
             .eq('is_active', true)
             .order('created_at', { ascending: false })
             .limit(50)

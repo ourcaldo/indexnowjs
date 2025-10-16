@@ -19,8 +19,8 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking/domains',
         reason: 'User fetching their domains with keyword counts',
         metadata: { endpoint: '/api/v1/rank-tracking/domains', method: 'GET' },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'indb_keyword_domains', operationType: 'select' },
       async (db) => {
@@ -30,6 +30,7 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
             *,
             keyword_count:indb_keyword_keywords(count)
           `)
+          .eq('user_id', auth.userId)
           .eq('is_active', true)
           .order('created_at', { ascending: false })
 
@@ -78,8 +79,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking/domains',
         reason: 'User creating a new domain for rank tracking',
         metadata: { domainName: cleanDomain, displayName: display_name || cleanDomain },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'indb_keyword_domains', operationType: 'insert' },
       async (db) => {

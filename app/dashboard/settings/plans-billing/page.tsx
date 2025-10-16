@@ -584,7 +584,33 @@ export default function BillingPage() {
 
       {/* Plans */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-4" data-testid="text-heading-plans">Plans</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-foreground" data-testid="text-heading-plans">Plans</h2>
+          <div className="flex items-center gap-2 bg-secondary rounded-lg p-1" data-testid="toggle-billing-period">
+            <button
+              onClick={() => setSelectedBillingPeriod('monthly')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedBillingPeriod === 'monthly'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="button-monthly"
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setSelectedBillingPeriod('yearly')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedBillingPeriod === 'yearly'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="button-yearly"
+            >
+              Yearly
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {packagesData?.packages && packagesData.packages.length > 0 ? packagesData.packages.map((plan) => {
             const pricing = getBillingPeriodPrice(plan, selectedBillingPeriod)
@@ -598,12 +624,22 @@ export default function BillingPage() {
               >
                 <CardHeader>
                   <CardTitle data-testid={`text-plan-name-${plan.slug}`}>{plan.name}</CardTitle>
-                  <div className="flex items-baseline gap-1">
+                  <div className="flex items-baseline gap-2">
+                    {pricing.originalPrice && pricing.originalPrice !== pricing.price && (
+                      <span className="text-lg text-muted-foreground line-through" data-testid={`text-plan-regular-price-${plan.slug}`}>
+                        {formatCurrency(pricing.originalPrice, userCurrency)}
+                      </span>
+                    )}
                     <span className="text-3xl text-foreground font-bold" data-testid={`text-plan-price-${plan.slug}`}>
                       {formatCurrency(pricing.price, userCurrency)}
                     </span>
-                    <span className="text-sm text-muted-foreground">/mo</span>
+                    <span className="text-sm text-muted-foreground">/{selectedBillingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
                   </div>
+                  {pricing.discount && pricing.discount > 0 && (
+                    <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-0 mt-2" data-testid={`badge-discount-${plan.slug}`}>
+                      Save {pricing.discount}%
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2.5 mb-4">
