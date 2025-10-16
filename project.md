@@ -2,6 +2,66 @@
 
 ## Recent Changes
 
+### 2025-10-16 - Fixed Billing Page "No Active Package" and Empty Plans Section (COMPLETED)
+**Bug Fix**: Corrected billing page logic to properly show current plan when user has package_id, and added fallback for empty plans data.
+
+#### ✅ Issues Fixed
+
+**1. "No Active Package" Showing Incorrectly**
+- **Problem**: Page showed "No Active Package" even when user had a valid package_id in their profile
+- **Root Cause**: Logic required BOTH `currentPlan` AND `billingData?.currentSubscription` to be truthy, but billing API might not have subscription record yet (especially after new checkout)
+- **Fix**: Changed condition from `{currentPlan && billingData?.currentSubscription ? ...}` to `{currentPlan ? ...}`
+  - Now shows current plan if user has package_id, regardless of subscription record
+  - Matches the old backend fallback logic from billing overview endpoint fix
+  - Added fallback for billing info: shows subscription details if available, otherwise shows package price
+
+**2. Plans Section Empty/Not Rendering**
+- **Problem**: Plans section showed nothing - no plan cards rendered
+- **Root Cause**: Code mapped over `packagesData?.packages` without checking if it exists or is empty
+- **Fix**: Added conditional check `{packagesData?.packages && packagesData.packages.length > 0 ? ... : fallback}`
+  - Shows "No plans available" message when packages data is missing
+  - Prevents silent failure when API doesn't return packages
+
+#### ✅ Implementation Details
+
+**Current Plan Card Logic (Fixed):**
+```tsx
+{currentPlan ? (
+  // Show current plan card
+  <CardDescription>
+    {billingData?.currentSubscription ? (
+      // Primary: Show subscription billing details
+      {formatCurrency(amount)}/{period} • Next billing {date}
+    ) : (
+      // Fallback: Show package pricing when no subscription record
+      Active package • {formatCurrency(price)}/{period}
+    )}
+  </CardDescription>
+) : (
+  // No package at all
+  <Card>No Active Package</Card>
+)}
+```
+
+**Plans Section Logic (Fixed):**
+```tsx
+{packagesData?.packages && packagesData.packages.length > 0 ? (
+  packagesData.packages.map(plan => <Card>...</Card>)
+) : (
+  <div>No plans available</div>
+)}
+```
+
+#### ✅ Backend Integration Preserved
+- ✅ Same API endpoints: BILLING_ENDPOINTS.OVERVIEW, DASHBOARD_ENDPOINTS.MAIN
+- ✅ Same data structure from `data.billing` for packages
+- ✅ Same fallback logic as old billing page implementation
+- ✅ Handles cases where subscription record doesn't exist yet (new users after checkout)
+
+**Status**: Billing page display logic **FIXED** - Now properly shows current plan for users with package_id, with fallback handling for missing subscription records and empty packages data.
+
+---
+
 ### 2025-10-16 - Completed Billing Page Redesign with Figma Layout (COMPLETED)
 **UI/UX Enhancement**: Fully implemented the Figma settings redesign for the Plans & Billing page, replacing the old comprehensive BillingHistory component with a cleaner, simpler invoice list matching the Figma design exactly.
 

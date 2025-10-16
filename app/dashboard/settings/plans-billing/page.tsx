@@ -455,7 +455,7 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       {/* Current Plan Card */}
-      {currentPlan && billingData?.currentSubscription ? (
+      {currentPlan ? (
         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-purple-500/5" data-testid="card-current-plan">
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -463,8 +463,14 @@ export default function BillingPage() {
                 <Badge className="mb-2 bg-primary text-primary-foreground" data-testid="badge-current-plan">Current Plan</Badge>
                 <CardTitle className="text-2xl" data-testid="text-plan-name">{currentPlan.name}</CardTitle>
                 <CardDescription className="text-foreground/70" data-testid="text-billing-info">
-                  {formatCurrency(billingData.currentSubscription.amount_paid, userCurrency)}/
-                  {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
+                  {billingData?.currentSubscription ? (
+                    <>
+                      {formatCurrency(billingData.currentSubscription.amount_paid, userCurrency)}/
+                      {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
+                    </>
+                  ) : (
+                    `Active package • ${formatCurrency(currentPlan.price, userCurrency)}/${currentPlan.billing_period}`
+                  )}
                 </CardDescription>
               </div>
               <Button variant="outline" className="bg-background" data-testid="button-manage-plan">Manage</Button>
@@ -554,7 +560,7 @@ export default function BillingPage() {
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-4" data-testid="text-heading-plans">Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {packagesData?.packages.map((plan) => {
+          {packagesData?.packages && packagesData.packages.length > 0 ? packagesData.packages.map((plan) => {
             const pricing = getBillingPeriodPrice(plan, selectedBillingPeriod)
             const isCurrentPlan = plan.id === packagesData.current_package_id
             
@@ -603,7 +609,11 @@ export default function BillingPage() {
                 </CardContent>
               </Card>
             )
-          })}
+          }) : (
+            <div className="col-span-3 text-center py-8">
+              <p className="text-muted-foreground">No plans available</p>
+            </div>
+          )}
         </div>
       </div>
 
