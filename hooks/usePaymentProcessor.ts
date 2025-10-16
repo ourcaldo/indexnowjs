@@ -409,17 +409,41 @@ export function usePaymentProcessor({
           popupModal.openPopup(redirect_url)
         },
         onSuccess: async function(response: any) {
-          // 3DS authentication success - close popup and redirect
+          // 3DS authentication success - but check transaction_status for actual payment status
           popupModal.closePopup()
           
-          addToast({
-            title: "Payment successful!",
-            description: "Your subscription has been activated.",
-            type: "success"
-          })
+          // Check transaction_status from response
+          const transactionStatus = response.transaction_status
           
-          setSubmitting(false)
-          router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
+          // Success statuses: capture, settlement, authorize
+          if (transactionStatus === 'capture' || transactionStatus === 'settlement' || transactionStatus === 'authorize') {
+            addToast({
+              title: "Payment successful!",
+              description: "Your subscription has been activated.",
+              type: "success"
+            })
+            setSubmitting(false)
+            router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
+          }
+          // Pending status - wait for webhook notification
+          else if (transactionStatus === 'pending') {
+            addToast({
+              title: "Payment processing",
+              description: "Your payment is being verified. You will receive a notification shortly.",
+              type: "info"
+            })
+            setSubmitting(false)
+            router.push(`/dashboard/settings/plans-billing`)
+          }
+          // Other statuses (deny, cancel, expire, etc.)
+          else {
+            addToast({
+              title: "Payment failed",
+              description: response.status_message || "Transaction was not successful. Please try again.",
+              type: "error"
+            })
+            setSubmitting(false)
+          }
         },
         onFailure: function(response: any) {
           // 3DS authentication failure - close popup, stay on page
@@ -433,7 +457,7 @@ export function usePaymentProcessor({
           })
         },
         onPending: function(response: any) {
-          // Transaction pending - close popup, stay on page
+          // Transaction pending - close popup, redirect to billing
           popupModal.closePopup()
           setSubmitting(false)
           
@@ -442,6 +466,8 @@ export function usePaymentProcessor({
             description: "Your payment is being processed. You will receive a notification when it's complete.",
             type: "info"
           })
+          
+          router.push(`/dashboard/settings/plans-billing`)
         }
       }
 
