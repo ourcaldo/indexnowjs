@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { usePageViewLogger } from '@/hooks/useActivityLogger'
-import { Button } from '@/components/ui/button'
 import { 
-  Settings as SettingsIcon, 
   User, 
   Key,
   CreditCard
@@ -18,10 +16,8 @@ export default function SettingsPage() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState('general')
 
-  // Log page view
   usePageViewLogger('/dashboard/settings', 'Settings', { section: 'user_settings' })
 
-  // Set active tab from URL parameter on load
   useEffect(() => {
     const tab = searchParams?.get('tab')
     if (tab && ['general', 'service-accounts', 'plans-billing'].includes(tab)) {
@@ -32,7 +28,7 @@ export default function SettingsPage() {
   const tabs = [
     {
       id: 'general',
-      label: 'Account Setting',
+      label: 'Account',
       icon: User,
       description: 'Update your profile information, password and notifications'
     },
@@ -44,12 +40,11 @@ export default function SettingsPage() {
     },
     {
       id: 'plans-billing',
-      label: 'Plans & Billing',
+      label: 'Billing',
       icon: CreditCard,
       description: 'Manage your subscription and billing information'
     }
   ]
-
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -65,63 +60,70 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl font-bold text-foreground mb-2">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your account settings, service accounts, and billing preferences.
-        </p>
-      </div>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar Navigation - Desktop */}
+      <aside className="hidden lg:block w-64 bg-white border-r border-gray-200 min-h-screen">
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Settings</h2>
+          <p className="text-sm text-gray-500 mb-6">Manage your account and preferences</p>
+          <nav className="space-y-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  data-testid={`tab-${tab.id}`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+      </aside>
 
-      {/* Mobile-First Tab Navigation */}
-      <div className="mb-6">
-        {/* Desktop Navigation */}
-        <nav className="hidden sm:flex space-x-1 border-b border-border bg-muted/30 rounded-t-lg p-1">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${
-                activeTab === tab.id ? '' : 'hover:bg-slate-50'
-              }`}
-              data-testid={`tab-${tab.id}`}
-            >
-              <tab.icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </Button>
-          ))}
-        </nav>
-
-        {/* Mobile Navigation */}
-        <div className="sm:hidden">
-          <div className="grid grid-cols-2 gap-2 p-2 bg-muted/30 rounded-lg">
-            {tabs.map((tab) => (
-              <Button
-                key={tab.id}
-                variant={activeTab === tab.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center gap-1 p-3 h-auto text-xs font-medium transition-colors duration-150 ${
-                  activeTab === tab.id ? '' : 'hover:bg-slate-50'
-                }`}
-                data-testid={`tab-mobile-${tab.id}`}
-              >
-                <tab.icon className="w-4 h-4" />
-                <span className="text-center leading-tight">
-                  {tab.label.includes(' ') ? tab.label.split(' ')[0] : tab.label}
-                </span>
-              </Button>
-            ))}
+      {/* Mobile Navigation */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-10">
+        <div className="p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Settings</h2>
+          <div className="grid grid-cols-3 gap-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                  data-testid={`tab-mobile-${tab.id}`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="text-center leading-tight">
+                    {tab.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="min-h-[400px]">
-        {renderTabContent()}
-      </div>
+      {/* Main Content */}
+      <main className="flex-1 lg:pt-0 pt-32">
+        <div className="max-w-[1400px] mx-auto p-6">
+          {renderTabContent()}
+        </div>
+      </main>
     </div>
   )
 }

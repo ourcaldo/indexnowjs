@@ -9,20 +9,14 @@ import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
 import { 
-  SettingCard, 
-  SettingToggle, 
-  SettingInput, 
-  SettingSelect 
-} from '@/components/settings'
-import { 
-  Bell,
   RefreshCw,
-  Save,
-  User,
   Eye,
-  EyeOff,
-  KeyRound
+  EyeOff
 } from 'lucide-react'
 import { AUTH_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 
@@ -34,11 +28,9 @@ export default function GeneralSettingsPage() {
   const [savingPassword, setSavingPassword] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  // Log page view and settings activities
   usePageViewLogger('/dashboard/settings/general', 'Account Settings', { section: 'account_settings' })
   const { logDashboardActivity } = useActivityLogger()
 
-  // Form states
   const [notifications, setNotifications] = useState({
     jobCompletion: true,
     failures: true,
@@ -58,7 +50,6 @@ export default function GeneralSettingsPage() {
     confirmPassword: ''
   })
 
-  // Load data on component mount
   useEffect(() => {
     loadData()
   }, [])
@@ -69,10 +60,9 @@ export default function GeneralSettingsPage() {
       const token = (await supabase.auth.getSession()).data.session?.access_token
       if (!token) return
 
-      // Load user profile
       const profileResponse = await fetch(AUTH_ENDPOINTS.PROFILE, {
         headers: { Authorization: `Bearer ${token}` },
-        credentials: 'include' // Essential for cross-subdomain authentication
+        credentials: 'include'
       })
       
       if (profileResponse.ok) {
@@ -83,7 +73,6 @@ export default function GeneralSettingsPage() {
           email_notifications: profileData.data.profile.email_notifications || false
         })
       } else if (profileResponse.status === 404) {
-        // Profile doesn't exist, create default values
         setProfileForm({
           full_name: user?.email?.split('@')[0] || '',
           phone_number: '',
@@ -91,10 +80,9 @@ export default function GeneralSettingsPage() {
         })
       }
 
-      // Load user settings for notifications
       const settingsResponse = await fetch(AUTH_ENDPOINTS.SETTINGS, {
         headers: { Authorization: `Bearer ${token}` },
-        credentials: 'include' // Essential for cross-subdomain authentication
+        credentials: 'include'
       })
       
       if (settingsResponse.ok) {
@@ -106,8 +94,6 @@ export default function GeneralSettingsPage() {
           dailyReports: settings.email_daily_report || false,
           criticalAlerts: settings.email_quota_alerts || false
         })
-      } else if (settingsResponse.status === 404) {
-        // Settings don't exist, keep defaults
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -129,7 +115,7 @@ export default function GeneralSettingsPage() {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(profileForm),
-        credentials: 'include' // Essential for cross-subdomain authentication
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -139,7 +125,7 @@ export default function GeneralSettingsPage() {
           type: 'success'
         })
         await logDashboardActivity('profile_update', 'Profile information updated')
-        loadData() // Refresh data
+        loadData()
       } else {
         const error = await response.json()
         addToast({
@@ -191,7 +177,6 @@ export default function GeneralSettingsPage() {
     try {
       setSavingPassword(true)
       
-      // First verify current password by attempting to sign in
       if (!user?.email) {
         addToast({
           title: 'Error',
@@ -215,7 +200,6 @@ export default function GeneralSettingsPage() {
         return
       }
 
-      // Update password
       const { error: updateError } = await supabase.auth.updateUser({
         password: passwordForm.newPassword
       })
@@ -237,7 +221,6 @@ export default function GeneralSettingsPage() {
 
       await logDashboardActivity('password_change', 'Password updated successfully')
       
-      // Clear password form
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
@@ -257,7 +240,7 @@ export default function GeneralSettingsPage() {
 
   const handleSaveNotifications = async () => {
     try {
-      setSavingProfile(true) // Reuse this state for notifications
+      setSavingProfile(true)
       const token = (await supabase.auth.getSession()).data.session?.access_token
       if (!token) return
 
@@ -273,7 +256,7 @@ export default function GeneralSettingsPage() {
           email_daily_report: notifications.dailyReports,
           email_quota_alerts: notifications.criticalAlerts
         }),
-        credentials: 'include' // Essential for cross-subdomain authentication
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -306,229 +289,323 @@ export default function GeneralSettingsPage() {
     }
   }
 
+  const getInitials = () => {
+    const name = profileForm.full_name || user?.email
+    if (!name) return 'U'
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  }
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-6 w-48 bg-muted rounded animate-pulse" />
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Profile Information Skeleton */}
-          <div className="space-y-4 p-6 bg-card border rounded-lg">
-            <div className="h-4 w-32 bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-            <div className="h-4 w-24 bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-            <div className="h-4 w-28 bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-          </div>
-          
-          {/* Security Skeleton */}
-          <div className="space-y-4 p-6 bg-card border rounded-lg">
-            <div className="h-4 w-32 bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-            <div className="h-4 w-28 bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-            <div className="h-4 w-36 bg-muted rounded animate-pulse" />
-            <div className="h-10 w-full bg-muted rounded animate-pulse" />
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="h-5 w-32 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-48 bg-muted rounded animate-pulse mt-2" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                  <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-20 bg-muted rounded animate-pulse" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Profile Information */}
-        <SettingCard 
-          title="Profile Information" 
-          description="Update your personal details and contact information"
-        >
-          <div className="space-y-4">
-            <SettingInput
-              id="full-name"
-              label="Full Name"
-              placeholder="Enter your full name"
-              value={profileForm.full_name}
-              onChange={(value) => setProfileForm(prev => ({...prev, full_name: value}))}
-            />
-
-            <SettingInput
-              id="email"
-              label="Email Address"
-              type="email"
-              value={user?.email || ''}
-              readOnly
-              description="Email cannot be changed directly. Contact support if needed."
-              className="bg-muted"
-            />
-
-            <SettingInput
-              id="phone"
-              label="Phone Number"
-              type="tel"
-              placeholder="Enter your phone number"
-              value={profileForm.phone_number}
-              onChange={(value) => setProfileForm(prev => ({...prev, phone_number: value}))}
-              description="Optional - used for account recovery and notifications"
-            />
-          </div>
-
-          <div className="pt-4">
-            <Button 
-              onClick={handleSaveProfile}
-              disabled={savingProfile}
-              className="w-full sm:w-auto"
-            >
-              {savingProfile ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Update Profile
-                </>
-              )}
-            </Button>
-          </div>
-        </SettingCard>
-
-        {/* Security */}
-        <SettingCard 
-          title="Security" 
-          description="Update your password to keep your account secure"
-        >
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current-password" className="text-sm font-medium">
-                Current Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="current-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter current password"
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
-                  className="pr-10"
-                  data-testid="input-current-password"
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Column */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Profile */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile</CardTitle>
+            <CardDescription>Update your personal information</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-6 mb-6">
+              <Avatar className="w-16 h-16">
+                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-lg font-medium">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <Button variant="outline" size="sm">Change photo</Button>
+                <p className="text-xs text-gray-500 mt-2">JPG, PNG. Max 2MB</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full name</Label>
+                <Input 
+                  id="name" 
+                  value={profileForm.full_name} 
+                  onChange={(e) => setProfileForm(prev => ({...prev, full_name: e.target.value}))}
+                  data-testid="input-full-name"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={user?.email || ''} 
+                  readOnly
+                  className="bg-muted"
+                  data-testid="input-email"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="phone">Phone number</Label>
+                <Input 
+                  id="phone" 
+                  placeholder="Optional" 
+                  value={profileForm.phone_number}
+                  onChange={(e) => setProfileForm(prev => ({...prev, phone_number: e.target.value}))}
+                  data-testid="input-phone"
+                />
               </div>
             </div>
 
-            <SettingInput
-              id="new-password"
-              label="New Password"
-              type="password"
-              placeholder="Enter new password"
-              value={passwordForm.newPassword}
-              onChange={(value) => setPasswordForm(prev => ({...prev, newPassword: value}))}
-              description="Must be at least 6 characters long"
-            />
+            <div className="flex justify-end mt-6">
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleSaveProfile}
+                disabled={savingProfile}
+                data-testid="button-save-profile"
+              >
+                {savingProfile ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save changes'
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-            <SettingInput
-              id="confirm-password"
-              label="Confirm New Password"
-              type="password"
-              placeholder="Confirm new password"
-              value={passwordForm.confirmPassword}
-              onChange={(value) => setPasswordForm(prev => ({...prev, confirmPassword: value}))}
-            />
-          </div>
+        {/* Password */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Password</CardTitle>
+            <CardDescription>Change your password</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="current">Current password</Label>
+                <div className="relative">
+                  <Input 
+                    id="current" 
+                    type={showPassword ? "text" : "password"}
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
+                    className="pr-10"
+                    data-testid="input-current-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new">New password</Label>
+                <Input 
+                  id="new" 
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm(prev => ({...prev, newPassword: e.target.value}))}
+                  data-testid="input-new-password"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm">Confirm password</Label>
+                <Input 
+                  id="confirm" 
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({...prev, confirmPassword: e.target.value}))}
+                  data-testid="input-confirm-password"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end mt-6">
+              <Button 
+                variant="outline"
+                onClick={handleChangePassword}
+                disabled={savingPassword}
+                data-testid="button-update-password"
+              >
+                {savingPassword ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update password'
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-          <div className="pt-4">
-            <Button 
-              onClick={handleChangePassword}
-              disabled={savingPassword}
-              variant="outline"
-              className="w-full sm:w-auto"
-            >
-              {savingPassword ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Changing...
-                </>
-              ) : (
-                <>
-                  <KeyRound className="w-4 h-4 mr-2" />
-                  Change Password
-                </>
-              )}
-            </Button>
-          </div>
-        </SettingCard>
+        {/* Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>Manage email preferences</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <div className="space-y-0.5">
+                  <Label>Indexing updates</Label>
+                  <p className="text-xs text-gray-500">Job completion notifications</p>
+                </div>
+                <Switch 
+                  checked={notifications.jobCompletion}
+                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, jobCompletion: checked}))}
+                  data-testid="switch-job-completion"
+                />
+              </div>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <div className="space-y-0.5">
+                  <Label>Failure notifications</Label>
+                  <p className="text-xs text-gray-500">Get notified when jobs fail</p>
+                </div>
+                <Switch 
+                  checked={notifications.failures}
+                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, failures: checked}))}
+                  data-testid="switch-failures"
+                />
+              </div>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <div className="space-y-0.5">
+                  <Label>Daily reports</Label>
+                  <p className="text-xs text-gray-500">Summary of account activity</p>
+                </div>
+                <Switch 
+                  checked={notifications.dailyReports}
+                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, dailyReports: checked}))}
+                  data-testid="switch-daily-reports"
+                />
+              </div>
+              <div className="flex items-center justify-between py-3">
+                <div className="space-y-0.5">
+                  <Label>Critical alerts</Label>
+                  <p className="text-xs text-gray-500">Quota limit warnings</p>
+                </div>
+                <Switch 
+                  checked={notifications.criticalAlerts}
+                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, criticalAlerts: checked}))}
+                  data-testid="switch-critical-alerts"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end mt-6">
+              <Button 
+                onClick={handleSaveNotifications}
+                disabled={savingProfile}
+                data-testid="button-save-notifications"
+              >
+                {savingProfile ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save preferences'
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Email Notifications */}
-      <SettingCard 
-        title="Email Notifications" 
-        description="Control when you receive email notifications about your indexing activities"
-      >
-        <div className="space-y-4">
-          <SettingToggle
-            id="job-completion"
-            label="Job completion notifications"
-            description="Get notified when indexing jobs complete successfully"
-            checked={notifications.jobCompletion}
-            onCheckedChange={(checked) => setNotifications(prev => ({...prev, jobCompletion: checked}))}
-          />
-          
-          <SettingToggle
-            id="job-failures"
-            label="Failure notifications"
-            description="Get notified when indexing jobs fail or encounter errors"
-            checked={notifications.failures}
-            onCheckedChange={(checked) => setNotifications(prev => ({...prev, failures: checked}))}
-          />
-          
-          <SettingToggle
-            id="daily-reports"
-            label="Daily quota reports"
-            description="Receive daily summaries of your quota usage and activities"
-            checked={notifications.dailyReports}
-            onCheckedChange={(checked) => setNotifications(prev => ({...prev, dailyReports: checked}))}
-          />
-          
-          <SettingToggle
-            id="critical-alerts"
-            label="Critical quota alerts"
-            description="Get notified when you're approaching quota limits"
-            checked={notifications.criticalAlerts}
-            onCheckedChange={(checked) => setNotifications(prev => ({...prev, criticalAlerts: checked}))}
-          />
-        </div>
+      {/* Sidebar */}
+      <div className="space-y-6">
+        {/* Account Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-xs text-gray-500">Status</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-900">Active</span>
+              </div>
+            </div>
+            <Separator />
+            <div>
+              <p className="text-xs text-gray-500">Member since</p>
+              <p className="text-sm text-gray-900 mt-1">Recently</p>
+            </div>
+            <Separator />
+            <div>
+              <p className="text-xs text-gray-500">Email</p>
+              <p className="text-sm text-gray-900 mt-1">{user?.email || 'N/A'}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="pt-4">
-          <Button 
-            onClick={handleSaveNotifications}
-            disabled={savingProfile}
-            className="w-full sm:w-auto"
-          >
-            {savingProfile ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Bell className="w-4 h-4 mr-2" />
-                Save Notifications
-              </>
-            )}
-          </Button>
-        </div>
-      </SettingCard>
+        {/* Security */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Security</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-900">Two-factor auth</p>
+                <p className="text-xs text-gray-500">Coming soon</p>
+              </div>
+              <Button variant="outline" size="sm" disabled>Manage</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-red-200">
+          <CardHeader>
+            <CardTitle className="text-red-600">Danger Zone</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-gray-600 mb-3">Permanently delete your account and data</p>
+            <Button variant="outline" size="sm" className="w-full text-red-600 border-red-200 hover:bg-red-50">
+              Delete account
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
