@@ -2,8 +2,8 @@
 
 ## Recent Changes
 
-### 2025-10-16 - Completed Billing Page Redesign (COMPLETED)
-**UI/UX Enhancement**: Implemented the final piece of the Figma settings redesign by updating the Plans & Billing page with a cleaner, more modern layout featuring a prominent current plan card with usage metrics.
+### 2025-10-16 - Completed Billing Page Redesign with Figma Layout (COMPLETED)
+**UI/UX Enhancement**: Fully implemented the Figma settings redesign for the Plans & Billing page, replacing the old comprehensive BillingHistory component with a cleaner, simpler invoice list matching the Figma design exactly.
 
 #### ✅ What Was Implemented
 
@@ -29,17 +29,30 @@
      - Action button: "Upgrade" for other plans, "Current plan" (disabled) for active plan
    - Current plan highlighted with primary border color
 
-3. **Billing History Section**:
-   - Retained existing comprehensive billing history component
-   - Transaction filtering, pagination, and search functionality
-   - Status indicators and payment method tracking
+3. **Billing Section** (NEW - Matches Figma Design):
+   - **Layout**: 3-column grid (2 columns left, 1 column right)
+   - **Left Side (lg:col-span-2)**: Billing History Card
+     - Simple invoice list showing last 5 transactions
+     - Each row displays: Invoice ID, Date, Status badge (Paid/Pending/Failed), Amount, Download button
+     - Clean border-separated rows with hover states
+     - Direct link to order details on download button click
+   - **Right Side (1 column)**:
+     - **Payment Method Card**:
+       - Gradient credit card visual (primary to purple)
+       - Shows masked card number (•••• •••• •••• ••••)
+       - Update button for changing payment method
+       - Empty state for no payment method
+     - **Referral Card**:
+       - Light blue background (primary/5)
+       - "Get 1 month free per referral" message
+       - Share link button
 
 #### ✅ Backend Integration Preserved
 
 **All existing functionality maintained:**
 - ✅ API calls to BILLING_ENDPOINTS.OVERVIEW for subscription data
 - ✅ API calls to DASHBOARD_ENDPOINTS.MAIN for usage data, packages, and trial eligibility
-- ✅ API calls to BILLING_ENDPOINTS.HISTORY for transaction history
+- ✅ API calls to BILLING_ENDPOINTS.HISTORY for transaction history (simplified to fetch latest 10)
 - ✅ Real-time quota usage data from dashboard API
 - ✅ Keyword usage tracking from rank tracking system
 - ✅ Service account count from user quota data
@@ -50,13 +63,20 @@
 
 #### ✅ Components Removed/Replaced
 
-**Old components no longer needed:**
+**Old components completely removed:**
 - `BillingStats` component → Functionality merged into Current Plan Card
 - `PackageComparison` component → Replaced with simpler Plans section
 - `PricingTable` component → Replaced with plan cards
+- **`BillingHistory` component** → Replaced with simpler inline invoice list matching Figma design
+  - Removed comprehensive filtering, search, and pagination UI
+  - Removed summary stats display (Total/Completed/Pending/Failed)
+  - Removed complex DataTable implementation
+  - Replaced with simple card showing 5 most recent transactions
 
-**Components retained:**
-- `BillingHistory` component → Kept as-is for transaction history
+**New inline components:**
+- Simple billing history list (inline in main page)
+- Payment method card with gradient visual
+- Referral card with share functionality
 
 #### ✅ Code Quality & Testing
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Check, Key } from 'lucide-react'
+import { AlertCircle, Check, Download } from 'lucide-react'
 import { supabase } from '@/lib/database'
 import { authService } from '@/lib/auth'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { BillingHistory } from './components'
 
 // Type definitions
 interface PaymentPackage {
@@ -152,12 +151,6 @@ export default function BillingPage() {
   const [subscribing, setSubscribing] = useState<string | null>(null)
   const [startingTrial, setStartingTrial] = useState<string | null>(null)
 
-  // History section state
-  const [currentPage, setCurrentPage] = useState(1)
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [typeFilter, setTypeFilter] = useState<string>('')
-  const [searchTerm, setSearchTerm] = useState<string>('')
-
   // Hooks
   const router = useRouter()
   const { addToast } = useToast()
@@ -179,12 +172,6 @@ export default function BillingPage() {
       router.replace(url.pathname, { scroll: false })
     }
   }, [])
-
-  useEffect(() => {
-    if (statusFilter || typeFilter || searchTerm) {
-      loadBillingHistory()
-    }
-  }, [currentPage, statusFilter, typeFilter, searchTerm])
 
   // Data loading functions
   const loadAllData = async () => {
@@ -287,11 +274,8 @@ export default function BillingPage() {
       if (!token) throw new Error('No authentication token')
 
       const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: '10',
-        ...(statusFilter && { status: statusFilter }),
-        ...(typeFilter && { type: typeFilter }),
-        ...(searchTerm && { search: searchTerm })
+        page: '1',
+        limit: '10'
       })
 
       const response = await fetch(`${BILLING_ENDPOINTS.HISTORY}?${params}`, {
@@ -400,17 +384,6 @@ export default function BillingPage() {
 
   const isTrialEligiblePackage = (pkg: any) => {
     return pkg.free_trial_enabled === true
-  }
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
-
-  const resetFilters = () => {
-    setStatusFilter('')
-    setTypeFilter('')
-    setSearchTerm('')
-    setCurrentPage(1)
   }
 
   const getStatusIcon = (status: string) => {
@@ -634,25 +607,118 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Billing History */}
-      <BillingHistory
-        historyData={historyData}
-        currentPage={currentPage}
-        statusFilter={statusFilter}
-        typeFilter={typeFilter}
-        searchTerm={searchTerm}
-        setCurrentPage={setCurrentPage}
-        setStatusFilter={setStatusFilter}
-        setTypeFilter={setTypeFilter}
-        setSearchTerm={setSearchTerm}
-        handlePageChange={handlePageChange}
-        resetFilters={resetFilters}
-        getStatusIcon={getStatusIcon}
-        getStatusText={getStatusText}
-        getStatusColor={getStatusColor}
-        formatCurrency={formatCurrency}
-        formatDate={formatDate}
-      />
+      {/* Billing Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Billing History - Left Side */}
+        <div className="lg:col-span-2">
+          <Card data-testid="card-billing-history">
+            <CardHeader>
+              <CardTitle>Billing History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {historyData?.transactions && historyData.transactions.length > 0 ? (
+                <div className="space-y-3">
+                  {historyData.transactions.slice(0, 5).map((transaction) => (
+                    <div 
+                      key={transaction.id} 
+                      className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                      data-testid={`billing-row-${transaction.id}`}
+                    >
+                      <div>
+                        <p className="text-sm text-foreground font-medium" data-testid={`text-invoice-id-${transaction.id}`}>
+                          {transaction.id}
+                        </p>
+                        <p className="text-xs text-muted-foreground" data-testid={`text-invoice-date-${transaction.id}`}>
+                          {formatDate(transaction.created_at)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          variant="secondary" 
+                          className={`${
+                            transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
+                              ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                              : transaction.transaction_status === 'pending'
+                              ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
+                              : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                          } border-0`}
+                          data-testid={`badge-status-${transaction.id}`}
+                        >
+                          {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
+                        </Badge>
+                        <span className="text-sm text-foreground min-w-[80px] text-right" data-testid={`text-amount-${transaction.id}`}>
+                          {formatCurrency(transaction.amount, transaction.currency)}
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
+                          data-testid={`button-download-${transaction.id}`}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-12">
+                  <p className="text-muted-foreground">No transactions found</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          {/* Payment Method Card */}
+          <Card data-testid="card-payment-method">
+            <CardHeader>
+              <CardTitle>Payment Method</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {billingData?.currentSubscription ? (
+                <>
+                  <div className="bg-gradient-to-br from-primary to-purple-600 dark:from-primary/80 dark:to-purple-600/80 rounded-lg p-4 mb-4">
+                    <div className="flex justify-between mb-8">
+                      <div className="w-10 h-7 bg-white/20 rounded flex items-center justify-center">
+                        <span className="text-white text-[10px] font-bold">CARD</span>
+                      </div>
+                    </div>
+                    <p className="text-white text-sm mb-1">•••• •••• •••• ••••</p>
+                    <p className="text-xs text-white/70">Payment method on file</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full" data-testid="button-update-payment">
+                    Update
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground mb-4">No payment method added</p>
+                  <Button variant="outline" size="sm" className="w-full" data-testid="button-add-payment">
+                    Add Payment Method
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Referral Card */}
+          <Card className="border-primary/20 bg-primary/5" data-testid="card-referral">
+            <CardHeader>
+              <CardTitle>Referral</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-foreground/70 mb-3">Get 1 month free per referral</p>
+              <Button size="sm" className="w-full" data-testid="button-share-referral">
+                Share link
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
