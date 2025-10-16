@@ -3,19 +3,20 @@
 ## Recent Changes
 
 ### 2025-10-16 - Fixed Credit Card Payment Authentication Error & Improved Error Message Security (COMPLETED)
-**Critical Payment Fix**: Resolved authentication error preventing credit card payments from processing. Fixed missing `getCurrentSessionToken()` method and implemented secure error message sanitization to prevent technical details from being exposed to users.
+**Critical Payment Fix**: Resolved authentication error preventing credit card payments from processing. Fixed incorrect 3DS authentication flow and token retrieval method. Implemented secure error message sanitization to prevent technical details from being exposed to users.
 
 #### ✅ Issues Fixed
 
 **1. Authentication Error During Credit Card Payment (CRITICAL)**
-- **Problem**: When users attempted to place orders using credit cards, payment processing failed with error "Authentication Failed,lib_auth__WEBPACK_IMPORTED_MODULE_5__.authService.getCurrentSessionToken is not a function"
+- **Problem**: When users attempted to place orders using credit cards, payment processing failed with error "Authentication Failed,lib_auth__WEBPACK_IMPORTED_MODULE_5__.authService.getCurrentSessionToken is not a function" followed by "Authentication required. Please log in and try again." even when already logged in
 - **Root Cause**:
-  - Line 275 of `hooks/usePaymentProcessor.ts` called `authService.getCurrentSessionToken()`
-  - This method doesn't exist in the AuthService class
+  - **Initial Issue**: Line 275 called `authService.getCurrentSessionToken()` which doesn't exist
+  - **Deeper Issue**: 3DS authentication flow was incorrectly re-throwing errors instead of handling them directly
+  - **Token Context Lost**: Re-throwing the 3DS error caused loss of token context when checkout page tried to handle it
+  - **Wrong Method**: Used `authService.getSession()` instead of `supabaseBrowser.auth.getSession()` for fresh token
   - Backend was working correctly and returning proper response
-  - Frontend error occurred during 3DS authentication token retrieval
 - **User Impact**:
-  - Users unable to complete credit card payments
+  - Users unable to complete credit card payments even when authenticated
   - 3DS authentication flow broken
   - Error message exposed technical implementation details (security issue)
 
@@ -32,30 +33,56 @@
 
 #### ✅ Solutions Implemented
 
-**1. Fixed Authentication Token Retrieval** (`hooks/usePaymentProcessor.ts` lines 277-282)
+**1. Fixed 3DS Authentication Flow** (`hooks/usePaymentProcessor.ts`)
 
-**BEFORE (BROKEN - method doesn't exist):**
+**BEFORE (BROKEN - re-throwing 3DS error):**
 ```typescript
-const authToken = await authService.getCurrentSessionToken()
-if (!authToken) {
-  throw new Error('Authentication required. Please log in again.')
+// In processCreditCardPayment
+} catch (error) {
+  // Re-throw 3DS errors so checkout page can handle them
+  if (error && typeof error === 'object' && 'requires_3ds' in error) {
+    setSubmitting(false)
+    throw error  // ❌ Token context lost here!
+  }
+}
+
+// In handle3DSAuthentication (called by checkout page)
+const authToken = await authService.getCurrentSessionToken()  // ❌ Method doesn't exist!
+```
+
+**AFTER (FIXED - handle 3DS directly with fresh token):**
+```typescript
+// In processCreditCardPayment - handle 3DS directly
+} catch (error) {
+  if (error && typeof error === 'object' && 'requires_3ds' in error) {
+    try {
+      const threeDSError = error as any
+      await handle3DSAuthentication(
+        threeDSError.redirect_url,
+        threeDSError.transaction_id,
+        threeDSError.order_id
+      )  // ✅ Handle in place, no re-throw
+    } catch (authError) {
+      setError(sanitizeErrorMessage(authError))
+      setSubmitting(false)
+    }
+    return // Don't re-throw, we handled it
+  }
+}
+
+// In onSuccess callback - get fresh token correctly
+const { data: { session } } = await supabaseBrowser.auth.getSession()  // ✅ Correct method!
+const token = session?.access_token
+if (!token) {
+  throw new Error('Authentication token expired')
 }
 ```
 
-**AFTER (FIXED - using correct method):**
-```typescript
-const session = await authService.getSession()
-const authToken = session?.access_token
-if (!authToken) {
-  throw new Error('Authentication required. Please log in again.')
-}
-```
-
-**How It Works:**
-- Uses existing `getSession()` method from AuthService
-- Extracts `access_token` from session object
-- Properly validates token exists before proceeding
-- Maintains same error handling flow
+**Key Changes:**
+1. **Handle 3DS directly in `processCreditCardPayment`** - No more re-throwing errors
+2. **Get fresh token in onSuccess callback** - Uses `supabaseBrowser.auth.getSession()` 
+3. **Removed token fetch before 3DS** - Token fetched fresh when actually needed
+4. **Maintains token context** - No loss of authentication state
 
 **2. Implemented Error Message Sanitization** (`hooks/usePaymentProcessor.ts` lines 49-74)
 
@@ -116,11 +143,13 @@ addToast({
 
 **hooks/usePaymentProcessor.ts**
 - Lines 49-74: Added `sanitizeErrorMessage()` helper function to sanitize error messages
-- Lines 277-282: Fixed authentication token retrieval to use `getSession()` instead of non-existent `getCurrentSessionToken()`
+- Lines 172-200: Fixed `processCreditCardPayment` to handle 3DS directly instead of re-throwing (restores original flow)
+- Lines 310-318: Removed premature token fetch from `handle3DSAuthentication` (token fetched in callback instead)
+- Lines 466-519: Fixed `onSuccess` callback to use `supabaseBrowser.auth.getSession()` for fresh token
+- Lines 487-494: Added complete 3DS response fields to backend callback (status_code, transaction_status, gross_amount, payment_type)
 - Line 131: Applied error sanitization to payment processing errors
-- Line 180: Applied error sanitization to credit card payment errors
-- Line 488: Applied error sanitization to 3DS callback processing errors
-- Line 528: Applied error sanitization to 3DS authentication errors
+- Line 183-190: Applied error sanitization to 3DS authentication errors
+- Line 515: Applied error sanitization to 3DS processing errors
 
 #### ✅ Security & User Experience Improvements
 
@@ -148,8 +177,15 @@ addToast({
 
 **Payment Processing:**
 - ✅ Credit card payments now work correctly with proper authentication
-- ✅ 3DS authentication flow functional
+- ✅ 3DS authentication flow functional for logged-in users
 - ✅ Backend and frontend properly synchronized
+- ✅ Token context maintained throughout payment flow
+
+**Authentication Flow:**
+- ✅ Fresh session token retrieved when needed (in onSuccess callback)
+- ✅ Uses correct `supabaseBrowser.auth.getSession()` method
+- ✅ No premature token fetching
+- ✅ Handles authentication in proper context
 
 **Error Handling:**
 - ✅ All payment errors show user-friendly messages
@@ -160,10 +196,10 @@ addToast({
 **Code Quality:**
 - ✅ Reusable error sanitization helper function
 - ✅ Consistent error handling across payment processor
-- ✅ Uses correct AuthService methods
+- ✅ Restored original working 3DS flow
 - ✅ Maintains proper error propagation for debugging (errors still logged internally)
 
-**Status**: Credit card payment authentication **COMPLETELY FIXED** - Auth token retrieval corrected and error message sanitization implemented for better security and user experience.
+**Status**: Credit card payment authentication **COMPLETELY FIXED** - 3DS flow corrected to handle authentication in proper context with fresh token retrieval. Error message sanitization implemented for better security and user experience.
 
 ---
 
