@@ -414,6 +414,9 @@ export function usePaymentProcessor({
           popupModal.openPopup(redirect_url)
         },
         onSuccess: async function(response: any) {
+          // According to Midtrans docs: check transaction_status
+          // Possible values: capture, settlement, pending, deny, authorize
+          
           popupModal.closePopup()
 
           try {
@@ -424,7 +427,31 @@ export function usePaymentProcessor({
               throw new Error('Authentication token expired')
             }
 
-            // Call 3DS callback API to finalize payment
+            // Check if transaction is actually successful (capture/settlement/authorize) or still pending
+            // Per Midtrans docs: authorize is a legitimate success state for credit cards
+            const isSuccess = response.transaction_status === 'capture' || 
+                             response.transaction_status === 'settlement' || 
+                             response.transaction_status === 'authorize'
+            const isPending = response.transaction_status === 'pending'
+
+            if (isPending) {
+              // According to Midtrans docs: if status is pending, need to wait for webhook notification
+              addToast({
+                title: "Payment processing",
+                description: "Your payment is being verified. You will receive a notification shortly.",
+                type: "info"
+              })
+              setSubmitting(false)
+              router.push(`/dashboard/settings/plans-billing`)
+              return
+            }
+
+            if (!isSuccess) {
+              // Not success, not pending, and not authorize = failure
+              throw new Error(`Payment status: ${response.status_message || response.transaction_status}`)
+            }
+
+            // Call 3DS callback API to finalize successful payment
             const callbackResponse = await fetch(BILLING_ENDPOINTS.MIDTRANS_3DS_CALLBACK, {
               method: 'POST',
               headers: {
@@ -461,17 +488,35 @@ export function usePaymentProcessor({
           }
         },
         onFailure: function(response: any) {
+          // According to Midtrans docs: this is called when 3DS authentication fails
+          // Check if OTP was submitted to give better error message
+          const challengeCompleted = response.three_ds_challenge_completion === true
+          const errorMessage = challengeCompleted 
+            ? `Authentication failed: ${response.status_message || 'Card verification was not successful'}. Please check with your bank.`
+            : "Authentication was not completed. Please try again."
+          
           popupModal.closePopup()
           setSubmitting(false)
           addToast({
             title: "Payment authentication failed",
-            description: "Please verify your card details and try again.",
+            description: errorMessage,
             type: "error"
           })
         },
-        onPending: function(response: any) {
-          // For credit card recurring payments, there's no pending state - only success or failure
-          // Keep popup open and let user complete the authentication
+        onPending: async function(response: any) {
+          // According to Midtrans docs: transaction is pending, final status comes via webhook
+          // This callback is for async endpoints where payment needs additional verification
+          popupModal.closePopup()
+          setSubmitting(false)
+          
+          addToast({
+            title: "Payment pending",
+            description: "Your payment is being processed. You will receive a notification when it's complete.",
+            type: "info"
+          })
+          
+          // Redirect to billing page to track status
+          router.push(`/dashboard/settings/plans-billing`)
         }
       }
 

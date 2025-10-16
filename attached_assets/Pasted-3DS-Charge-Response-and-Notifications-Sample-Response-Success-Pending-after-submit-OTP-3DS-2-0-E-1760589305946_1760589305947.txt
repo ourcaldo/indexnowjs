@@ -1,0 +1,420 @@
+3DS Charge Response and Notifications
+Sample Response
+Success
+Pending after submit OTP 3DS 2.0
+Error Response
+Capture Notification
+Capture Notification after submit OTP 3DS 2.0
+Deny Notification
+Challenge Notification
+Settlement Notification
+
+{
+  "status_code": "201",
+  "status_message": "Success, Credit Card transaction is successful",
+  "transaction_id": "1a1a66f7-27a7-4844-ba1f-d86dcc16ab27",
+  "order_id": "C17550",
+  "redirect_url": "https://api.veritrans.co.id/v2/3ds/redirect/451249-2595-e14aac7f-cfb3-4ab2-98ab-5cc5e70f4b2c",
+  "gross_amount": "145000.00",
+  "currency": "IDR",
+  "payment_type": "credit_card",
+  "transaction_time": "2018-09-12 22:10:23",
+  "transaction_status": "pending",
+  "masked_card": "48111111-1114",
+  "card_type": "credit",
+  "three_ds_version": "2",
+  "on_us": true
+}
+The 3DS response is identical with Card Payment Charge Response, with the additional attributes given below.
+
+JSON Attribute	Description	Type
+redirect_url	The URL to redirect the user to 3D Secure authentication page.	String
+eci	The 3D secure ECI Code indicating the result of the 3DS process.	String
+
+
+Handling 3DS Callback
+By default, 3DS callback scheme is set as js_event. It is optimized for merchants who prefer to open the 3DS page without leaving from their page.
+
+Midtrans JavaScript library provides functions to handle the redirect URL and its callback response.
+
+Authenticate function from the JavaScript Library to handle the redirect URL and callback response
+
+var redirect_url = '<redirect_url Retrieved from Charge Response>';
+
+// callback functions
+var options = {
+  performAuthentication: function(redirect_url){
+    // Implement how you will open iframe to display 3ds authentication redirect_url to customer
+    popupModal.openPopup(redirect_url);
+  },
+  onSuccess: function(response){
+    // 3ds authentication success, implement payment success scenario
+    console.log('response:',response);
+    popupModal.closePopup();
+  },
+  onFailure: function(response){
+    // 3ds authentication failure, implement payment failure scenario
+    console.log('response:',response);
+    popupModal.closePopup();
+  },
+  onPending: function(response){
+    // transaction is pending, transaction result will be notified later via 
+    // HTTP POST notification, implement as you wish here
+    console.log('response:',response);
+    popupModal.closePopup();
+  }
+};
+
+// trigger `authenticate` function
+MidtransNew3ds.authenticate(redirect_url, options);
+
+/**
+ * Example helper functions to open Iframe popup, you may replace this with your own 
+ * method of open iframe. In this example, PicoModal library is used by including 
+ * this script tag on the HTML:
+ * <script src="https://cdnjs.cloudflare.com/ajax/libs/picomodal/3.0.0/picoModal.js"></script>
+ */
+var popupModal = (function(){
+  var modal = null;
+  return {
+    openPopup(url){
+      modal = picoModal({
+        content:'<iframe frameborder="0" style="height:90vh; width:100%;" src="'+url+'"></iframe>',
+        width: "75%",
+        closeButton: false,
+        overlayClose: false,
+        escCloses: false
+      }).show();
+    },
+    closePopup(){
+      try{
+        modal.close();
+      } catch(e) {}
+    }
+  }
+}());
+
+/**
+ * Alternatively, instead of opening 3ds authentication redirect_url using iframe,
+ * you can also redirect customer using:
+ * MidtransNew3ds.redirect( redirect_url, { callbackUrl : 'https://mywebsite.com/finish_3ds' });
+ **/
+Sample Callback Function Implementation
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/picomodal/3.0.0/picoModal.js"></script>
+    <script id="midtrans-script" type="text/javascript" src="https://api.midtrans.com/v2/assets/js/midtrans-new-3ds.min.js" data-environment="sandbox" data-client-key="<INSERT YOUR CLIENT KEY HERE>"></script>
+</head>
+<body>
+    <script>
+        /**
+         * Example helper functions to open Iframe popup, you may replace this with your own 
+         * method of open iframe. In this example, PicoModal library is used by including 
+         * this script tag on the HTML:
+         */
+        var popupModal = (function(){
+            var modal = null;
+            return {
+                openPopup(url){
+                modal = picoModal({
+                    content:'<iframe frameborder="0" style="height:90vh; width:100%;" src="'+url+'"></iframe>',
+                    width: "75%",
+                    closeButton: false,
+                    overlayClose: false,
+                    escCloses: false
+                }).show();
+                },
+                closePopup(){
+                try{
+                    modal.close();
+                } catch(e) {}
+                }
+            }
+        }());
+    </script>
+
+    <script>
+        var redirect_url = '<redirect_url Retrieved from Charge Response>';
+
+        // callback functions
+        var options = {
+            performAuthentication: function(redirect_url){
+                // Implement how you will open iframe to display 3ds authentication redirect_url to customer
+                popupModal.openPopup(redirect_url);
+            },
+            onSuccess: function(response){
+                // 3ds authentication success, implement payment success scenario
+                console.log('response:',response);
+                popupModal.closePopup();
+                // // Simulate an HTTP redirect:
+                window.location.replace("http://midtrans.com?status=success");
+            },
+            onFailure: function(response){
+                // 3ds authentication failure, implement payment failure scenario
+                console.log('response:',response);
+                popupModal.closePopup();
+            },
+            onPending: function(response){
+                // transaction is pending, transaction result will be notified later via 
+                // HTTP POST notification, implement as you wish here
+                console.log('response:',response);
+                popupModal.closePopup();
+            }
+        };
+
+        // trigger `authenticate` function
+        MidtransNew3ds.authenticate(redirect_url, options);
+    </script>   
+</body>
+</html>
+Callback via form is a simple web redirection. From the merchant website, the customer is redirected to 3DS page and then back to merchant website. For callback via js-event open 3DS page in an iFrame, and the callback happens as a JSON.
+
+JSON Attribute	Description	Type
+transaction_id	Transaction ID given by Midtrans.	String
+order_id	Order ID specified by you.	String
+gross_amount	Total amount of transaction in IDR.	String
+payment_type	The payment method used by the customer.
+Value: credit_card.
+Note: For any transactions using payment card (credit or debit), payment_type is credit_card.	String
+transaction_time	Timestamp of transaction in ISO 8601 format. Time Zone: GMT+7.	String
+transaction_status	Transaction status after charge card transaction. Possible values are
+capture: Transaction is accepted by the bank and ready for settlement.
+deny: transaction is denied by the bank or FDS.
+authorize: card is authorized in Pre-authorization feature.
+pending: Credit card is pending and you will need to rely on the http notification webhook to receive the final transaction status.	String
+fraud_status	Detection result by Fraud Detection System (FDS). Possible values are
+accept: Approved by FDS.
+challenge: Questioned by FDS.
+Note: Approve transaction to accept it or transaction will get cancelled automatically during settlement.
+deny: Denied by FDS. Transaction automatically failed.	String
+masked_card	First 8-digits and last 4-digits of customer's card number.	String
+status_code	Status code of transaction charge result.	String
+bank	The name of the Acquiring Bank.	String
+status_message	Status message describing the result of the API request.	String
+approval_code	Approval code. It can be used for refund. This does not exist on denied transaction.	String
+eci	The 3D secure ECI Code indicating the result of the 3DS process.	String
+channel_response_code	Response code from payment channel provider.	String
+channel_response_message	Response message from payment channel provider.	String
+currency	ISO-4217 representation of three-letter alphabetic currency code. Value: IDR.
+Note: Currently only IDR is supported.	String
+card_type	Type of payment card used for the transaction. Possible values are credit, debit.	String
+three_ds_version	3DS Version that used for transaction (This field only present for 3DS Transaction). Possible values are 1, 2	String
+three_ds_challenge_completion	3DS Challenge completion state to indicate the customer has been submitted the OTP or not(it doesn't matter if the OTP is valid or not). Possible values are true, false	Boolean
+📘
+Note
+
+If you receive pending transaction_status, you will need to rely on the http notification webhook to receive the final transaction status
+
+
+
+Redirecting to 3DS Page (3DS 2.0 Compatible)
+After proceeding card transaction to Charge API request, if the transaction needs 3DS authentication, you will receive redirect_url in the response. You can optionally use built-in MidtransNew3ds.redirect function to redirect the customer.
+
+After 3DS process is completed, the customer is redirected back to the website specified in callbackUrl or the Finish Redirect URL configured on your MAP account.
+This final redirect is HTTP POST method. It contains JSON string encapsulated as value of response key of the POST form-data.
+
+Callback response object attributes are listed below.
+
+Redirect Function
+How Midtrans redirects customer via HTML form (POST Method)
+
+var options = {
+    // In case, Merchant needs to override for each transactions
+    callbackUrl = "<ANY LINK>"
+}
+
+MidtransNew3ds.redirect(redirect_url, options);
+JSON Attribute	Description	Type
+transaction_id	Transaction ID given by Midtrans.	String
+order_id	Order ID specified by you.	String
+gross_amount	Total amount of transaction in IDR.	String
+payment_type	The payment method used by the customer.	String
+transaction_time	Timestamp of transaction in ISO 8601 format. Time Zone: GMT+7.	String
+transaction_status	Transaction status after charge credit card transaction. Possible values are
+capture : Transaction is accepted by the bank and ready for settlement.
+deny: transaction is denied by the bank or FDS.
+authorize: Credit card is authorized in pre-authorization feature.
+pending: Credit card is pending and you will need to rely on the http notification webhook to receive the final transaction status..	String
+fraud_status	Detection result by Fraud Detection System (FDS). Possible values are
+accept : Approved by FDS.
+challenge: Questioned by FDS. Note: Approve transaction to accept it or transaction gets automatically canceled during settlement.
+deny: Denied by FDS. Transaction automatically failed.	String
+masked_card	First 8-digits and last 4-digits of customer's credit card number.	String
+status_code	Status code of transaction charge result.	String
+bank	The name of the acquiring bank.	String
+status_message	Status message describing the result of the API request.	String
+approval_code	Approval code. It can be used for refund. This does not exist on denied transaction.	String
+eci	The 3D secure ECI Code.	String
+channel_response_code	Response code from payment channel provider.	String
+channel_response_message	Response message from payment channel provider.	String
+currency	ISO-4217 representation of three-letter alphabetic currency code. Value: IDR.
+Note: Currently only IDR is supported.	String
+card_type	Type of card used for the transaction. Possible values are credit, debit.	String
+three_ds_version	3DS Version that used for transaction (This field only present for 3DS Transaction). Possible values are 1, 2	String
+three_ds_challenge_completion	3DS Challenge completion state to indicate the customer has submit the OTP or not(it doesn't matter if the OTP is valid or not). Possible values are true, false	Boolean
+📘
+Note
+
+If you receive pending transaction_status, you will need to rely on the http notification webhook to receive the final transaction status
+
+
+Optional parameter is given below.
+
+Name	Description	Required
+callbackUrl	To override where the customer gets redirected after 3DS authentication is done.	Optional
+
+
+3DS Redirect Page – Gather Browser Information
+As mentioned earlier, after 3DS transaction is charged successfully, the response includes a redirect_url, which directs the customer to an authentication page. At this stage, Midtrans returns an HTML page that collects browser information via JavaScript. This Midtrans redirect page automatically gathers the following browser details:
+
+Sample: browser information
+
+"BrowserInfo": {
+	"browserAcceptHeader": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+	"browserColorDepth": "24",
+	"browserIP": "103.84.5.252",
+	"browserJavaEnabled": false,
+	"browserJavascriptEnabled": true,
+	"browserLanguage": "en-GB",
+	"browserScreenHeight": 932,
+	"browserScreenWidth": 430,
+	"browserTZ": -420,
+	"browserUserAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1.1 Mobile/15E148 Safari/604.1",
+	"challengeWindowSize": "05"
+}
+
+📘
+Important
+
+Please do not override BrowserInfo parameters when redirecting to Midtrans page. This browser information will be forwarded to Midtrans Server in Base64 format as parameters.
+
+Sample: JavaScript Gather Browser Information
+
+function setBrowserInformation(browserInfo) {
+    var browserJavascriptEnabled = true;
+    if (browserInfo === undefined || browserInfo == null || browserInfo.length <= 0) {
+        browserInfo={};
+        browserJavascriptEnabled = false;
+        Object.assign(browserInfo, {browserUserAgent: window.navigator.userAgent});
+    }
+
+    Object.assign(browserInfo, {browserJavascriptEnabled: browserJavascriptEnabled});
+    document.getElementById('BrowserInfo').value = window.ThreedDS2Utils.base64Url.encode(JSON.stringify(browserInfo));
+}
+
+<form id="veritrans" method="post" action="{{threeDSCallbackUrl}}">
+    <input type="hidden" name="BrowserInfo" id="BrowserInfo"/>
+</form>
+
+3D Secure 2.0 (3DS 2.0) introduces more advanced authentication mechanism designed to improve security and reduce fraud while minimizing friction for customers. One of the key improvements in 3DS 2.0 is risk-based authentication (RBA), where the issuer evaluates multiple factors, including browser and device information, to determine whether additional authentication is needed.
+
+To support this process, the browser information collected in the redirect page plays a critical role in helping banks and card networks assess the legitimacy of a transaction. Incorrect or missing browser details may lead to authentication failures, requiring additional verification or causing the transaction to be declined.
+
+Potential Issues and Best Practices:
+
+Avoid modifying BrowserInfo parameters
+Any alterations to browserUserAgent, browserIP, browserScreenWidth, or other fields may lead to transaction failures.
+Do not rename BrowserInfo object
+The 3DS system expects a standardized format. Any renaming or structural changes could disrupt the authentication process.
+Using a VPN may cause transaction failures
+📘
+Using VPN for 3DS Transaction
+
+We strongly recommend that customers do not use VPN during a 3DS transaction.
+The browserIP field is a key data point sent to the 3DS Servers, which is used for risk evaluation. If the detected IP does not match the customer's typical location, it may trigger high-risk alerts, potentially leading to authentication failure or rejection by the 3DS servers (Bank, Card Network, ACS).
+
+By following these guidelines, merchants and customers can ensure smooth authentication and minimize transaction disruptions when using 3DS 2.0.
+
+Opening 3DS Page via iFrame (3DS 2.0 Compatible)
+Optionally, you can use MidtransNew3ds.performAuthentication function to open redirect_url as iFrame. It is a substitute to the redirection scheme.
+
+After 3DS process is completed by a customer, your website receives JSONP callback containing the transaction result.
+
+Callback response object attributes are listed below.
+
+Sample code to open redirect_url on iFrame (JQuery - FancyBox)
+
+// Open 3DSecure dialog box
+function openDialog(url) {
+    // make sure to load fancybox in a script tag
+    $.fancybox.open({
+        href: url,
+        type: 'iframe',
+        autoSize: false,
+        width: 400,
+        height: 420,
+        closeBtn: false,
+        modal: true
+    });
+}
+
+// Close 3DSecure dialog box
+function closeDialog() {
+    $.fancybox.close()
+}
+
+var options = {
+  performAuthentication: function(url) {
+    openDialog(url)
+  },
+  onSuccess: function(response) {
+    // Successful handling
+    closeDialog()
+  },
+  onPending: function(response) {
+    // Pending handling
+    closeDialog()
+  },
+  onFailure: function(response) {
+    // Failure handling
+    closeDialog()
+  }
+}
+
+MidtransNew3ds.authenticate(redirect_url,options)
+JSON Attribute	Description	Type
+transaction_id	Transaction ID given by Midtrans.	String
+order_id	Order ID specified by you.	String
+gross_amount	Total amount of transaction in IDR.	String
+payment_type	The payment method used by the customer.	String
+transaction_time	Timestamp of transaction in ISO 8601 format. Time Zone: GMT+7.	String
+transaction_status	Transaction status after charge credit card transaction. Possible values are
+capture : Transaction is accepted by the bank and ready for settlement.
+deny: transaction is denied by the bank or FDS.
+authorize: Credit card is authorized in pre-authorization feature.
+pending: Credit card is pending and you will need to rely on the http notification webhook to receive the final transaction status.	String
+fraud_status	Detection result by Fraud Detection System (FDS). Possible values are
+accept : Approved by FDS.
+challenge: Questioned by FDS. Note: Approve transaction to accept it or transaction gets automatically canceled during settlement.
+deny: Denied by FDS. Transaction automatically failed.	String
+masked_card	First 8-digits and last 4-digits of customer's credit card number.	String
+status_code	Status code of transaction charge result.	String
+bank	The acquiring bank of the transaction.	String
+status_message	Description of transaction charge result.	String
+approval_code	Approval code. It can be used for refund. This does not exist on denied transaction.	String
+eci	The 3D secure ECI Code.	String
+channel_response_code	Response code from payment channel provider.	String
+channel_response_message	Response message from payment channel provider.	String
+currency	ISO-4217 representation of three-letter alphabetic currency code. Value: IDR.
+Note: Currently only IDR is supported.	String
+card_type	Type of card used for the transaction. Possible values are credit, debit.	String
+three_ds_version	3DS Version that used for transaction (This field only present for 3DS Transaction). Possible values are 1, 2	String
+📘
+Note
+
+If you receive pending transaction_status, you will need to rely on the http notification webhook to receive the final transaction status
+
+
+Available options are given below.
+
+Name	Description
+performAuthentication	Implementation to open redirect URL in iFrame.
+onSuccess	Handle to receive successful callback response.
+onPending	Handle to receive callback response. Only applicable when merchant applied for async endpoint.
+onFailure	Handle to receive failure response.
