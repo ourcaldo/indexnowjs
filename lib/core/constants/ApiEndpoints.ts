@@ -11,7 +11,6 @@ const API_BASE_URL = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL ||
 export const API_BASE = {
   V1: `${API_BASE_URL}/v1`,
   SYSTEM: `${API_BASE_URL}/system`,
-  WEBSOCKET: `${API_BASE_URL}/websocket`,
   PUBLIC: `${API_BASE_URL}/v1/public`,
 } as const;
 
@@ -237,13 +236,6 @@ export const ERROR_ENDPOINTS = {
   LOG: `${API_BASE.V1}/errors/log`,
 } as const;
 
-// WebSocket endpoints
-export const WEBSOCKET_ENDPOINTS = {
-  MAIN: `${API_BASE.WEBSOCKET}`,
-  SOCKETIO: `/api/socketio`,
-  SOCKET_INIT: `/api/socket`,
-} as const;
-
 // External API endpoints
 export const EXTERNAL_ENDPOINTS = {
   GOOGLE_INDEXING: 'https://indexing.googleapis.com/v3/urlNotifications:publish',
@@ -297,7 +289,6 @@ export const isValidEndpoint = (endpoint: string): boolean => {
     ...Object.values(BLOG_ENDPOINTS).filter(ep => typeof ep === 'string'),
     ...Object.values(PUBLIC_ENDPOINTS).filter(ep => typeof ep === 'string'),
     ...Object.values(SYSTEM_ENDPOINTS).filter(ep => typeof ep === 'string'),
-    ...Object.values(WEBSOCKET_ENDPOINTS).filter(ep => typeof ep === 'string'),
     ...Object.values(INTEGRATION_ENDPOINTS).filter(ep => typeof ep === 'string'),
   ];
 

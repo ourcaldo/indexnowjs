@@ -230,20 +230,6 @@ export class ErrorHandlingService {
       }
     }
 
-    // Broadcast critical errors to admin users via WebSocket
-    if (structuredError.severity === ErrorSeverity.CRITICAL && typeof window === 'undefined') {
-      try {
-          id: errorId,
-          severity: structuredError.severity,
-          message: errorMessage,
-          endpoint: options.endpoint,
-          error_type: type,
-          user_message: userMessage
-        })
-      } catch (wsError) {
-        // Silent fail - WebSocket broadcast should never break the app
-      }
-    }
 
     return structuredError
   }
