@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { usePageViewLogger } from '@/hooks/useActivityLogger'
 import { 
   User, 
@@ -14,6 +14,7 @@ import PlansBillingSettingsPage from './plans-billing/page'
 
 export default function SettingsPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('general')
 
   usePageViewLogger('/dashboard/settings', 'Settings', { section: 'user_settings' })
@@ -24,6 +25,11 @@ export default function SettingsPage() {
       setActiveTab(tab)
     }
   }, [searchParams])
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId)
+    router.push(`/dashboard/settings?tab=${tabId}`, { scroll: false })
+  }
 
   const tabs = [
     {
@@ -72,7 +78,7 @@ export default function SettingsPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                     activeTab === tab.id
                       ? 'bg-blue-50 text-blue-700 font-medium'
@@ -99,7 +105,7 @@ export default function SettingsPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-colors ${
                     activeTab === tab.id
                       ? 'bg-blue-50 text-blue-700 font-medium'

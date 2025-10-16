@@ -2,6 +2,201 @@
 
 ## Recent Changes
 
+### 2025-10-16 - Migrated Settings Pages from Figma Redesign (COMPLETED)
+**UI/UX Redesign**: Migrated settings pages from Vite-based Figma redesign to Next.js production app, implementing new sidebar navigation layout and cleaner visual design while preserving all existing functionality.
+
+#### ✅ What Was Changed
+
+**Navigation Pattern:**
+- Migrated from tab-based navigation to sidebar navigation layout
+- Added desktop sidebar with icon-based navigation (User, Key, CreditCard icons)
+- Implemented mobile navigation with grid-based tab system
+- Improved visual hierarchy with better spacing and typography
+
+**Pages Redesigned:**
+1. **Main Settings Layout** (`app/dashboard/settings/page.tsx`)
+   - New sidebar navigation for desktop (left-side panel)
+   - Mobile-responsive grid navigation for smaller screens
+   - Cleaner header with descriptions for each section
+   - Removed old Tabs component in favor of custom sidebar
+
+2. **Account Settings - General Page** (`app/dashboard/settings/general/page.tsx`)
+   - Added Avatar component with initials and gradient background
+   - Redesigned profile card with photo upload section
+   - Improved form layout with 2-column grid for better space utilization
+   - Enhanced password section with show/hide password toggle
+   - Redesigned notification preferences with Switch components and better descriptions
+   - Added sidebar info panels: Account Status, Security, and Danger Zone
+   - Better visual grouping with Cards and improved spacing
+
+3. **Service Accounts Page** (`app/dashboard/settings/service-accounts/page.tsx`)
+   - Applied "API Keys" visual design from Figma while keeping Service Accounts functionality
+   - Clean card-based layout for each service account
+   - Improved quota usage visualization with color-coded progress bars
+   - Added Alert component for important information
+   - Better empty state with centered content and call-to-action
+   - Enhanced add service account dialog with better form layout
+   - Summary cards showing total daily quota and quick tips
+
+4. **Plans & Billing Page** (No changes)
+   - Existing implementation superior to redesign
+   - Already has comprehensive billing history, transaction tracking, and package management
+   - No changes needed
+
+#### ✅ New Components Added
+
+**UI Components:**
+- `components/ui/avatar.tsx` - Avatar component with fallback to initials (was missing despite package being installed)
+  - Supports image avatars and fallback initials
+  - Customizable size and colors
+  - Used in Account Settings for user profile display
+
+#### ✅ Files Modified
+
+**Main Settings Layout:**
+- `app/dashboard/settings/page.tsx` - Complete redesign with sidebar navigation
+  - Desktop: 64px wide sidebar with icon navigation
+  - Mobile: Fixed header with grid-based tab navigation
+  - Responsive layout with Tailwind breakpoints (lg:)
+  - Removed Tabs component dependency
+
+**Account Settings:**
+- `app/dashboard/settings/general/page.tsx` - Comprehensive redesign
+  - Added Avatar component integration
+  - 3-column grid layout (2 columns main content, 1 column sidebar)
+  - Profile section: Avatar + form fields with Change photo button
+  - Password section: Current/new/confirm fields with show/hide toggle
+  - Notifications: Switch-based preferences with descriptions
+  - Sidebar: Account info, Security (2FA coming soon), Danger Zone cards
+  - Fixed TypeScript errors with optional chaining for AuthUser properties
+
+**Service Accounts:**
+- `app/dashboard/settings/service-accounts/page.tsx` - Visual redesign with functionality preservation
+  - Card-based layout for each service account
+  - Color-coded quota usage bars (blue < 70%, yellow 70-90%, red >= 90%)
+  - Enhanced modal with better form structure
+  - Alert component for important warnings
+  - Summary cards for total quota and tips
+  - Better loading states and empty states
+
+#### ✅ Design System Applied
+
+**Visual Improvements:**
+- Consistent use of shadcn/ui Card components for content grouping
+- Better color palette: Blue-600 primary actions, Gray-50 backgrounds
+- Improved spacing with Tailwind spacing utilities
+- Enhanced typography with font weights and sizes
+- Status indicators with color-coded badges (green for active)
+- Progress bars with visual feedback (color changes based on usage)
+
+**Responsive Design:**
+- Mobile-first approach with Tailwind breakpoints
+- Desktop sidebar (hidden on mobile, shown on lg+)
+- Mobile header navigation (shown on mobile, hidden on lg+)
+- Grid layouts that adapt to screen size (1 column mobile, 2-3 columns desktop)
+- Proper padding and margins for different viewports
+
+**Component Patterns:**
+- Card + CardHeader + CardContent structure for all sections
+- Label + Input combinations for forms
+- Switch components for toggles
+- Dialog for modals (add service account)
+- Alert for important messages
+- Avatar for user representation
+- Badge for status indicators
+
+#### ✅ Functionality Preserved
+
+**Account Settings:**
+- ✅ Full name and phone number editing
+- ✅ Email display (read-only)
+- ✅ Password change with current/new/confirm validation
+- ✅ Email notification preferences (job completion, failures, daily reports, alerts)
+- ✅ All API integrations maintained
+- ✅ Form validation and error handling
+- ✅ Toast notifications for success/error states
+
+**Service Accounts:**
+- ✅ Add service account with JSON upload
+- ✅ Delete service account functionality
+- ✅ Quota tracking and usage display
+- ✅ Daily quota limits per account
+- ✅ Total quota calculation across all accounts
+- ✅ Status badges (active/inactive)
+- ✅ All API integrations maintained
+- ✅ Optional display name for service accounts
+
+**Plans & Billing:**
+- ✅ No changes - existing implementation already comprehensive
+- ✅ Billing overview, transaction history, package comparison all intact
+
+#### ✅ Mobile Responsiveness
+
+**Breakpoint Strategy:**
+- `sm:` (640px) - Small adjustments
+- `md:` (768px) - 2-column grids
+- `lg:` (1024px) - Sidebar navigation, 3-column layouts
+
+**Responsive Patterns:**
+- Sidebar: `hidden lg:block` (desktop only)
+- Mobile nav: `lg:hidden` (mobile only)
+- Grids: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
+- Spacing: Smaller on mobile, larger on desktop
+- Font sizes: Responsive with `text-sm lg:text-base` patterns
+
+#### ✅ Accessibility & Testing
+
+**Test IDs Added:**
+- All interactive elements have `data-testid` attributes
+- Buttons: `button-save-profile`, `button-add-service-account`, `button-delete-{id}`
+- Inputs: `input-full-name`, `input-email`, `input-phone`, `input-password`
+- Switches: `switch-job-completion`, `switch-failures`, etc.
+- Tabs: `tab-general`, `tab-service-accounts`, `tab-plans-billing`
+
+**Form Labels:**
+- All form inputs have associated Label components
+- Clear descriptions for all settings
+- Placeholder text where appropriate
+
+#### ✅ Impact & Benefits
+
+**User Experience:**
+- ✅ Cleaner, more modern visual design
+- ✅ Better navigation with sidebar pattern
+- ✅ Improved visual hierarchy and readability
+- ✅ Better mobile experience with responsive design
+- ✅ Clear status indicators and progress visualization
+- ✅ Enhanced form layouts with better space utilization
+
+**Code Quality:**
+- ✅ Consistent component patterns across all pages
+- ✅ Proper TypeScript typing with no LSP errors
+- ✅ Reusable shadcn/ui components
+- ✅ Clean separation of concerns
+- ✅ All existing functionality preserved
+
+**Design Consistency:**
+- ✅ Unified design language across all settings pages
+- ✅ Consistent spacing and color palette
+- ✅ Standard card-based layouts
+- ✅ Cohesive navigation pattern
+
+#### ✅ Bug Fixes
+
+**URL Query Parameter Synchronization (CRITICAL UX):**
+- **Issue**: Tab state not syncing with URL query parameters, breaking deep-linking and tab persistence on refresh
+- **Root Cause**: Tab clicks only updated local state without calling router.push/replace to update URL
+- **Fix**: Added `handleTabChange` function that updates both local state and URL query parameter (`?tab=...`)
+- **Impact**: 
+  - ✅ Deep-linking works (e.g., `/dashboard/settings?tab=service-accounts`)
+  - ✅ Tab state persists across page refreshes
+  - ✅ Browser back/forward buttons work correctly
+  - ✅ Shareable URLs maintain tab context
+
+**Status**: Settings pages migration **COMPLETE** - New sidebar navigation layout implemented, all pages redesigned with cleaner visual design, all functionality preserved, mobile responsive, URL query parameter synchronization fixed, and fully tested.
+
+---
+
 ### 2025-10-16 - Removed All WebSocket/Socket.IO Real-Time Features (COMPLETED)
 **Architecture Simplification**: Completely removed WebSocket/Socket.IO functionality as real-time updates are not needed. The application now uses a standard Next.js HTTP server with polling-based updates where needed.
 
