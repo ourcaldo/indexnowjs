@@ -17,7 +17,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
         reason: 'User fetching their billing profile with package information',
         metadata: { endpoint: '/api/v1/billing/overview' },
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'indb_auth_user_profiles', operationType: 'select' },
       async (db) => {
@@ -49,7 +49,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
         reason: 'User fetching their active billing subscription for overview',
         metadata: { endpoint: '/api/v1/billing/overview' },
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'indb_payment_subscriptions', operationType: 'select' },
       async (db) => {
@@ -85,7 +85,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
         reason: 'User fetching their billing statistics for overview',
         metadata: { endpoint: '/api/v1/billing/overview' },
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'user_billing_summary', operationType: 'select' },
       async (db) => {
@@ -114,7 +114,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
         reason: 'User fetching their recent billing transactions for overview',
         metadata: { endpoint: '/api/v1/billing/overview' },
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'indb_payment_transactions', operationType: 'select' },
       async (db) => {
@@ -178,6 +178,48 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
       amount_paid: calculatedAmount,
       billing_period: billingPeriod
     }
+  } else if (recentTransactions && recentTransactions.length > 0) {
+    const completedTransaction = recentTransactions.find(
+      (t: any) => t.transaction_status === 'completed' || t.transaction_status === 'settlement'
+    )
+    
+    if (completedTransaction && completedTransaction.package) {
+      const transactionPackage = completedTransaction.package
+      const userCurrency = getUserCurrency(userProfile.country)
+      const billingPeriod = (completedTransaction.metadata as any)?.billing_period || 
+                           completedTransaction.billing_period || 
+                           'monthly'
+      
+      let calculatedAmount = parseFloat(completedTransaction.amount || '0')
+      
+      const now = new Date()
+      let calculatedExpiresAt = new Date(now)
+      
+      switch (billingPeriod) {
+        case 'weekly':
+          calculatedExpiresAt.setDate(now.getDate() + 7)
+          break
+        case 'monthly':
+          calculatedExpiresAt.setMonth(now.getMonth() + 1)
+          break
+        case 'quarterly':
+          calculatedExpiresAt.setMonth(now.getMonth() + 3)
+          break
+        case 'annually':
+          calculatedExpiresAt.setFullYear(now.getFullYear() + 1)
+          break
+      }
+
+      subscriptionData = {
+        package_name: typeof transactionPackage === 'object' ? transactionPackage.name : 'Unknown',
+        package_slug: typeof transactionPackage === 'object' ? transactionPackage.slug || '' : '',
+        subscription_status: 'active',
+        expires_at: calculatedExpiresAt.toISOString(),
+        subscribed_at: completedTransaction.created_at,
+        amount_paid: calculatedAmount,
+        billing_period: billingPeriod
+      }
+    }
   }
 
   const responseData = {
@@ -188,7 +230,7 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
       next_billing_date: userProfile.expires_at,
       days_remaining: daysRemaining
     },
-    recentTransactions: (recentTransactions || []).map(transaction => ({
+    recentTransactions: (recentTransactions || []).map((transaction: any) => ({
       id: transaction.id,
       transaction_type: transaction.transaction_type,
       amount: parseFloat(transaction.amount || '0'),
