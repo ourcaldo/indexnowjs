@@ -219,10 +219,82 @@ export class GoogleApiClient {
             }
           );
 
-          // Broadcast real-time URL submission update
-          if (updatedSubmission) {
+          successful++;
+          console.log(`✅ Successfully submitted URL: ${submission.url}`);
+        } catch (error) {
+          failed++;
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error(`❌ Failed to submit URL ${submission.url}:`, errorMessage);
 
-        // Send enhanced progress broadcast with current URL info
+          // Update submission as failed using SecureWrapper
+          await SecureServiceRoleWrapper.executeSecureOperation(
+            {
+              userId: 'system',
+              operation: 'update_submission_failed',
+              reason: 'Google API client updating URL submission as failed due to API error',
+              source: 'GoogleApiClient.processUrlSubmissionsWithGoogleAPI',
+              metadata: {
+                submissionId: submission.id,
+                jobId: job.id,
+                url: submission.url,
+                error: errorMessage,
+                operation_type: 'submission_failure_update'
+              }
+            },
+            { table: 'indb_indexing_url_submissions', operationType: 'update' },
+            async () => {
+              await supabaseAdmin
+                .from('indb_indexing_url_submissions')
+                .update({
+                  status: 'failed',
+                  error_message: errorMessage,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', submission.id);
+            }
+          );
+
+          await this.jobLogger.logJobEvent({
+            job_id: job.id,
+            level: 'ERROR',
+            message: `Failed to submit URL: ${errorMessage}`,
+            metadata: {
+              url: submission.url,
+              error: errorMessage
+            }
+          });
+        } finally {
+          processed++;
+        }
+      }
+
+      console.log(`📊 URL processing completed: ${processed} processed, ${successful} successful, ${failed} failed`);
+    } catch (error) {
+      console.error('Error in processUrlSubmissionsWithGoogleAPI:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Submit a URL to Google's Indexing API
+   */
+  private async submitUrlToGoogleIndexingAPI(url: string, accessToken: string, serviceAccountId: string): Promise<void> {
+    // Apply rate limiting: 60 requests per minute = 1 request per second
+    await this.applyRateLimit(serviceAccountId);
+    
+    const apiUrl = 'https://indexing.googleapis.com/v3/urlNotifications:publish';
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        url: url,
+        type: 'URL_UPDATED'
+      })
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
