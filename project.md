@@ -41,6 +41,15 @@
   - Adjusted main content padding from `pt-36` to `pt-0` (no longer needs offset for fixed header)
   - Now tabs render once at top of content flow and don't track scroll
 
+**4. Mobile Layout Broken on Account Settings Page**
+- **Problem**: Right sidebar (Account info, Security, Danger Zone cards) was showing on mobile, causing horizontal overflow and broken layout
+- **Root Cause**: The sidebar div had `className="space-y-6"` without mobile visibility control
+- **Visual Issue**: On mobile screens, both main content and sidebar were rendering side-by-side in grid layout, making content overflow viewport width
+- **Fix**: Added `hidden lg:block` to sidebar container
+  - Mobile: Only main column (Profile, Password, Notifications) shows in full width
+  - Desktop (lg breakpoint): Both columns display properly (2-column main + 1-column sidebar)
+  - Result: Clean mobile layout with proper stacking, no horizontal scroll
+
 #### ✅ Implementation Details
 
 **Dashboard API Integration (Fixed):**
@@ -91,6 +100,7 @@ const package_id = profileData.package_id || billingData.current_package_id
 #### ✅ Files Modified
 - `app/dashboard/settings/plans-billing/page.tsx` - Fixed API data extraction, added free trial button
 - `app/dashboard/settings/page.tsx` - Removed fixed positioning from mobile tabs
+- `app/dashboard/settings/general/page.tsx` - Hidden right sidebar on mobile for proper responsive layout
 
 **Status**: Billing page **FULLY FIXED** - Now correctly displays current package when user has package_id, shows free trial button for eligible packages, and mobile header stays at top without following scroll.
 

@@ -549,8 +549,8 @@ export default function GeneralSettingsPage() {
         </Card>
       </div>
 
-      {/* Sidebar */}
-      <div className="space-y-6">
+      {/* Sidebar - Hidden on mobile, shown on desktop */}
+      <div className="hidden lg:block space-y-6">
         {/* Account Info */}
         <Card>
           <CardHeader>
