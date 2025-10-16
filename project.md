@@ -13,7 +13,8 @@
 - **Fix**: Changed condition from `{currentPlan && billingData?.currentSubscription ? ...}` to `{currentPlan ? ...}`
   - Now shows current plan if user has package_id, regardless of subscription record
   - Matches the old backend fallback logic from billing overview endpoint fix
-  - Added fallback for billing info: shows subscription details if available, otherwise shows package price
+  - Added fallback for billing info: shows subscription details if available, otherwise extracts price from `pricing_tiers` using `getBillingPeriodPrice()`
+  - **Critical Fix**: Removed reference to non-existent `currentPlan.price` field - packages only have `pricing_tiers` structure, not a simple `price` column
 
 **2. Plans Section Empty/Not Rendering**
 - **Problem**: Plans section showed nothing - no plan cards rendered

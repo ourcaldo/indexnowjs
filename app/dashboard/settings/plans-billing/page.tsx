@@ -451,6 +451,7 @@ export default function BillingPage() {
   }
 
   const currentPlan = packagesData?.packages.find(pkg => pkg.id === packagesData.current_package_id)
+  const currentPlanPricing = currentPlan ? getBillingPeriodPrice(currentPlan, selectedBillingPeriod) : null
 
   return (
     <div className="space-y-6">
@@ -468,8 +469,10 @@ export default function BillingPage() {
                       {formatCurrency(billingData.currentSubscription.amount_paid, userCurrency)}/
                       {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
                     </>
+                  ) : currentPlanPricing ? (
+                    `Active package • ${formatCurrency(currentPlanPricing.price, userCurrency)}/month`
                   ) : (
-                    `Active package • ${formatCurrency(currentPlan.price, userCurrency)}/${currentPlan.billing_period}`
+                    'Active package'
                   )}
                 </CardDescription>
               </div>
