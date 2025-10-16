@@ -264,9 +264,7 @@ export function usePaymentProcessor({
   const handle3DSAuthentication = async (
     redirectUrl: string,
     transactionId: string,
-    orderId: string,
-    onModalOpen?: (url: string) => void,
-    onModalClose?: () => void
+    orderId: string
   ) => {
     try {
       if (!window.MidtransNew3ds || typeof window.MidtransNew3ds.authenticate !== 'function') {
@@ -391,8 +389,6 @@ export function usePaymentProcessor({
           modalDiv.appendChild(modalContent)
           document.body.appendChild(modalDiv)
           modal = modalDiv
-
-          onModalOpen?.(url)
         },
         closePopup: () => {
           if (modal && modal.parentNode) {
@@ -403,7 +399,6 @@ export function usePaymentProcessor({
             }
             modal = null
           }
-          onModalClose?.()
         }
       }
 
@@ -414,98 +409,31 @@ export function usePaymentProcessor({
           popupModal.openPopup(redirect_url)
         },
         onSuccess: async function(response: any) {
-          // According to Midtrans docs: check transaction_status
-          // Possible values: capture, settlement, pending, deny, authorize
-          
+          // 3DS authentication success - close popup and redirect
           popupModal.closePopup()
-
-          try {
-            const { data: { session } } = await supabaseBrowser.auth.getSession()
-            const token = session?.access_token
-
-            if (!token) {
-              throw new Error('Authentication token expired')
-            }
-
-            // Check if transaction is actually successful (capture/settlement/authorize) or still pending
-            // Per Midtrans docs: authorize is a legitimate success state for credit cards
-            const isSuccess = response.transaction_status === 'capture' || 
-                             response.transaction_status === 'settlement' || 
-                             response.transaction_status === 'authorize'
-            const isPending = response.transaction_status === 'pending'
-
-            if (isPending) {
-              // According to Midtrans docs: if status is pending, need to wait for webhook notification
-              addToast({
-                title: "Payment processing",
-                description: "Your payment is being verified. You will receive a notification shortly.",
-                type: "info"
-              })
-              setSubmitting(false)
-              router.push(`/dashboard/settings/plans-billing`)
-              return
-            }
-
-            if (!isSuccess) {
-              // Not success, not pending, and not authorize = failure
-              throw new Error(`Payment status: ${response.status_message || response.transaction_status}`)
-            }
-
-            // Call 3DS callback API to finalize successful payment
-            const callbackResponse = await fetch(BILLING_ENDPOINTS.MIDTRANS_3DS_CALLBACK, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              credentials: 'include', // Essential for cross-subdomain authentication
-              body: JSON.stringify({
-                transaction_id: transactionId,
-                order_id: orderId,
-                status_code: response.status_code,
-                transaction_status: response.transaction_status,
-                gross_amount: response.gross_amount,
-                payment_type: response.payment_type
-              }),
-            })
-
-            const callbackResult = await callbackResponse.json()
-
-            if (callbackResult.success) {
-              // Don't show toast here - billing page will handle it via URL parameter
-              router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
-            } else {
-              throw new Error(callbackResult.message || '3DS authentication callback failed')
-            }
-          } catch (error) {
-            addToast({
-              title: "Payment processing failed",
-              description: error instanceof Error ? error.message : "Please contact support.",
-              type: "error"
-            })
-          } finally {
-            setSubmitting(false)
-          }
+          
+          addToast({
+            title: "Payment successful!",
+            description: "Your subscription has been activated.",
+            type: "success"
+          })
+          
+          setSubmitting(false)
+          router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
         },
         onFailure: function(response: any) {
-          // According to Midtrans docs: this is called when 3DS authentication fails
-          // Check if OTP was submitted to give better error message
-          const challengeCompleted = response.three_ds_challenge_completion === true
-          const errorMessage = challengeCompleted 
-            ? `Authentication failed: ${response.status_message || 'Card verification was not successful'}. Please check with your bank.`
-            : "Authentication was not completed. Please try again."
-          
+          // 3DS authentication failure - close popup, stay on page
           popupModal.closePopup()
           setSubmitting(false)
+          
           addToast({
-            title: "Payment authentication failed",
-            description: errorMessage,
+            title: "Payment failed",
+            description: "Please verify your card details and try again.",
             type: "error"
           })
         },
-        onPending: async function(response: any) {
-          // According to Midtrans docs: transaction is pending, final status comes via webhook
-          // This callback is for async endpoints where payment needs additional verification
+        onPending: function(response: any) {
+          // Transaction pending - close popup, stay on page
           popupModal.closePopup()
           setSubmitting(false)
           
@@ -514,9 +442,6 @@ export function usePaymentProcessor({
             description: "Your payment is being processed. You will receive a notification when it's complete.",
             type: "info"
           })
-          
-          // Redirect to billing page to track status
-          router.push(`/dashboard/settings/plans-billing`)
         }
       }
 
@@ -524,7 +449,6 @@ export function usePaymentProcessor({
       window.MidtransNew3ds.authenticate(redirectUrl, options)
 
     } catch (error) {
-      onModalClose?.()
       setSubmitting(false)
       addToast({
         title: "Authentication failed",

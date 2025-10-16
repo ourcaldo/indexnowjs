@@ -1,0 +1,61 @@
+    <script>
+        /**
+         * Example helper functions to open Iframe popup, you may replace this with your own 
+         * method of open iframe. In this example, PicoModal library is used by including 
+         * this script tag on the HTML:
+         */
+        var popupModal = (function(){
+            var modal = null;
+            return {
+                openPopup(url){
+                modal = picoModal({
+                    content:'<iframe frameborder="0" style="height:90vh; width:100%;" src="'+url+'"></iframe>',
+                    width: "75%",
+                    closeButton: false,
+                    overlayClose: false,
+                    escCloses: false
+                }).show();
+                },
+                closePopup(){
+                try{
+                    modal.close();
+                } catch(e) {}
+                }
+            }
+        }());
+    </script>
+
+    <script>
+        var redirect_url = '<redirect_url Retrieved from Charge Response>';
+
+        // callback functions
+        var options = {
+            performAuthentication: function(redirect_url){
+                // Implement how you will open iframe to display 3ds authentication redirect_url to customer
+                popupModal.openPopup(redirect_url);
+            },
+            onSuccess: function(response){
+                // 3ds authentication success, implement payment success scenario
+                console.log('response:',response);
+                popupModal.closePopup();
+                // // Simulate an HTTP redirect:
+                window.location.replace("http://midtrans.com?status=success");
+            },
+            onFailure: function(response){
+                // 3ds authentication failure, implement payment failure scenario
+                console.log('response:',response);
+                popupModal.closePopup();
+            },
+            onPending: function(response){
+                // transaction is pending, transaction result will be notified later via 
+                // HTTP POST notification, implement as you wish here
+                console.log('response:',response);
+                popupModal.closePopup();
+            }
+        };
+
+        // trigger `authenticate` function
+        MidtransNew3ds.authenticate(redirect_url, options);
+    </script>   
+</body>
+</html>

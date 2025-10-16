@@ -77,8 +77,6 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false)
   const [userCurrency, setUserCurrency] = useState<'USD' | 'IDR'>('USD')
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null)
-  const [show3DSModal, setShow3DSModal] = useState(false)
-  const [threeDSUrl, setThreeDSUrl] = useState('')
 
   const [form, setForm] = useState<CheckoutForm>({
     first_name: '',
@@ -340,15 +338,7 @@ export default function CheckoutPage() {
             await paymentProcessor.handle3DSAuthentication(
               threeDSError.redirect_url,
               threeDSError.transaction_id,
-              threeDSError.order_id,
-              (url: string) => {
-                setThreeDSUrl(url)
-                setShow3DSModal(true)
-              },
-              () => {
-                setShow3DSModal(false)
-                setThreeDSUrl('')
-              }
+              threeDSError.order_id
             )
           } catch (authError) {
             addToast({
@@ -499,31 +489,6 @@ export default function CheckoutPage() {
             </div>
           </div>
         </div>
-
-        {/* 3DS Modal */}
-        {show3DSModal && threeDSUrl && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto">
-              <h3 className="text-lg font-semibold mb-4">Payment Authentication</h3>
-              <iframe
-                src={threeDSUrl}
-                className="w-full h-[600px] border rounded"
-                title="3DS Authentication"
-              />
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => {
-                    setShow3DSModal(false)
-                    setThreeDSUrl('')
-                  }}
-                  className="px-4 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </PaymentErrorBoundary>
   )
