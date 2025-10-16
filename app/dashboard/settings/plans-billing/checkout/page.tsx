@@ -328,29 +328,8 @@ export default function CheckoutPage() {
       card_cvv: cardData.cvv
     }
 
-    try {
-      await paymentProcessor.processCreditCardPayment(paymentRequest, mappedCardData, token)
-    } catch (error) {
-      if (error && typeof error === 'object' && 'requires_3ds' in error) {
-        const threeDSError = error as any
-        if (threeDSError.requires_3ds && threeDSError.redirect_url) {
-          try {
-            await paymentProcessor.handle3DSAuthentication(
-              threeDSError.redirect_url,
-              threeDSError.transaction_id,
-              threeDSError.order_id
-            )
-          } catch (authError) {
-            addToast({
-              title: "Authentication failed",
-              description: "Unable to initialize payment authentication. Please try again.",
-              type: "error"
-            })
-          }
-          return
-        }
-      }
-    }
+    // processCreditCardPayment handles 3DS internally, no need to catch and re-handle
+    await paymentProcessor.processCreditCardPayment(paymentRequest, mappedCardData, token)
   }
 
   // Main form submission handler
