@@ -44,6 +44,33 @@ export function usePaymentProcessor({
   const router = useRouter()
 
   /**
+   * Sanitize error messages to avoid exposing technical details
+   */
+  const sanitizeErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase()
+      
+      // Check for technical error patterns and return user-friendly messages
+      if (message.includes('is not a function') || message.includes('webpack') || message.includes('module')) {
+        return 'A technical error occurred. Please try again or contact support.'
+      }
+      if (message.includes('fetch') || message.includes('network') || message.includes('connection')) {
+        return 'Network error. Please check your connection and try again.'
+      }
+      if (message.includes('timeout')) {
+        return 'Request timed out. Please try again.'
+      }
+      if (message.includes('unauthorized') || message.includes('authentication')) {
+        return 'Authentication required. Please log in and try again.'
+      }
+      
+      // Return the original message if it seems user-friendly
+      return error.message
+    }
+    return 'An unexpected error occurred. Please try again.'
+  }
+
+  /**
    * Set loading state
    */
   const setLoading = (loading: boolean) => {
@@ -98,7 +125,7 @@ export function usePaymentProcessor({
         throw error
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Payment failed'
+      const errorMessage = sanitizeErrorMessage(error)
       setError(errorMessage)
       onError?.(error as Error)
 
@@ -147,7 +174,7 @@ export function usePaymentProcessor({
       }
       
       // For other errors, set error state
-      const errorMessage = error instanceof Error ? error.message : 'Payment processing failed'
+      const errorMessage = sanitizeErrorMessage(error)
       setError(errorMessage)
       setSubmitting(false)
       throw error
@@ -272,7 +299,8 @@ export function usePaymentProcessor({
       }
 
       // Get auth token for backend API call
-      const authToken = await authService.getCurrentSessionToken()
+      const session = await authService.getSession()
+      const authToken = session?.access_token
       if (!authToken) {
         throw new Error('Authentication required. Please log in again.')
       }
@@ -454,7 +482,7 @@ export function usePaymentProcessor({
             setSubmitting(false)
             addToast({
               title: "Processing error",
-              description: error instanceof Error ? error.message : "Payment succeeded but subscription setup failed. Please contact support.",
+              description: sanitizeErrorMessage(error),
               type: "error"
             })
           }
@@ -494,7 +522,7 @@ export function usePaymentProcessor({
       setSubmitting(false)
       addToast({
         title: "Authentication failed",
-        description: error instanceof Error ? error.message : "Payment authentication was not completed.",
+        description: sanitizeErrorMessage(error),
         type: "error"
       })
     }
