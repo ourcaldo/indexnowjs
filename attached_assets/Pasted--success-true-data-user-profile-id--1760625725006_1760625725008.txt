@@ -1,0 +1,100 @@
+{
+    "success": true,
+    "data": {
+        "user": {
+            "profile": {
+                "id": "dad359c4-f028-426a-8105-a1e7a800b8fe",
+                "user_id": "0f8afdd8-1b21-4c64-8ac6-26e7976f6be5",
+                "full_name": "Aldo Dwi Kristian",
+                "role": "user",
+                "email_notifications": true,
+                "created_at": "2025-10-15T15:18:42.052766+00:00",
+                "updated_at": "2025-10-16T09:08:30.569+00:00",
+                "phone_number": "+6281244001006",
+                "package_id": "2a5b8559-d9d7-4832-836c-2c3908d2fd35",
+                "subscribed_at": "2025-10-16T09:08:30.569+00:00",
+                "expires_at": "2025-11-16T09:08:30.569+00:00",
+                "daily_quota_used": 0,
+                "daily_quota_reset_date": "2025-10-15",
+                "email": "nex@aldo.codes",
+                "country": "Indonesia",
+                "trial_started_at": null,
+                "trial_status": "none",
+                "auto_billing_enabled": false,
+                "has_used_trial": false,
+                "trial_used_at": null,
+                "package": null,
+                "email_confirmed_at": "2025-10-15T15:19:20.122197Z",
+                "last_sign_in_at": "2025-10-16T14:12:46.37011Z",
+                "service_account_count": 0,
+                "active_jobs_count": 0
+            },
+            "quota": null,
+            "settings": {
+                "id": "34a41e51-118f-4110-af1b-82f78d96f360",
+                "user_id": "0f8afdd8-1b21-4c64-8ac6-26e7976f6be5",
+                "timeout_duration": 30,
+                "retry_attempts": 3,
+                "email_job_completion": true,
+                "email_job_failure": true,
+                "email_quota_alerts": true,
+                "created_at": "2025-10-15T15:18:42.052766+00:00",
+                "updated_at": "2025-10-15T15:18:42.052766+00:00",
+                "default_schedule": "one-time",
+                "email_daily_report": false
+            },
+            "trial": {
+                "eligible": true,
+                "available_packages": [],
+                "message": "You are eligible for a 3-day free trial"
+            }
+        },
+        "billing": {
+            "packages": [],
+            "current_package_id": "2a5b8559-d9d7-4832-836c-2c3908d2fd35",
+            "expires_at": "2025-11-16T09:08:30.569+00:00",
+            "user_currency": "IDR",
+            "user_country": "Indonesia"
+        },
+        "indexing": {
+            "serviceAccounts": 0
+        },
+        "rankTracking": {
+            "usage": {
+                "keywords_used": 14,
+                "keywords_limit": 0,
+                "is_unlimited": false,
+                "remaining_quota": 0,
+                "period_start": "2025-09-01T00:00:00+00:00",
+                "period_end": "2025-09-30T23:59:59+00:00"
+            },
+            "domains": [
+                {
+                    "id": "5282f714-6cb0-474d-9574-d927a37758df",
+                    "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "domain_name": "cetta.id",
+                    "display_name": "cetta.id",
+                    "is_active": true,
+                    "verification_status": "verified",
+                    "verification_code": null,
+                    "created_at": "2025-09-17T21:16:25.536468+00:00",
+                    "updated_at": "2025-09-17T21:16:25.536468+00:00"
+                },
+                {
+                    "id": "9506479c-6d94-4d81-93f3-65f9180f1032",
+                    "user_id": "915f50e5-0902-466a-b1af-bdf19d789722",
+                    "domain_name": "nexjob.tech",
+                    "display_name": "nexjob.tech",
+                    "is_active": true,
+                    "verification_status": "verified",
+                    "verification_code": null,
+                    "created_at": "2025-08-11T18:29:46.761411+00:00",
+                    "updated_at": "2025-08-11T18:29:46.761411+00:00"
+                }
+            ],
+            "recentKeywords": []
+        },
+        "notifications": []
+    },
+    "timestamp": "2025-10-16T14:40:35.985Z"
+}

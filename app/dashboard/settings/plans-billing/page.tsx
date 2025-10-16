@@ -9,7 +9,7 @@ import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import { useToast } from '@/hooks/use-toast'
 import { useApiError } from '@/hooks/useApiError'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { BILLING_ENDPOINTS, DASHBOARD_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
+import { BILLING_ENDPOINTS, PUBLIC_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -96,6 +96,8 @@ interface PackagesData {
   packages: PaymentPackage[]
   current_package_id: string | null
   expires_at: string | null
+  user_currency?: string
+  user_country?: string
 }
 
 interface BillingHistoryData {
@@ -224,7 +226,20 @@ export default function BillingPage() {
       const token = (await supabase.auth.getSession()).data.session?.access_token
       if (!token) throw new Error('No authentication token')
 
-      const response = await fetch(DASHBOARD_ENDPOINTS.MAIN, {
+      // Fetch packages from public endpoint
+      const packagesResponse = await fetch(PUBLIC_ENDPOINTS.PACKAGES, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!packagesResponse.ok) throw new Error('Failed to load packages')
+      
+      const packagesResult = await packagesResponse.json()
+      const packages = packagesResult?.data?.packages || []
+
+      // Fetch user profile to get current package and currency
+      const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/user/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -232,32 +247,31 @@ export default function BillingPage() {
         credentials: 'include'
       })
 
-      if (!response.ok) throw new Error('Failed to load dashboard data')
+      if (!profileResponse.ok) throw new Error('Failed to load profile')
+      
+      const profileResult = await profileResponse.json()
+      const profileData = profileResult?.data || {}
 
-      const result = await response.json()
-      const data = result?.success === true && result.data ? result.data : result
+      // Set packages data
+      setPackagesData({
+        packages: packages,
+        current_package_id: profileData.package_id || null,
+        expires_at: profileData.expires_at || null,
+        user_currency: profileData.country === 'Indonesia' ? 'IDR' : 'USD',
+        user_country: profileData.country || ''
+      })
       
-      // Extract packages data from dashboard response
-      if (data.billing) {
-        setPackagesData(data.billing)
-        if (data.billing.user_currency) {
-          setUserCurrency(data.billing.user_currency)
-        }
+      // Set user currency
+      setUserCurrency(profileData.country === 'Indonesia' ? 'IDR' : 'USD')
+      
+      // Extract usage data from profile
+      if (profileData.quota) {
+        setUsageData(profileData.quota)
       }
       
-      // Extract usage data
-      if (data.user?.quota) {
-        setUsageData(data.user.quota)
-      }
-      
-      // Extract keyword usage
-      if (data.rankTracking?.usage) {
-        setKeywordUsage(data.rankTracking.usage)
-      }
-      
-      // Extract trial eligibility from dashboard response
-      if (data.user?.trial) {
-        setTrialEligible(data.user.trial.eligible)
+      // Extract trial eligibility from profile
+      if (profileData.trial) {
+        setTrialEligible(profileData.trial.eligible)
       }
     } catch (error) {
       handleApiError(error)

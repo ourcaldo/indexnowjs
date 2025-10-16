@@ -1,0 +1,115 @@
+{
+    "success": true,
+    "data": {
+        "currentSubscription": null,
+        "billingStats": {
+            "total_payments": 0,
+            "total_spent": 0,
+            "next_billing_date": "2025-11-16T09:08:30.569+00:00",
+            "days_remaining": 31
+        },
+        "recentTransactions": [
+            {
+                "id": "b827dccb-1c6c-4918-baa6-828797cefdf3",
+                "transaction_type": "payment",
+                "amount": 80000,
+                "currency": "IDR",
+                "transaction_status": "completed",
+                "created_at": "2025-10-16T09:08:19.006227+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "0e30243c-ba7e-4ceb-8c89-b688df737bbb",
+                "transaction_type": "payment",
+                "amount": 50000,
+                "currency": "IDR",
+                "transaction_status": "completed",
+                "created_at": "2025-10-16T08:55:55.850126+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "4219cd7e-a005-41a6-97aa-ea71729f1f19",
+                "transaction_type": "payment",
+                "amount": 50000,
+                "currency": "IDR",
+                "transaction_status": "failed",
+                "created_at": "2025-10-16T08:54:39.517228+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "5a183a4d-636e-48e4-aac1-53f51f8b8607",
+                "transaction_type": "payment",
+                "amount": 50000,
+                "currency": "IDR",
+                "transaction_status": "failed",
+                "created_at": "2025-10-16T08:49:29.99386+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "55b6ea79-48c2-4273-828f-148611717e7a",
+                "transaction_type": "payment",
+                "amount": 80000,
+                "currency": "IDR",
+                "transaction_status": "failed",
+                "created_at": "2025-10-16T08:45:43.299098+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "f3a9e753-1df5-4248-9fbd-56d576e81cdb",
+                "transaction_type": "payment",
+                "amount": 80000,
+                "currency": "IDR",
+                "transaction_status": "expired",
+                "created_at": "2025-10-16T08:36:28.832087+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "6717fb99-6b9b-4ddf-b3d7-07b714fcc5e3",
+                "transaction_type": "payment",
+                "amount": 80000,
+                "currency": "IDR",
+                "transaction_status": "expired",
+                "created_at": "2025-10-16T08:36:11.576758+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "99cd4cb4-6a04-4ab3-97ed-1f0ae5eca51b",
+                "transaction_type": "payment",
+                "amount": 80000,
+                "currency": "IDR",
+                "transaction_status": "expired",
+                "created_at": "2025-10-16T08:22:10.958533+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "abb4df7d-f7dd-4183-a4ed-2b1edf5ef643",
+                "transaction_type": "payment",
+                "amount": 80000,
+                "currency": "IDR",
+                "transaction_status": "expired",
+                "created_at": "2025-10-16T08:17:40.945022+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            },
+            {
+                "id": "355bcd9b-7e2b-4ef9-8686-d26147933930",
+                "transaction_type": "payment",
+                "amount": 80000,
+                "currency": "IDR",
+                "transaction_status": "expired",
+                "created_at": "2025-10-16T08:11:43.347829+00:00",
+                "package_name": "Unknown",
+                "payment_method": "midtrans_recurring"
+            }
+        ]
+    },
+    "timestamp": "2025-10-16T14:40:35.990Z"
+}

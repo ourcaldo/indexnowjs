@@ -2,6 +2,70 @@
 
 ## Recent Changes
 
+### 2025-10-16 - Fixed Billing Page API Integration and Mobile Header (COMPLETED)
+**Critical Fix**: Billing page now properly fetches packages from public API endpoint and inherits standard mobile header from DashboardLayout.
+
+#### ✅ Issues Fixed
+
+**1. Packages Not Loading - API Endpoint Issue**
+- **Problem**: Billing page showed "No plans available" - packages section was completely empty
+- **Root Cause**: Page was fetching from `DASHBOARD_ENDPOINTS.MAIN` which returns `billing.packages = []` (empty array)
+- **Investigation**: Network tab showed only 2 API calls:
+  1. `/v1/dashboard` (returns empty packages array)
+  2. `/v1/billing/overview` (billing data only)
+  - No call to `/v1/public/packages` endpoint (which has actual package data)
+- **Fix**: Changed `loadDashboardData()` to fetch from `PUBLIC_ENDPOINTS.PACKAGES`
+  - Now calls `/v1/public/packages` for actual package data (Basic, Premium, Pro plans)
+  - Fetches user profile to get `package_id`, `expires_at`, and `country` for currency
+  - Properly constructs `PackagesData` with packages array and user metadata
+
+**2. Mobile Header Missing - Layout Override Issue**
+- **Problem**: Billing page didn't have hamburger menu, logo, or notification bell on mobile (unlike other dashboard pages like "Manage Jobs")
+- **Root Cause**: Settings page (`/app/dashboard/settings/page.tsx`) creates its OWN full-page layout wrapper that overrides DashboardLayout
+  - Has custom mobile header at `top-0` that completely replaces the standard DashboardLayout mobile header
+  - Line 69: `<div className="flex min-h-screen...">` creates independent layout system
+- **Fix**: Repositioned settings mobile tab navigation to work WITH DashboardLayout header
+  - Changed from `top-0` to `top-16` to position below DashboardLayout mobile header
+  - Adjusted main content padding from `pt-32` to `pt-36` to account for both headers
+  - Now shows: DashboardLayout header (hamburger, logo, notifications) → Settings tabs → Content
+
+#### ✅ Implementation Details
+
+**API Integration (Fixed):**
+```tsx
+// OLD (WRONG) - Fetched from dashboard endpoint with empty packages
+const response = await fetch(DASHBOARD_ENDPOINTS.MAIN)
+const packages = response.data.billing.packages // Empty array!
+
+// NEW (CORRECT) - Fetches from public packages endpoint
+const packagesResponse = await fetch(PUBLIC_ENDPOINTS.PACKAGES)
+const packages = packagesResponse.data.packages // [Basic, Premium, Pro]
+
+const profileResponse = await fetch('/v1/auth/user/profile')
+const packageData = {
+  packages: packages,
+  current_package_id: profileResponse.data.package_id,
+  user_currency: profileResponse.data.country === 'Indonesia' ? 'IDR' : 'USD'
+}
+```
+
+**Mobile Header Layout (Fixed):**
+```tsx
+// Settings page now uses layered headers on mobile:
+// 1. DashboardLayout header at top (from layout.tsx) - hamburger, logo, bell
+// 2. Settings tabs below (from settings/page.tsx) - Account, Service Accounts, Billing
+// 3. Content area below both headers
+
+<div className="lg:hidden fixed top-16..."> {/* Was top-0, now below DashboardLayout */}
+  <div className="grid grid-cols-3">...</div>
+</div>
+<main className="flex-1 lg:pt-0 pt-36"> {/* Was pt-32, now accounts for both headers */}
+```
+
+**Status**: Billing page **FULLY FIXED** - Now fetches packages from correct API endpoint and displays standard mobile header matching other dashboard pages.
+
+---
+
 ### 2025-10-16 - Fixed Billing Page "No Active Package" and Empty Plans Section (COMPLETED)
 **Bug Fix**: Corrected billing page logic to properly show current plan when user has package_id, and added fallback for empty plans data.
 

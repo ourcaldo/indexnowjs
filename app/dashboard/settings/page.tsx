@@ -95,10 +95,9 @@ export default function SettingsPage() {
         </div>
       </aside>
 
-      {/* Mobile Navigation */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-10">
+      {/* Mobile Tab Navigation */}
+      <div className="lg:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 z-10">
         <div className="p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Settings</h2>
           <div className="grid grid-cols-3 gap-2">
             {tabs.map((tab) => {
               const Icon = tab.icon
@@ -125,7 +124,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 lg:pt-0 pt-32">
+      <main className="flex-1 lg:pt-0 pt-36">
         <div className="max-w-[1400px] mx-auto p-6">
           {renderTabContent()}
         </div>
