@@ -9,7 +9,6 @@ import { useFavicon, useSiteName, useSiteLogo } from '@/hooks/use-site-settings'
 import QuotaNotification from '@/components/QuotaNotification'
 import ServiceAccountQuotaNotification from '@/components/ServiceAccountQuotaNotification'
 import QueryProvider from '@/components/QueryProvider'
-import { ErrorNotifications } from '@/components/admin/errors/ErrorNotifications'
 
 // Cookie utilities for sidebar state persistence
 const getCookie = (name: string): string | null => {
@@ -241,7 +240,6 @@ export default function DashboardLayout({
           <QuotaNotification />
           
           {/* Error Notifications (Admin only) */}
-          <ErrorNotifications />
         </div>
       </ToastContainer>
     </QueryProvider>
