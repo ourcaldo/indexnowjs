@@ -2,7 +2,6 @@ import { GoogleApiClient } from './GoogleApiClient';
 import { JobQueue } from './JobQueue';
 import { RetryHandler } from './RetryHandler';
 import { QuotaManager } from './QuotaManager';
-import { SocketIOBroadcaster } from '../../core/socketio-broadcaster';
 import { JobLoggingService } from '../../job-management/job-logging-service';
 
 interface IndexingJob {
@@ -33,7 +32,6 @@ export class IndexingService {
   private jobQueue: JobQueue;
   private retryHandler: RetryHandler;
   private quotaManager: QuotaManager;
-  private socketBroadcaster: SocketIOBroadcaster;
   private jobLogger: JobLoggingService;
   private processingJobs = new Set<string>();
 
@@ -42,7 +40,6 @@ export class IndexingService {
     this.jobQueue = JobQueue.getInstance();
     this.retryHandler = RetryHandler.getInstance();
     this.quotaManager = QuotaManager.getInstance();
-    this.socketBroadcaster = SocketIOBroadcaster.getInstance();
     this.jobLogger = JobLoggingService.getInstance();
   }
 
@@ -156,16 +153,6 @@ export class IndexingService {
       });
 
       // Send real-time completion update
-      this.socketBroadcaster.broadcastJobUpdate(job.user_id, jobId, {
-        status: 'completed',
-        progress: {
-          total_urls: finalJob?.total_urls || 0,
-          processed_urls: finalJob?.processed_urls || 0,
-          successful_urls: finalJob?.successful_urls || 0,
-          failed_urls: finalJob?.failed_urls || 0,
-          progress_percentage: 100
-        }
-      });
 
       console.log(`✅ Indexing job ${jobId} completed successfully`);
       return { success: true };

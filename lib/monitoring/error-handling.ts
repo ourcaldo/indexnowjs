@@ -4,7 +4,6 @@ import { supabaseAdmin } from '@/lib/database'
 import { SecureServiceRoleHelpers } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { trackServerError } from '@/lib/analytics/sentry-server'
 import { formatError } from '../core/api-response-formatter'
-import { SocketIOBroadcaster } from '@/lib/core/socketio-broadcaster'
 
 // Configure Pino logger to avoid worker threads completely
 export const logger = pino({
@@ -234,8 +233,6 @@ export class ErrorHandlingService {
     // Broadcast critical errors to admin users via WebSocket
     if (structuredError.severity === ErrorSeverity.CRITICAL && typeof window === 'undefined') {
       try {
-        const broadcaster = SocketIOBroadcaster.getInstance()
-        broadcaster.broadcastCriticalError({
           id: errorId,
           severity: structuredError.severity,
           message: errorMessage,

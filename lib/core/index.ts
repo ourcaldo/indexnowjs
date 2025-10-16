@@ -22,4 +22,3 @@ export * from './constants/ValidationRules';
 export { queryClient } from './queryClient';
 export { authenticateRequest } from './api-middleware';
 export type { AuthenticatedRequest } from './api-middleware';
-export { SocketIOBroadcaster } from './socketio-broadcaster';

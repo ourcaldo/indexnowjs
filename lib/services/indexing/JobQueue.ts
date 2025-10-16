@@ -1,5 +1,4 @@
 import { supabaseAdmin } from '../../database/supabase';
-import { SocketIOBroadcaster } from '../../core/socketio-broadcaster';
 import { SecureServiceRoleWrapper } from '../security/SecureServiceRoleWrapper';
 
 interface IndexingJob {
@@ -26,10 +25,8 @@ interface IndexingJob {
  */
 export class JobQueue {
   private static instance: JobQueue;
-  private socketBroadcaster: SocketIOBroadcaster;
 
   constructor() {
-    this.socketBroadcaster = SocketIOBroadcaster.getInstance();
   }
 
   static getInstance(): JobQueue {
@@ -87,16 +84,6 @@ export class JobQueue {
         // Get user_id from the job data
         const job = await this.getJobDetails(jobId);
         if (job) {
-          this.socketBroadcaster.broadcastJobUpdate(job.user_id, jobId, {
-            status: 'running',
-            progress: {
-              total_urls: job.total_urls,
-              processed_urls: 0,
-              successful_urls: 0,
-              failed_urls: 0,
-              progress_percentage: 0
-            }
-          });
         }
       }
 

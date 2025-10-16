@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '../../database/supabase';
 import { GoogleAuthService } from '../../google-services/google-auth-service';
-import { SocketIOBroadcaster } from '../../core/socketio-broadcaster';
 import { JobLoggingService } from '../../job-management/job-logging-service';
 import { QuotaManager } from './QuotaManager';
 import { SecureServiceRoleWrapper } from '../security/SecureServiceRoleWrapper';
@@ -40,14 +39,12 @@ interface UrlSubmission {
 export class GoogleApiClient {
   private static instance: GoogleApiClient;
   private googleAuth: GoogleAuthService;
-  private socketBroadcaster: SocketIOBroadcaster;
   private jobLogger: JobLoggingService;
   private quotaManager: QuotaManager;
   private rateLimitTracker: Map<string, number>;
 
   constructor() {
     this.googleAuth = GoogleAuthService.getInstance();
-    this.socketBroadcaster = SocketIOBroadcaster.getInstance();
     this.jobLogger = JobLoggingService.getInstance();
     this.quotaManager = QuotaManager.getInstance();
     this.rateLimitTracker = new Map();
@@ -224,175 +221,8 @@ export class GoogleApiClient {
 
           // Broadcast real-time URL submission update
           if (updatedSubmission) {
-            this.socketBroadcaster.broadcastUrlStatusChange(job.user_id, job.id, updatedSubmission);
-          }
-
-          // Update quota usage for the service account (-1 for successful request)
-          await this.quotaManager.updateQuotaUsage(serviceAccount.id, true);
-
-          // CRITICAL: Update user's daily quota consumption
-          await this.quotaManager.updateUserQuotaConsumption(job.user_id, 1);
-
-          // Log successful URL processing
-          await this.jobLogger.logUrlProcessed(job.id, submission.url, true, undefined, responseTime);
-          const remainingQuota = await this.quotaManager.getRemainingQuota(serviceAccount.id);
-          await this.jobLogger.logQuotaUsage(job.id, serviceAccount.id, remainingQuota);
-
-          successful++;
-          console.log(`✅ Successfully indexed: ${submission.url}`);
-
-        } catch (error) {
-          console.error(`❌ Failed to index ${submission.url}:`, error);
-          
-          // Get the service account for this submission
-          const serviceAccount = serviceAccounts[processed % serviceAccounts.length];
-          
-          // Log failed URL processing
-          await this.jobLogger.logUrlProcessed(job.id, submission.url, false, error instanceof Error ? error.message : 'Unknown error');
-          
-          // Update submission as failed using SecureWrapper
-          const failedSubmission = await SecureServiceRoleWrapper.executeSecureOperation(
-            {
-              userId: 'system',
-              operation: 'update_submission_failed',
-              reason: 'Google API client updating URL submission as failed after Google Indexing API error',
-              source: 'GoogleApiClient.processUrlSubmissionsWithGoogleAPI',
-              metadata: {
-                submissionId: submission.id,
-                jobId: job.id,
-                url: submission.url,
-                serviceAccountId: serviceAccount.id,
-                errorMessage: error instanceof Error ? error.message : 'Indexing failed',
-                retryCount: submission.retry_count + 1,
-                operation_type: 'submission_failure_update'
-              }
-            },
-            { table: 'indb_indexing_url_submissions', operationType: 'update' },
-            async () => {
-              const { data: failedSubmission } = await supabaseAdmin
-                .from('indb_indexing_url_submissions')
-                .update({
-                  status: 'failed',
-                  error_message: error instanceof Error ? error.message : 'Indexing failed',
-                  retry_count: submission.retry_count + 1,
-                  service_account_id: serviceAccount.id,
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', submission.id)
-                .select()
-                .single();
-
-              return failedSubmission;
-            }
-          );
-
-          // Broadcast real-time URL submission update
-          if (failedSubmission) {
-            this.socketBroadcaster.broadcastUrlStatusChange(job.user_id, job.id, failedSubmission);
-          }
-
-          // Update quota usage for the service account (still counts as a request attempt)
-          await this.quotaManager.updateQuotaUsage(serviceAccount.id, false);
-
-          // CRITICAL: Update user's daily quota consumption (failed requests still consume quota)
-          await this.quotaManager.updateUserQuotaConsumption(job.user_id, 1);
-
-          failed++;
-        }
-
-        processed++;
-        
-        // Update job progress in real-time using SecureWrapper
-        const progressPercentage = Math.round((processed / submissions.length) * 100);
-        await SecureServiceRoleWrapper.executeSecureOperation(
-          {
-            userId: 'system',
-            operation: 'update_job_progress',
-            reason: 'Google API client updating job progress in real-time during URL processing',
-            source: 'GoogleApiClient.processUrlSubmissionsWithGoogleAPI',
-            metadata: {
-              jobId: job.id,
-              processedUrls: processed,
-              successfulUrls: successful,
-              failedUrls: failed,
-              progressPercentage,
-              totalUrls: submissions.length,
-              operation_type: 'job_progress_update'
-            }
-          },
-          { table: 'indb_indexing_jobs', operationType: 'update' },
-          async () => {
-            await supabaseAdmin
-              .from('indb_indexing_jobs')
-              .update({
-                processed_urls: processed,
-                successful_urls: successful,
-                failed_urls: failed,
-                progress_percentage: progressPercentage,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', job.id);
-          }
-        );
-
-        // Log progress update every 10 processed URLs or on completion
-        if (processed % 10 === 0 || processed === submissions.length) {
-          await this.jobLogger.logProgressUpdate(job.id, progressPercentage, processed, submissions.length);
-        }
-
-        // Send real-time progress update via Socket.io
-        this.socketBroadcaster.broadcastJobUpdate(job.user_id, job.id, {
-          status: 'running',
-          progress: {
-            total_urls: submissions.length,
-            processed_urls: processed,
-            successful_urls: successful,
-            failed_urls: failed,
-            progress_percentage: progressPercentage
-          }
-        });
 
         // Send enhanced progress broadcast with current URL info
-        this.socketBroadcaster.broadcastJobProgress(job.user_id, job.id, {
-          total_urls: submissions.length,
-          processed_urls: processed,
-          successful_urls: successful,
-          failed_urls: failed,
-          progress_percentage: progressPercentage
-        }, submissions[processed - 1]?.url);
-
-        // Respect Google API rate limits
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      console.log(`📊 Job processing complete: ${successful} successful, ${failed} failed out of ${processed} total`);
-
-    } catch (error) {
-      console.error('Error processing URL submissions:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Submit individual URL to Google's Indexing API with rate limiting
-   */
-  private async submitUrlToGoogleIndexingAPI(url: string, accessToken: string, serviceAccountId: string): Promise<void> {
-    // Apply rate limiting: 60 requests per minute = 1 request per second
-    await this.applyRateLimit(serviceAccountId);
-    
-    const apiUrl = 'https://indexing.googleapis.com/v3/urlNotifications:publish';
-    
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        url: url,
-        type: 'URL_UPDATED'
-      })
-    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

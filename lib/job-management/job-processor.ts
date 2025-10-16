@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '../database/supabase';
 import { GoogleAuthService } from '../google-services/google-auth-service';
-import { SocketIOBroadcaster } from '../core/socketio-broadcaster';
 import { SecureServiceRoleWrapper } from '../services/security/SecureServiceRoleWrapper';
 import { JobErrorHandler } from './JobErrorHandler';
 import { logger } from '@/lib/monitoring/error-handling';
@@ -30,12 +29,10 @@ interface UrlSubmission {
 export class JobProcessor {
   private static instance: JobProcessor;
   private googleAuth: GoogleAuthService;
-  private websocket: SocketIOBroadcaster;
   private processingJobs = new Set<string>();
 
   constructor() {
     this.googleAuth = GoogleAuthService.getInstance();
-    this.websocket = SocketIOBroadcaster.getInstance();
   }
 
   static getInstance(): JobProcessor {
@@ -66,10 +63,6 @@ export class JobProcessor {
           }
 
           await this.updateJobStatus(jobId, 'running', { started_at: new Date().toISOString() });
-          this.websocket.broadcastJobUpdate(job.user_id, jobId, {
-            status: 'running',
-            progress: this.getJobProgress(job)
-          });
 
           await this.processJobUrls(job);
 
@@ -79,10 +72,6 @@ export class JobProcessor {
             locked_by: null
           });
 
-          this.websocket.broadcastJobUpdate(job.user_id, jobId, {
-            status: 'completed',
-            progress: this.getJobProgress({ ...job, status: 'completed' })
-          });
 
           return { jobId, status: 'completed' };
         },
@@ -102,11 +91,6 @@ export class JobProcessor {
 
       const job = await this.getJobDetails(jobId);
       if (job) {
-        this.websocket.broadcastJobUpdate(job.user_id, jobId, {
-          status: 'failed',
-          progress: this.getJobProgress(job),
-          error_message: error instanceof Error ? error.message : 'Unknown error'
-        });
       }
     } finally {
       this.processingJobs.delete(jobId);
@@ -311,11 +295,6 @@ export class JobProcessor {
       // Update progress and broadcast to frontend
       const updatedJob = await this.getJobDetails(job.id);
       if (updatedJob) {
-        this.websocket.broadcastJobUpdate(job.user_id, job.id, {
-          status: 'running',
-          progress: this.getJobProgress(updatedJob),
-          current_url: batch[batch.length - 1]?.url
-        });
       }
     }
   }

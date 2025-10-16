@@ -163,12 +163,3 @@ export function useGlobalQuotaManager() {
   }
 }
 
-// WebSocket quota update handler (to be called from global WebSocket)
-export function updateQuotaFromWebSocket(quotaUpdate: Partial<QuotaInfo>) {
-  if (globalQuotaData.quotaInfo) {
-    const updatedQuotaInfo = { ...globalQuotaData.quotaInfo, ...quotaUpdate }
-    const updatedData = { ...globalQuotaData, quotaInfo: updatedQuotaInfo }
-    globalQuotaData = updatedData
-    quotaSubscribers.forEach(subscriber => subscriber(updatedData))
-  }
-}

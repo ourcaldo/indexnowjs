@@ -28,7 +28,6 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/database';
 import { authService } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useSocketIO } from '@/hooks/useSocketIO';
 import { INDEXING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints';
 
 interface Job {
@@ -125,73 +124,6 @@ export default function JobDetailsPage() {
   const itemsPerPage = 20;
 
   // Memoized callback functions to prevent infinite re-renders
-  const handleJobUpdate = useCallback((message: any) => {
-    // Update job data with real-time progress
-    if (message.jobId === jobId) {
-      setJob(prevJob => {
-        if (!prevJob) return prevJob;
-        
-        return {
-          ...prevJob,
-          status: (message.status as Job['status']) || prevJob.status,
-          progress_percentage: message.progress?.progress_percentage ?? prevJob.progress_percentage,
-          processed_urls: message.progress?.processed_urls ?? prevJob.processed_urls,
-          successful_urls: message.progress?.successful_urls ?? prevJob.successful_urls,
-          failed_urls: message.progress?.failed_urls ?? prevJob.failed_urls,
-          total_urls: message.progress?.total_urls ?? prevJob.total_urls,
-          updated_at: new Date().toISOString()
-        };
-      });
-    }
-  }, [jobId]);
-
-  const handleJobProgress = useCallback((message: any) => {
-    if (message.jobId === jobId && message.progress) {
-      setJob(prevJob => {
-        if (!prevJob) return prevJob;
-        
-        return {
-          ...prevJob,
-          progress_percentage: message.progress.progress_percentage ?? prevJob.progress_percentage,
-          processed_urls: message.progress.processed_urls ?? prevJob.processed_urls,
-          successful_urls: message.progress.successful_urls ?? prevJob.successful_urls,
-          failed_urls: message.progress.failed_urls ?? prevJob.failed_urls,
-          total_urls: message.progress.total_urls ?? prevJob.total_urls,
-          updated_at: new Date().toISOString()
-        };
-      });
-    }
-  }, [jobId]);
-
-  const handleJobCompleted = useCallback((message: any) => {
-    if (message.jobId === jobId) {
-      addToast({
-        title: 'Job Completed',
-        description: `Job completed successfully!`,
-        type: 'success'
-      });
-      
-      // Update job status to completed immediately
-      setJob(prevJob => {
-        if (!prevJob) return prevJob;
-        return {
-          ...prevJob,
-          status: 'completed',
-          progress_percentage: 100,
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-      });
-    }
-  }, [jobId, addToast]);
-
-  // Socket.io for real-time job updates
-  const { isConnected } = useSocketIO({
-    jobId: jobId,
-    onJobUpdate: handleJobUpdate,
-    onJobProgress: handleJobProgress,
-    onJobCompleted: handleJobCompleted
-  });
 
   // Listen for real-time URL submission updates
   useEffect(() => {

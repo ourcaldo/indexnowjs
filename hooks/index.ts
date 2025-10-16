@@ -19,7 +19,6 @@ export { useNotification } from './ui/useNotification'
 // Legacy Hooks - Existing hooks maintained for compatibility
 export { useUserProfile } from './useUserProfile'
 export { useGlobalQuotaManager } from './useGlobalQuotaManager'
-export { useSocketIO } from './useSocketIO'
 export { usePaymentProcessor } from './usePaymentProcessor'
 export { useKeywordUsage } from './useKeywordUsage'
 export { useQuotaValidation } from './useQuotaValidation'
