@@ -66,7 +66,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
       {/* Sidebar Navigation - Desktop */}
       <aside className="hidden lg:block w-64 bg-white border-r border-gray-200 min-h-screen">
         <div className="p-6">
