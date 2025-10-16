@@ -96,7 +96,7 @@ export default function SettingsPage() {
       </aside>
 
       {/* Mobile Tab Navigation */}
-      <div className="lg:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 z-10">
+      <div className="lg:hidden bg-white border-b border-gray-200">
         <div className="p-4">
           <div className="grid grid-cols-3 gap-2">
             {tabs.map((tab) => {
@@ -124,7 +124,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 lg:pt-0 pt-36">
+      <main className="flex-1 lg:pt-0 pt-0">
         <div className="max-w-[1400px] mx-auto p-6">
           {renderTabContent()}
         </div>

@@ -238,8 +238,8 @@ export default function BillingPage() {
       const packagesResult = await packagesResponse.json()
       const packages = packagesResult?.data?.packages || []
 
-      // Fetch user profile to get current package and currency
-      const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/user/profile`, {
+      // Fetch dashboard data to get current package and usage data
+      const dashboardResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -247,31 +247,40 @@ export default function BillingPage() {
         credentials: 'include'
       })
 
-      if (!profileResponse.ok) throw new Error('Failed to load profile')
+      if (!dashboardResponse.ok) throw new Error('Failed to load dashboard data')
       
-      const profileResult = await profileResponse.json()
-      const profileData = profileResult?.data || {}
+      const dashboardResult = await dashboardResponse.json()
+      const dashboardData = dashboardResult?.data || {}
+      
+      // Extract profile data from nested structure
+      const profileData = dashboardData.user?.profile || {}
+      const billingData = dashboardData.billing || {}
 
       // Set packages data
       setPackagesData({
         packages: packages,
-        current_package_id: profileData.package_id || null,
-        expires_at: profileData.expires_at || null,
-        user_currency: profileData.country === 'Indonesia' ? 'IDR' : 'USD',
-        user_country: profileData.country || ''
+        current_package_id: profileData.package_id || billingData.current_package_id || null,
+        expires_at: profileData.expires_at || billingData.expires_at || null,
+        user_currency: billingData.user_currency || (profileData.country === 'Indonesia' ? 'IDR' : 'USD'),
+        user_country: billingData.user_country || profileData.country || ''
       })
       
       // Set user currency
-      setUserCurrency(profileData.country === 'Indonesia' ? 'IDR' : 'USD')
+      setUserCurrency(billingData.user_currency || (profileData.country === 'Indonesia' ? 'IDR' : 'USD'))
       
-      // Extract usage data from profile
-      if (profileData.quota) {
-        setUsageData(profileData.quota)
+      // Extract usage data from dashboard
+      if (dashboardData.user?.quota) {
+        setUsageData(dashboardData.user.quota)
       }
       
-      // Extract trial eligibility from profile
-      if (profileData.trial) {
-        setTrialEligible(profileData.trial.eligible)
+      // Extract keyword usage from rank tracking
+      if (dashboardData.rankTracking?.usage) {
+        setKeywordUsage(dashboardData.rankTracking.usage)
+      }
+      
+      // Extract trial eligibility from dashboard
+      if (dashboardData.user?.trial) {
+        setTrialEligible(dashboardData.user.trial.eligible)
       }
     } catch (error) {
       handleApiError(error)
@@ -605,24 +614,44 @@ export default function BillingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button 
-                    className={isCurrentPlan ? 'w-full' : 'w-full'}
-                    variant={isCurrentPlan ? 'default' : 'outline'}
-                    disabled={isCurrentPlan || subscribing === plan.id}
-                    onClick={() => handleSubscribe(plan.id, selectedBillingPeriod)}
-                    data-testid={`button-${isCurrentPlan ? 'current' : 'upgrade'}-${plan.slug}`}
-                  >
-                    {subscribing === plan.id ? (
-                      <>
-                        <LoadingSpinner size="sm" className="mr-2" />
-                        Processing...
-                      </>
-                    ) : isCurrentPlan ? (
-                      'Current plan'
-                    ) : (
-                      'Upgrade'
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full"
+                      variant={isCurrentPlan ? 'default' : 'outline'}
+                      disabled={isCurrentPlan || subscribing === plan.id}
+                      onClick={() => handleSubscribe(plan.id, selectedBillingPeriod)}
+                      data-testid={`button-${isCurrentPlan ? 'current' : 'upgrade'}-${plan.slug}`}
+                    >
+                      {subscribing === plan.id ? (
+                        <>
+                          <LoadingSpinner size="sm" className="mr-2" />
+                          Processing...
+                        </>
+                      ) : isCurrentPlan ? (
+                        'Current plan'
+                      ) : (
+                        'Upgrade'
+                      )}
+                    </Button>
+                    {!isCurrentPlan && isTrialEligiblePackage(plan) && trialEligible && (
+                      <Button 
+                        className="w-full"
+                        variant="default"
+                        disabled={startingTrial === plan.id}
+                        onClick={() => handleStartTrial(plan.id)}
+                        data-testid={`button-start-trial-${plan.slug}`}
+                      >
+                        {startingTrial === plan.id ? (
+                          <>
+                            <LoadingSpinner size="sm" className="mr-2" />
+                            Starting Trial...
+                          </>
+                        ) : (
+                          'Start Free Trial'
+                        )}
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                 </CardContent>
               </Card>
             )
