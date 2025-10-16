@@ -403,15 +403,18 @@ export function usePaymentProcessor({
       }
 
       // Options exactly matching Midtrans documentation structure
+      // With callback_type: "js_event", Midtrans determines success/failure, NOT us
+      // We just trust the callbacks and act accordingly
       const options = {
         performAuthentication: function(redirect_url: string) {
-          // Implement exactly as Midtrans docs show
+          // Midtrans will open 3DS iframe in popup
           popupModal.openPopup(redirect_url)
         },
         onSuccess: function(response: any) {
-          // onSuccess = 3DS authentication succeeded = payment is successful
-          // Midtrans determines this, not us - just trust the callback
+          // Midtrans determined 3DS authentication succeeded
+          // This means payment is successful - just close popup and redirect
           popupModal.closePopup()
+          setSubmitting(false)
           
           addToast({
             title: "Payment successful!",
@@ -419,11 +422,12 @@ export function usePaymentProcessor({
             type: "success"
           })
           
-          setSubmitting(false)
+          // Webhook will handle subscription creation
           router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
         },
         onFailure: function(response: any) {
-          // onFailure = 3DS authentication failed = payment failed
+          // Midtrans determined 3DS authentication failed
+          // This means payment failed - show error and stay on page
           popupModal.closePopup()
           setSubmitting(false)
           
@@ -432,9 +436,10 @@ export function usePaymentProcessor({
             description: "Please verify your card details and try again.",
             type: "error"
           })
+          // Stay on checkout page so user can try again
         },
         onPending: function(response: any) {
-          // onPending = transaction still processing, wait for webhook
+          // Transaction pending - final result will come via webhook
           popupModal.closePopup()
           setSubmitting(false)
           
