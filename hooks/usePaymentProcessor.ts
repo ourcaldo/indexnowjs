@@ -408,45 +408,22 @@ export function usePaymentProcessor({
           // Implement exactly as Midtrans docs show
           popupModal.openPopup(redirect_url)
         },
-        onSuccess: async function(response: any) {
-          // 3DS authentication success - but check transaction_status for actual payment status
+        onSuccess: function(response: any) {
+          // onSuccess = 3DS authentication succeeded = payment is successful
+          // Midtrans determines this, not us - just trust the callback
           popupModal.closePopup()
           
-          // Check transaction_status from response
-          const transactionStatus = response.transaction_status
+          addToast({
+            title: "Payment successful!",
+            description: "Your subscription has been activated.",
+            type: "success"
+          })
           
-          // Success statuses: capture, settlement, authorize
-          if (transactionStatus === 'capture' || transactionStatus === 'settlement' || transactionStatus === 'authorize') {
-            addToast({
-              title: "Payment successful!",
-              description: "Your subscription has been activated.",
-              type: "success"
-            })
-            setSubmitting(false)
-            router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
-          }
-          // Pending status - wait for webhook notification
-          else if (transactionStatus === 'pending') {
-            addToast({
-              title: "Payment processing",
-              description: "Your payment is being verified. You will receive a notification shortly.",
-              type: "info"
-            })
-            setSubmitting(false)
-            router.push(`/dashboard/settings/plans-billing`)
-          }
-          // Other statuses (deny, cancel, expire, etc.)
-          else {
-            addToast({
-              title: "Payment failed",
-              description: response.status_message || "Transaction was not successful. Please try again.",
-              type: "error"
-            })
-            setSubmitting(false)
-          }
+          setSubmitting(false)
+          router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
         },
         onFailure: function(response: any) {
-          // 3DS authentication failure - close popup, stay on page
+          // onFailure = 3DS authentication failed = payment failed
           popupModal.closePopup()
           setSubmitting(false)
           
@@ -457,7 +434,7 @@ export function usePaymentProcessor({
           })
         },
         onPending: function(response: any) {
-          // Transaction pending - close popup, redirect to billing
+          // onPending = transaction still processing, wait for webhook
           popupModal.closePopup()
           setSubmitting(false)
           

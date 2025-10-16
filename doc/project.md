@@ -779,15 +779,22 @@ JWT_SECRET=[jwt-secret-key]
 
 🔐 **MIDTRANS 3DS AUTHENTICATION POPUP FIX**: Fixed critical 3DS authentication issues following Midtrans official documentation for `callback_type: "js_event"` implementation
 
+**✅ CRITICAL BUG FIXED - Incorrect Transaction Status Checking**:
+- **Root Cause**: Code was checking `response.transaction_status` inside `onSuccess` callback to determine payment success
+- **Problem**: Even when Midtrans calls `onSuccess` (meaning payment succeeded), `transaction_status` can be "pending" for 3DS 2.0
+- **Solution**: Trust which callback Midtrans invokes - `onSuccess` = payment successful, period. Don't check `transaction_status` again.
+- **Key Insight**: Midtrans determines success/failure by which callback it calls, not by the status field in the response
+
 **✅ ISSUES FIXED**:
 - **Double Popup Issue**: Removed duplicate modal rendering - checkout page was creating its own modal PLUS handle3DSAuthentication was creating another popup
 - **Auto-Close Issue**: Simplified callback handlers to match Midtrans documentation exactly - callbacks now ONLY close popup and handle redirect
 - **Incorrect Redirect Behavior**: Fixed to redirect ONLY on successful authentication (onSuccess), stay on page for failure/pending
+- **Transaction Status Bug**: Removed incorrect `transaction_status` checking that was causing false "Payment failed" messages
 
 **✅ FRONTEND IMPLEMENTATION** (`hooks/usePaymentProcessor.ts`):
-- **Simplified onSuccess Callback**: Removed complex API calls and transaction status checking from callback - now only closes popup and redirects to order page
+- **Fixed onSuccess Callback**: Now trusts Midtrans callback decision - if `onSuccess` is called, payment is successful, redirect to order page
 - **Simplified onFailure Callback**: Only closes popup and shows error toast - NO redirect, stays on checkout page for retry
-- **Simplified onPending Callback**: Only closes popup and shows pending message - NO redirect, stays on checkout page
+- **Simplified onPending Callback**: Only closes popup and shows pending message, redirects to billing page to wait for webhook
 - **Removed Unnecessary Callbacks**: Removed onModalOpen and onModalClose parameters from handle3DSAuthentication function
 - **Clean Implementation**: Follows Midtrans documentation pattern exactly with performAuthentication, onSuccess, onFailure, onPending structure
 
@@ -801,21 +808,22 @@ JWT_SECRET=[jwt-secret-key]
 - **Files Verified**: MidtransRecurringService.ts and MidtransSnapService.ts both use `callback_type: "js_event"`
 
 **🔧 TECHNICAL CHANGES**:
-- **Before**: Complex callback logic with API calls, transaction status checks, and duplicate modal rendering
-- **After**: Clean Midtrans pattern - popup opens, user completes 3DS, callbacks handle UI response only
-- **Redirect Logic**: Only redirect on SUCCESS, stay on page for FAILURE/PENDING to allow retry
+- **Before**: Complex callback logic checking `transaction_status` inside callbacks, causing false failures
+- **After**: Trust Midtrans callback decision - `onSuccess` called = payment successful, redirect immediately
+- **Callback Logic**: Midtrans SDK determines which callback to invoke based on 3DS authentication result
+- **Redirect Logic**: SUCCESS → order page, FAILURE → stay on checkout, PENDING → billing page
 
 **Files Modified**:
-- `hooks/usePaymentProcessor.ts` - Simplified 3DS callbacks, removed unnecessary parameters
+- `hooks/usePaymentProcessor.ts` - Fixed callback logic to trust Midtrans decision, removed transaction_status checking
 - `app/dashboard/settings/plans-billing/checkout/page.tsx` - Removed duplicate modal and state variables
 
 **Expected Behavior**:
 1. User clicks "Place Order" → Card tokenized → Backend returns 3DS redirect URL
 2. Popup opens with 3DS authentication iframe
 3. User completes OTP verification
-4. **On Success**: Popup closes, shows success toast, redirects to order details page
-5. **On Failure**: Popup closes, shows error toast, stays on checkout page for retry
-6. **On Pending**: Popup closes, shows pending toast, stays on checkout page
+4. **Midtrans calls onSuccess** → Popup closes, shows success toast, redirects to order details page
+5. **Midtrans calls onFailure** → Popup closes, shows error toast, stays on checkout page for retry
+6. **Midtrans calls onPending** → Popup closes, shows pending toast, redirects to billing page (webhook will update)
 
 ### September 20, 2025: Subdomain Architecture Implementation ✅
 
