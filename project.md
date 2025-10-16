@@ -2,6 +2,118 @@
 
 ## Recent Changes
 
+### 2025-10-16 - Completed Billing Page Redesign (COMPLETED)
+**UI/UX Enhancement**: Implemented the final piece of the Figma settings redesign by updating the Plans & Billing page with a cleaner, more modern layout featuring a prominent current plan card with usage metrics.
+
+#### ✅ What Was Implemented
+
+**New Billing Page Design** (`app/dashboard/settings/plans-billing/page.tsx`)
+
+1. **Current Plan Card** (Top Section):
+   - Highlighted card with gradient background (primary/purple gradient)
+   - "Current Plan" badge with plan name (e.g., "Pro")
+   - Subscription details: pricing, billing period, next billing date
+   - "Manage" button for plan management
+   - Three usage metrics displayed with progress bars:
+     - **Daily URLs**: Shows used/limit with formatted numbers (e.g., "156/2K")
+     - **Keywords**: Shows keyword tracking usage (e.g., "3.4K/15K")
+     - **Service Accounts**: Shows connected service accounts (e.g., "3/5")
+   - Each metric card has white background, border, and progress indicator
+
+2. **Plans Section**:
+   - Grid layout with three plan cards: Starter, Pro, Enterprise
+   - Each plan card displays:
+     - Plan name as title
+     - Formatted pricing with currency support (USD/IDR)
+     - Feature list with checkmark icons
+     - Action button: "Upgrade" for other plans, "Current plan" (disabled) for active plan
+   - Current plan highlighted with primary border color
+
+3. **Billing History Section**:
+   - Retained existing comprehensive billing history component
+   - Transaction filtering, pagination, and search functionality
+   - Status indicators and payment method tracking
+
+#### ✅ Backend Integration Preserved
+
+**All existing functionality maintained:**
+- ✅ API calls to BILLING_ENDPOINTS.OVERVIEW for subscription data
+- ✅ API calls to DASHBOARD_ENDPOINTS.MAIN for usage data, packages, and trial eligibility
+- ✅ API calls to BILLING_ENDPOINTS.HISTORY for transaction history
+- ✅ Real-time quota usage data from dashboard API
+- ✅ Keyword usage tracking from rank tracking system
+- ✅ Service account count from user quota data
+- ✅ Currency formatting for USD and IDR
+- ✅ Trial eligibility checking
+- ✅ Subscription and upgrade flows (checkout redirection)
+- ✅ Error handling with proper loading states
+
+#### ✅ Components Removed/Replaced
+
+**Old components no longer needed:**
+- `BillingStats` component → Functionality merged into Current Plan Card
+- `PackageComparison` component → Replaced with simpler Plans section
+- `PricingTable` component → Replaced with plan cards
+
+**Components retained:**
+- `BillingHistory` component → Kept as-is for transaction history
+
+#### ✅ Code Quality & Testing
+
+**TypeScript & Type Safety:**
+- ✅ All interfaces properly defined for API responses
+- ✅ Type-safe data transformations
+- ✅ Proper null/undefined handling with optional chaining
+- ✅ Zero LSP errors
+
+**Testing Support:**
+- ✅ Comprehensive data-testid attributes added:
+  - `card-current-plan`, `badge-current-plan`, `text-plan-name`
+  - `text-billing-info`, `button-manage-plan`
+  - `card-usage-daily-urls`, `text-value-daily-urls`, `progress-daily-urls`
+  - `card-usage-keywords`, `text-value-keywords`, `progress-keywords`
+  - `card-usage-service-accounts`, `text-value-service-accounts`, `progress-service-accounts`
+  - `card-plan-{slug}`, `text-plan-price-{slug}`, `button-upgrade-{slug}`
+- ✅ Enables E2E testing of all interactive elements
+
+**Helper Functions:**
+- ✅ `getUsagePercentage`: Calculates usage percentage for progress bars
+- ✅ `formatNumber`: Formats large numbers with K suffix (e.g., 3.4K)
+- ✅ `formatCurrency`: Multi-currency support with locale-aware formatting
+- ✅ `formatDate`: Consistent date formatting
+- ✅ `getBillingPeriodPrice`: Extracts pricing from complex tier structures
+
+#### ✅ Design Alignment
+
+**Matches Figma Redesign:**
+- ✅ Current plan card with gradient background at top
+- ✅ Usage metrics in 3-column grid with progress bars
+- ✅ Plan cards in responsive grid layout
+- ✅ Clean, modern visual hierarchy
+- ✅ Consistent spacing and typography
+- ✅ Proper use of shadcn/ui components (Card, Badge, Progress, Button)
+
+**Responsive Design:**
+- ✅ Mobile: Single column layout for usage metrics and plans
+- ✅ Desktop: 3-column grid for metrics, 3-column grid for plans
+- ✅ Tailwind breakpoints properly applied
+
+#### ✅ User Experience Improvements
+
+**Visual Clarity:**
+- Current plan status immediately visible with highlighted card
+- Usage metrics easy to understand with visual progress bars
+- Plan comparison simplified with clear feature lists
+
+**Data Transparency:**
+- Real quota usage shown (not estimates)
+- Next billing date prominently displayed
+- Service account count visible at a glance
+
+**Status**: Billing page redesign **COMPLETE** - Now matches Figma design while preserving all backend functionality and API integrations. All settings pages (Account, Service Accounts, Billing) now use the new design system.
+
+---
+
 ### 2025-10-16 - Fixed Build Error in GoogleApiClient (COMPLETED)
 **Build Fix**: Resolved critical TypeScript compilation error preventing production build from succeeding. The `submitUrlToGoogleIndexingAPI` method in GoogleApiClient.ts had corrupted code that caused syntax errors during build.
 
@@ -121,10 +233,24 @@
    - Enhanced add service account dialog with better form layout
    - Summary cards showing total daily quota and quick tips
 
-4. **Plans & Billing Page** (No changes)
-   - Existing implementation superior to redesign
-   - Already has comprehensive billing history, transaction tracking, and package management
-   - No changes needed
+4. **Plans & Billing Page** (`app/dashboard/settings/plans-billing/page.tsx`)
+   - Applied new Figma redesign layout with current plan card at top
+   - Current Plan Card displays:
+     - Plan name with "Current Plan" badge
+     - Pricing and next billing date
+     - Three usage metrics with progress bars: Daily URLs, Keywords, Service Accounts
+     - "Manage" button for plan management
+   - Plans section with Starter/Pro/Enterprise cards showing:
+     - Plan name and pricing
+     - Feature list with checkmarks
+     - Upgrade button (or "Current plan" for active plan)
+   - Preserved all existing backend logic and API integrations:
+     - Billing overview, dashboard, and history API calls
+     - Real-time usage data from quota system
+     - Transaction history with filtering and pagination
+     - Currency formatting (USD/IDR support)
+   - Removed old components: BillingStats (functionality merged into Current Plan Card), PackageComparison, PricingTable
+   - Enhanced with proper data-testid attributes for E2E testing
 
 #### ✅ New Components Added
 
