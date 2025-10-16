@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { TrendingUp, AlertCircle, Package, CheckCircle, Clock } from 'lucide-react'
+import { AlertCircle, Check, Key } from 'lucide-react'
 import { supabase } from '@/lib/database'
 import { authService } from '@/lib/auth'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
@@ -11,12 +11,10 @@ import { useApiError } from '@/hooks/useApiError'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { BILLING_ENDPOINTS, DASHBOARD_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { Button } from '@/components/ui/button'
-import { 
-  BillingStats, 
-  BillingHistory, 
-  PackageComparison
-} from './components'
-import PricingTable from '@/components/shared/PricingTable'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { BillingHistory } from './components'
 
 // Type definitions
 interface PaymentPackage {
@@ -36,6 +34,7 @@ interface PaymentPackage {
   is_popular: boolean
   is_current: boolean
   pricing_tiers: any
+  free_trial_enabled?: boolean
 }
 
 interface Transaction {
@@ -119,11 +118,30 @@ interface BillingHistoryData {
   }
 }
 
+interface UsageData {
+  daily_quota_used: number
+  daily_quota_limit: number
+  is_unlimited: boolean
+  quota_exhausted: boolean
+  package_name: string
+  remaining_quota: number
+  service_account_count: number
+}
+
+interface KeywordUsageData {
+  keywords_used: number
+  keywords_limit: number
+  is_unlimited: boolean
+  remaining_quota: number
+}
+
 export default function BillingPage() {
   // State management
   const [billingData, setBillingData] = useState<BillingData | null>(null)
   const [packagesData, setPackagesData] = useState<PackagesData | null>(null)
   const [historyData, setHistoryData] = useState<BillingHistoryData | null>(null)
+  const [usageData, setUsageData] = useState<UsageData | null>(null)
+  const [keywordUsage, setKeywordUsage] = useState<KeywordUsageData | null>(null)
   const [userCurrency, setUserCurrency] = useState<'USD' | 'IDR'>('USD')
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
@@ -133,9 +151,6 @@ export default function BillingPage() {
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<string>('monthly')
   const [subscribing, setSubscribing] = useState<string | null>(null)
   const [startingTrial, setStartingTrial] = useState<string | null>(null)
-  const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
-  const [showDetails, setShowDetails] = useState<Record<string, boolean>>({})
-  const [showComparePlans, setShowComparePlans] = useState(false)
 
   // History section state
   const [currentPage, setCurrentPage] = useState(1)
@@ -172,15 +187,13 @@ export default function BillingPage() {
   }, [currentPage, statusFilter, typeFilter, searchTerm])
 
   // Data loading functions
-  // NOTE: Consider refactoring to useQuery for better error handling and caching
-  // Example: const { data, error, refetch } = useQuery({ queryKey: ['billing'], queryFn: loadBillingData })
   const loadAllData = async () => {
     try {
       setLoading(true)
       await Promise.all([
         loadBillingData(),
         loadBillingHistory(),
-        loadDashboardData() // Replace individual calls with merged dashboard API
+        loadDashboardData()
       ])
     } catch (error) {
       handleApiError(error)
@@ -245,6 +258,16 @@ export default function BillingPage() {
         }
       }
       
+      // Extract usage data
+      if (data.user?.quota) {
+        setUsageData(data.user.quota)
+      }
+      
+      // Extract keyword usage
+      if (data.rankTracking?.usage) {
+        setKeywordUsage(data.rankTracking.usage)
+      }
+      
       // Extract trial eligibility from dashboard response
       if (data.user?.trial) {
         setTrialEligible(data.user.trial.eligible)
@@ -290,7 +313,6 @@ export default function BillingPage() {
     }
   }
 
-
   // Helper functions
   const getBillingPeriodPrice = (pkg: PaymentPackage, period: string): { price: number, originalPrice?: number, discount?: number } => {
     if (pkg.pricing_tiers && typeof pkg.pricing_tiers === 'object' && pkg.pricing_tiers[period]) {
@@ -331,11 +353,23 @@ export default function BillingPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric'
     })
+  }
+
+  const getUsagePercentage = (used: number, limit: number, isUnlimited: boolean) => {
+    if (isUnlimited || limit <= 0) return 0
+    return Math.min(100, (used / limit) * 100)
+  }
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K'
+    }
+    return num.toString()
   }
 
   // Action handlers
@@ -379,48 +413,19 @@ export default function BillingPage() {
     setCurrentPage(1)
   }
 
-
-  const togglePlanDetails = (planId: string) => {
-    if (!showComparePlans) {
-      setShowDetails(prev => {
-        const newState: Record<string, boolean> = {}
-        Object.keys(prev).forEach(key => {
-          newState[key] = false
-        })
-        newState[planId] = !prev[planId]
-        return newState
-      })
-    }
-  }
-
-  const toggleComparePlans = () => {
-    const newShowComparePlans = !showComparePlans
-    setShowComparePlans(newShowComparePlans)
-
-    if (newShowComparePlans) {
-      const allExpanded: Record<string, boolean> = {}
-      packagesData?.packages.forEach(pkg => {
-        allExpanded[pkg.id] = true
-      })
-      setShowDetails(allExpanded)
-    } else {
-      setShowDetails({})
-    }
-  }
-
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
       case 'confirmed':
-        return <CheckCircle className="h-4 w-4 text-success" />
+        return <Check className="h-4 w-4 text-success" />
       case 'pending':
       case 'proof_uploaded':
-        return <Clock className="h-4 w-4 text-warning" />
+        return <AlertCircle className="h-4 w-4 text-warning" />
       case 'failed':
       case 'cancelled':
         return <AlertCircle className="h-4 w-4 text-destructive" />
       default:
-        return <Clock className="h-4 w-4 text-muted-foreground" />
+        return <AlertCircle className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -472,58 +477,162 @@ export default function BillingPage() {
     )
   }
 
+  const currentPlan = packagesData?.packages.find(pkg => pkg.id === packagesData.current_package_id)
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Billing</h1>
-          <p className="text-muted-foreground mt-1">Manage your plan and billing history here.</p>
+    <div className="space-y-6">
+      {/* Current Plan Card */}
+      {currentPlan && billingData?.currentSubscription ? (
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-purple-500/5" data-testid="card-current-plan">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <Badge className="mb-2 bg-primary text-primary-foreground" data-testid="badge-current-plan">Current Plan</Badge>
+                <CardTitle className="text-2xl" data-testid="text-plan-name">{currentPlan.name}</CardTitle>
+                <CardDescription className="text-foreground/70" data-testid="text-billing-info">
+                  {formatCurrency(billingData.currentSubscription.amount_paid, userCurrency)}/
+                  {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
+                </CardDescription>
+              </div>
+              <Button variant="outline" className="bg-background" data-testid="button-manage-plan">Manage</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Daily URLs */}
+              <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-daily-urls">
+                <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-daily-urls">Daily URLs</p>
+                <p className="text-2xl text-foreground mb-2" data-testid="text-value-daily-urls">
+                  {formatNumber(usageData?.daily_quota_used || 0)}
+                  <span className="text-sm text-muted-foreground">
+                    /{usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}
+                  </span>
+                </p>
+                <Progress 
+                  value={getUsagePercentage(
+                    usageData?.daily_quota_used || 0, 
+                    usageData?.daily_quota_limit || 0, 
+                    usageData?.is_unlimited || false
+                  )} 
+                  className="h-1.5" 
+                  data-testid="progress-daily-urls"
+                />
+              </div>
+              
+              {/* Keywords */}
+              <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-keywords">
+                <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-keywords">Keywords</p>
+                <p className="text-2xl text-foreground mb-2" data-testid="text-value-keywords">
+                  {formatNumber(keywordUsage?.keywords_used || 0)}
+                  <span className="text-sm text-muted-foreground">
+                    /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
+                  </span>
+                </p>
+                <Progress 
+                  value={getUsagePercentage(
+                    keywordUsage?.keywords_used || 0, 
+                    keywordUsage?.keywords_limit || 0, 
+                    keywordUsage?.is_unlimited || false
+                  )} 
+                  className="h-1.5" 
+                  data-testid="progress-keywords"
+                />
+              </div>
+              
+              {/* Service Accounts */}
+              <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-service-accounts">
+                <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-service-accounts">Service Accounts</p>
+                <p className="text-2xl text-foreground mb-2" data-testid="text-value-service-accounts">
+                  {usageData?.service_account_count || 0}
+                  <span className="text-sm text-muted-foreground">
+                    /{currentPlan.quota_limits?.service_accounts_limit || 0}
+                  </span>
+                </p>
+                <Progress 
+                  value={getUsagePercentage(
+                    usageData?.service_account_count || 0, 
+                    currentPlan.quota_limits?.service_accounts_limit || 0, 
+                    false
+                  )} 
+                  className="h-1.5" 
+                  data-testid="progress-service-accounts"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card data-testid="card-no-plan">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-foreground mb-1">No Active Package</h3>
+                <p className="text-sm text-muted-foreground">
+                  You don't have an active package. Subscribe to a plan below to start tracking your keywords and accessing all features.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Plans */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-4" data-testid="text-heading-plans">Plans</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {packagesData?.packages.map((plan) => {
+            const pricing = getBillingPeriodPrice(plan, selectedBillingPeriod)
+            const isCurrentPlan = plan.id === packagesData.current_package_id
+            
+            return (
+              <Card 
+                key={plan.id} 
+                className={isCurrentPlan ? 'border-primary' : ''} 
+                data-testid={`card-plan-${plan.slug}`}
+              >
+                <CardHeader>
+                  <CardTitle data-testid={`text-plan-name-${plan.slug}`}>{plan.name}</CardTitle>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl text-foreground font-bold" data-testid={`text-plan-price-${plan.slug}`}>
+                      {formatCurrency(pricing.price, userCurrency)}
+                    </span>
+                    <span className="text-sm text-muted-foreground">/mo</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2.5 mb-4">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm" data-testid={`text-feature-${plan.slug}-${i}`}>
+                        <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button 
+                    className={isCurrentPlan ? 'w-full' : 'w-full'}
+                    variant={isCurrentPlan ? 'default' : 'outline'}
+                    disabled={isCurrentPlan || subscribing === plan.id}
+                    onClick={() => handleSubscribe(plan.id, selectedBillingPeriod)}
+                    data-testid={`button-${isCurrentPlan ? 'current' : 'upgrade'}-${plan.slug}`}
+                  >
+                    {subscribing === plan.id ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2" />
+                        Processing...
+                      </>
+                    ) : isCurrentPlan ? (
+                      'Current plan'
+                    ) : (
+                      'Upgrade'
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       </div>
-
-      {/* Billing Stats */}
-      <BillingStats
-        billingData={billingData}
-        currentPackageId={packagesData?.current_package_id || null}
-        formatCurrency={formatCurrency}
-        userCurrency={userCurrency}
-      />
-
-
-      {/* Billing Settings Section */}
-      <div className="bg-card rounded-lg border border-border p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Billing settings</h2>
-            <p className="text-sm text-muted-foreground">Manage your plan and billing history here.</p>
-          </div>
-        </div>
-
-        <PricingTable
-          showTrialButton={true}
-          trialEligible={trialEligible || false}
-          currentPackageId={packagesData?.current_package_id || null}
-          subscribing={subscribing}
-          startingTrial={startingTrial}
-          onSubscribe={(packageId: string) => handleSubscribe(packageId, selectedBillingPeriod)}
-          onStartTrial={handleStartTrial}
-          isTrialEligiblePackage={isTrialEligiblePackage}
-        />
-      </div>
-
-      {/* Package Comparison */}
-      <PackageComparison
-        packages={packagesData?.packages || []}
-        showComparePlans={showComparePlans}
-        toggleComparePlans={toggleComparePlans}
-        selectedBillingPeriod={selectedBillingPeriod}
-        userCurrency={userCurrency}
-        getBillingPeriodPrice={getBillingPeriodPrice}
-        formatCurrency={formatCurrency}
-        handleSubscribe={(packageId: string) => handleSubscribe(packageId, selectedBillingPeriod)}
-        subscribing={subscribing}
-      />
 
       {/* Billing History */}
       <BillingHistory
