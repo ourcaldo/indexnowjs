@@ -2,6 +2,100 @@
 
 ## Recent Changes
 
+### 2025-10-16 - Fixed Billing Page Data Extraction, Free Trial Button, and Sticky Header (COMPLETED)
+**Critical Fix**: Resolved billing page showing "No Active Package" despite user having package_id, added free trial button for eligible packages, and fixed sticky mobile header issue.
+
+#### ✅ Issues Fixed
+
+**1. Billing Page Shows "No Active Package" Despite User Having Package**
+- **Problem**: User has package_id ("2a5b8559-d9d7-4832-836c-2c3908d2fd35" - Pro package) in their profile, but billing page shows "No Active Package"
+- **Root Cause**: API data extraction issue - billing page was fetching from `/v1/auth/user/profile` endpoint which returns nested structure `data.user.profile.package_id`, but code expected flat structure `data.package_id`
+- **Investigation**: 
+  - `/v1/billing/overview` returns `currentSubscription: null` (no subscription record yet)
+  - `/v1/dashboard` returns correct data with nested structure: `data.user.profile.package_id`
+  - Code was extracting `profileData.package_id` but should be `profileData.user.profile.package_id`
+- **Fix**: Changed to use `/v1/dashboard` endpoint instead of `/v1/auth/user/profile`
+  - Now properly extracts from nested structure: `dashboardData.user.profile.package_id`
+  - Also extracts from `dashboardData.billing.current_package_id` as fallback
+  - Correctly gets usage data from `dashboardData.user.quota`
+  - Gets keyword usage from `dashboardData.rankTracking.usage`
+  - Gets trial eligibility from `dashboardData.user.trial.eligible`
+
+**2. Missing "Try Free Trial" Button for Eligible Packages**
+- **Problem**: Plans section only showed "Upgrade" button, no free trial option for packages with `free_trial_enabled: true` (Basic package)
+- **Requirement**: Should show TWO buttons for trial-eligible packages:
+  - Top button: "Upgrade" (outline variant)
+  - Bottom button: "Start Free Trial" (primary variant)
+- **Fix**: Added conditional free trial button logic
+  - Button shown when: plan is not current plan AND `free_trial_enabled === true` AND user is trial eligible
+  - Calls `handleStartTrial(packageId)` which redirects to checkout with `trial=true` parameter
+  - Proper loading state with "Starting Trial..." text
+  - Added `data-testid="button-start-trial-{slug}"` for testing
+
+**3. Sticky Mobile Header Follows When Scrolling**
+- **Problem**: Mobile tab navigation (Account, Service Accounts, Billing) has `fixed` positioning and follows when user scrolls down
+- **Expected**: Header should stay at the top of content area, not follow viewport scroll
+- **Root Cause**: Mobile navigation had `className="lg:hidden fixed top-16..."` making it fixed to viewport
+- **Fix**: Removed fixed positioning
+  - Changed from `fixed top-16 left-0 right-0 z-10` to normal flow positioning
+  - Adjusted main content padding from `pt-36` to `pt-0` (no longer needs offset for fixed header)
+  - Now tabs render once at top of content flow and don't track scroll
+
+#### ✅ Implementation Details
+
+**Dashboard API Integration (Fixed):**
+```tsx
+// OLD (WRONG) - Used profile endpoint with flat structure expectation
+const profileResponse = await fetch('/v1/auth/user/profile')
+const profileData = profileResult?.data || {}
+const package_id = profileData.package_id // undefined! Data is at profileData.user.profile.package_id
+
+// NEW (CORRECT) - Uses dashboard endpoint with proper nested structure handling
+const dashboardResponse = await fetch('/v1/dashboard')
+const dashboardData = dashboardResult?.data || {}
+const profileData = dashboardData.user?.profile || {}
+const billingData = dashboardData.billing || {}
+const package_id = profileData.package_id || billingData.current_package_id
+```
+
+**Free Trial Button (Added):**
+```tsx
+<div className="space-y-2">
+  <Button variant={isCurrentPlan ? 'default' : 'outline'} onClick={handleSubscribe}>
+    {isCurrentPlan ? 'Current plan' : 'Upgrade'}
+  </Button>
+  {!isCurrentPlan && isTrialEligiblePackage(plan) && trialEligible && (
+    <Button variant="default" onClick={handleStartTrial}>
+      Start Free Trial
+    </Button>
+  )}
+</div>
+```
+
+**Mobile Header (Fixed):**
+```tsx
+// OLD (WRONG) - Fixed positioning follows scroll
+<div className="lg:hidden fixed top-16 left-0 right-0 bg-white border-b z-10">
+<main className="flex-1 lg:pt-0 pt-36">
+
+// NEW (CORRECT) - Normal flow stays at top
+<div className="lg:hidden bg-white border-b">
+<main className="flex-1 lg:pt-0 pt-0">
+```
+
+#### ✅ Architecture Review
+- ✅ **Architect Verified**: Dashboard endpoint correctly unwraps `data.user.profile` and `data.billing`, populating package_id, currency, usage, keyword, and trial flags as expected
+- ✅ **Trial Button Logic**: Properly guarded by both `free_trial_enabled` and trial eligibility state, yielding requested dual-CTA layout
+- ✅ **Mobile Layout**: Tabs render once at top of content flow without scroll tracking, desktop spacing unchanged
+
+#### ✅ Files Modified
+- `app/dashboard/settings/plans-billing/page.tsx` - Fixed API data extraction, added free trial button
+- `app/dashboard/settings/page.tsx` - Removed fixed positioning from mobile tabs
+
+**Status**: Billing page **FULLY FIXED** - Now correctly displays current package when user has package_id, shows free trial button for eligible packages, and mobile header stays at top without following scroll.
+
+---
+
 ### 2025-10-16 - Fixed Billing Page API Integration and Mobile Header (COMPLETED)
 **Critical Fix**: Billing page now properly fetches packages from public API endpoint and inherits standard mobile header from DashboardLayout.
 
