@@ -1,0 +1,40 @@
+JSON Attribute	Description	Type
+transaction_id	Transaction ID given by Midtrans.	String
+order_id	Order ID specified by you.	String
+gross_amount	Total amount of transaction in IDR.	String
+payment_type	The payment method used by the customer.	String
+transaction_time	Timestamp of transaction in ISO 8601 format. Time Zone: GMT+7.	String
+transaction_status	Transaction status after charge credit card transaction. Possible values are
+capture : Transaction is accepted by the bank and ready for settlement.
+deny: transaction is denied by the bank or FDS.
+authorize: Credit card is authorized in pre-authorization feature.
+pending: Credit card is pending and you will need to rely on the http notification webhook to receive the final transaction status.	String
+fraud_status	Detection result by Fraud Detection System (FDS). Possible values are
+accept : Approved by FDS.
+challenge: Questioned by FDS. Note: Approve transaction to accept it or transaction gets automatically canceled during settlement.
+deny: Denied by FDS. Transaction automatically failed.	String
+masked_card	First 8-digits and last 4-digits of customer's credit card number.	String
+status_code	Status code of transaction charge result.	String
+bank	The acquiring bank of the transaction.	String
+status_message	Description of transaction charge result.	String
+approval_code	Approval code. It can be used for refund. This does not exist on denied transaction.	String
+eci	The 3D secure ECI Code.	String
+channel_response_code	Response code from payment channel provider.	String
+channel_response_message	Response message from payment channel provider.	String
+currency	ISO-4217 representation of three-letter alphabetic currency code. Value: IDR.
+Note: Currently only IDR is supported.	String
+card_type	Type of card used for the transaction. Possible values are credit, debit.	String
+three_ds_version	3DS Version that used for transaction (This field only present for 3DS Transaction). Possible values are 1, 2	String
+📘
+Note
+
+If you receive pending transaction_status, you will need to rely on the http notification webhook to receive the final transaction status
+
+
+Available options are given below.
+
+Name	Description
+performAuthentication	Implementation to open redirect URL in iFrame.
+onSuccess	Handle to receive successful callback response.
+onPending	Handle to receive callback response. Only applicable when merchant applied for async endpoint.
+onFailure	Handle to receive failure response.

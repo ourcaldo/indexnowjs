@@ -5,9 +5,11 @@ import { Server as SocketIOServer } from 'socket.io';
 
 // No environment concepts - unified behavior
 const hostname = '0.0.0.0';
-const port = parseInt(process.env.PORT || '5000', 10);
+// Always use port 5000 - only port not firewalled in Replit
+const port = 5000;
+const dev = process.env.NODE_ENV !== 'production';
 
-const app = next({ hostname, port });
+const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {

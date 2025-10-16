@@ -271,6 +271,12 @@ export function usePaymentProcessor({
         throw new Error('3DS authentication not available. Please refresh the page and try again.')
       }
 
+      // Get auth token for backend API call
+      const authToken = await authService.getCurrentSessionToken()
+      if (!authToken) {
+        throw new Error('Authentication required. Please log in again.')
+      }
+
       // 3DS Modal implementation following Midtrans documentation exactly
       let modal: any = null
       const popupModal = {
@@ -410,20 +416,48 @@ export function usePaymentProcessor({
           // Midtrans will open 3DS iframe in popup
           popupModal.openPopup(redirect_url)
         },
-        onSuccess: function(response: any) {
+        onSuccess: async function(response: any) {
           // Midtrans determined 3DS authentication succeeded
-          // This means payment is successful - just close popup and redirect
+          // Now we need to tell backend to create subscription
           popupModal.closePopup()
-          setSubmitting(false)
           
-          addToast({
-            title: "Payment successful!",
-            description: "Your subscription has been activated.",
-            type: "success"
-          })
-          
-          // Webhook will handle subscription creation
-          router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
+          try {
+            // Call backend to create subscription with 3DS result
+            const callbackResponse = await fetch(BILLING_ENDPOINTS.MIDTRANS_3DS_CALLBACK, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+              },
+              body: JSON.stringify({
+                transaction_id: transactionId,
+                order_id: orderId,
+                response: response
+              })
+            })
+
+            if (!callbackResponse.ok) {
+              const errorData = await callbackResponse.json().catch(() => ({}))
+              throw new Error(errorData.message || 'Failed to process payment')
+            }
+
+            const callbackData = await callbackResponse.json()
+            setSubmitting(false)
+            addToast({
+              title: "Payment successful!",
+              description: "Your subscription has been activated.",
+              type: "success"
+            })
+            
+            router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
+          } catch (error) {
+            setSubmitting(false)
+            addToast({
+              title: "Processing error",
+              description: error instanceof Error ? error.message : "Payment succeeded but subscription setup failed. Please contact support.",
+              type: "error"
+            })
+          }
         },
         onFailure: function(response: any) {
           // Midtrans determined 3DS authentication failed
