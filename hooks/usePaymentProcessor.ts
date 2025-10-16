@@ -167,10 +167,26 @@ export function usePaymentProcessor({
       await processPayment({ ...paymentData, token_id: cardToken }, token)
 
     } catch (error) {
-      // Re-throw 3DS errors so checkout page can handle them with modal callbacks
+      // Handle 3DS authentication directly without re-throwing
       if (error && typeof error === 'object' && 'requires_3ds' in error) {
-        setSubmitting(false)
-        throw error
+        try {
+          const threeDSError = error as any
+          await handle3DSAuthentication(
+            threeDSError.redirect_url,
+            threeDSError.transaction_id,
+            threeDSError.order_id
+          )
+        } catch (authError) {
+          const errorMessage = sanitizeErrorMessage(authError)
+          setError(errorMessage)
+          setSubmitting(false)
+          addToast({
+            title: "Authentication failed",
+            description: errorMessage,
+            type: "error"
+          })
+        }
+        return // Don't re-throw, we handled it
       }
       
       // For other errors, set error state
@@ -296,13 +312,6 @@ export function usePaymentProcessor({
     try {
       if (!window.MidtransNew3ds || typeof window.MidtransNew3ds.authenticate !== 'function') {
         throw new Error('3DS authentication not available. Please refresh the page and try again.')
-      }
-
-      // Get auth token for backend API call
-      const session = await authService.getSession()
-      const authToken = session?.access_token
-      if (!authToken) {
-        throw new Error('Authentication required. Please log in again.')
       }
 
       // 3DS Modal implementation following Midtrans documentation exactly
@@ -450,38 +459,49 @@ export function usePaymentProcessor({
           popupModal.closePopup()
           
           try {
+            // Get fresh session token
+            const { data: { session } } = await supabaseBrowser.auth.getSession()
+            const token = session?.access_token
+
+            if (!token) {
+              throw new Error('Authentication token expired')
+            }
+
             // Call backend to create subscription with 3DS result
             const callbackResponse = await fetch(BILLING_ENDPOINTS.MIDTRANS_3DS_CALLBACK, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${token}`
               },
               body: JSON.stringify({
                 transaction_id: transactionId,
                 order_id: orderId,
-                response: response
+                status_code: response.status_code,
+                transaction_status: response.transaction_status,
+                gross_amount: response.gross_amount,
+                payment_type: response.payment_type
               })
             })
 
-            if (!callbackResponse.ok) {
-              const errorData = await callbackResponse.json().catch(() => ({}))
-              throw new Error(errorData.message || 'Failed to process payment')
-            }
+            const callbackResult = await callbackResponse.json()
 
-            const callbackData = await callbackResponse.json()
-            setSubmitting(false)
-            addToast({
-              title: "Payment successful!",
-              description: "Your subscription has been activated.",
-              type: "success"
-            })
-            
-            router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
+            if (callbackResult.success) {
+              setSubmitting(false)
+              addToast({
+                title: "Payment successful!",
+                description: "Your subscription has been activated.",
+                type: "success"
+              })
+              
+              router.push(`/dashboard/settings/plans-billing/orders/${orderId}`)
+            } else {
+              throw new Error(callbackResult.message || '3DS authentication callback failed')
+            }
           } catch (error) {
             setSubmitting(false)
             addToast({
-              title: "Processing error",
+              title: "Payment processing failed",
               description: sanitizeErrorMessage(error),
               type: "error"
             })
