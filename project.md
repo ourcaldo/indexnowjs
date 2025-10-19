@@ -2,6 +2,116 @@
 
 ## Recent Changes
 
+### 2025-10-19 - Fixed Client-Side Authorization Header Missing in API Requests (CRITICAL FIX)
+
+**Critical Bug Fix**: Fixed persistent 401 authentication errors on indexnow/add page and other frontend pages by adding Authorization header to all client-side API requests.
+
+#### ✅ Root Cause Analysis
+
+**Problem:**
+- The `/api/v1/rank-tracking/domains` endpoint and other authenticated endpoints were returning 401 Unauthorized errors even when users were logged in
+- This affected the indexnow/add page and any other page making authenticated API calls via `apiRequest()`
+- Error message: `"Please log in to access this feature."` with error type `AUTHENTICATION`
+
+**Root Cause:**
+- **Backend**: The `authenticateRequest` function in `lib/core/api-middleware.ts` (lines 30-35) expects authentication via Authorization header: `Authorization: Bearer <token>`
+- **Frontend**: The `apiRequest` function in `lib/core/queryClient.ts` was only sending `credentials: 'include'` for cookies, but NOT the Authorization header
+- **Mismatch**: Frontend sent cookies → Backend expected Authorization header → Authentication failed
+
+**Why This Happened:**
+- After implementing global error handling and SecureServiceRoleWrapper, the backend authentication was changed to use Authorization headers instead of cookies
+- The `api-middleware.ts` was updated to extract token from Authorization header (line 31: `request.headers.get('authorization')`)
+- However, the frontend `apiRequest` function was never updated to include this Authorization header
+- Previous fix (2025-10-19) replaced `fetch()` with `apiRequest()`, but `apiRequest` itself was broken
+
+#### ✅ The Fix
+
+**Solution:**
+Updated `lib/core/queryClient.ts` to:
+1. Get the current session from Supabase before making the request
+2. Extract the `access_token` from the session
+3. Add `Authorization: Bearer <access_token>` header to all API requests
+
+**Implementation:**
+```typescript
+// BEFORE (missing Authorization header):
+export const apiRequest = async (url: string, options?: RequestInit) => {
+  const response = await fetch(fullUrl, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    credentials: 'include',
+    ...options,
+  })
+  // ...
+}
+
+// AFTER (with Authorization header):
+import { supabaseBrowser } from '@/lib/database/supabase-browser'
+
+export const apiRequest = async (url: string, options?: RequestInit) => {
+  // Get current session and access token
+  const { data: { session } } = await supabaseBrowser.auth.getSession()
+  const accessToken = session?.access_token
+  
+  // Build headers with Authorization if token exists
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers as Record<string, string>,
+  }
+  
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`
+  }
+  
+  const response = await fetch(fullUrl, {
+    headers,
+    credentials: 'include',
+    ...options,
+  })
+  // ...
+}
+```
+
+#### ✅ Files Modified
+
+- `lib/core/queryClient.ts`:
+  - Line 3: Added import `import { supabaseBrowser } from '@/lib/database/supabase-browser'`
+  - Lines 42-52: Get session, extract access_token, and add Authorization header to request headers
+
+#### ✅ Impact
+
+**Before:**
+- All authenticated API calls from frontend returned 401 errors
+- Users couldn't add keywords, fetch domains, or use any authenticated features
+- Error persisted even when users were properly logged in with valid sessions
+
+**After:**
+- All authenticated API calls now include proper Authorization header
+- Backend successfully authenticates requests via token in Authorization header
+- indexnow/add page and all other authenticated pages work correctly
+- No changes needed to backend code - frontend now sends the expected format
+
+#### ✅ Technical Notes
+
+**Authentication Flow (Correct):**
+1. User logs in → Supabase stores session in browser (cookies + localStorage)
+2. Frontend calls `apiRequest()` → Gets session and extracts access_token
+3. Request sent with `Authorization: Bearer <token>` header
+4. Backend `authenticateRequest()` reads Authorization header
+5. Backend validates token with Supabase → Returns user data
+6. Request succeeds ✅
+
+**Why Cookies Alone Don't Work:**
+- Cookies are domain-specific and don't work well across subdomains
+- Authorization headers are more reliable for API authentication
+- Backend was explicitly designed to use Authorization headers for cross-subdomain compatibility
+
+**Status**: All authenticated endpoints now working correctly. This fixes the persistent issue that was reported multiple times.
+
+---
+
 ### 2025-10-19 - Fixed Critical 401 Authentication Error and Enhanced Desktop Header
 
 **Critical Bug Fix & UI Enhancement**: Fixed root cause of 401 authentication errors across all API endpoints by removing setSession call with empty refresh token. Enhanced desktop Add Keyword button with text label.
