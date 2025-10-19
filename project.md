@@ -48,11 +48,11 @@ export const apiRequest = async (url: string, options?: RequestInit) => {
 }
 
 // AFTER (with Authorization header):
-import { supabaseBrowser } from '@/lib/database/supabase-browser'
+import { supabase } from '@/lib/database'
 
 export const apiRequest = async (url: string, options?: RequestInit) => {
   // Get current session and access token
-  const { data: { session } } = await supabaseBrowser.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
   const accessToken = session?.access_token
   
   // Build headers with Authorization if token exists
@@ -77,8 +77,8 @@ export const apiRequest = async (url: string, options?: RequestInit) => {
 #### ✅ Files Modified
 
 - `lib/core/queryClient.ts`:
-  - Line 3: Added import `import { supabaseBrowser } from '@/lib/database/supabase-browser'`
-  - Lines 42-52: Get session, extract access_token, and add Authorization header to request headers
+  - Line 3: Added import `import { supabase } from '@/lib/database'` (uses same Supabase instance as working endpoints)
+  - Lines 46-56: Get session, extract access_token, and add Authorization header to request headers
 
 #### ✅ Impact
 

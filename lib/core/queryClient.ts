@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { ApiResponse, ApiSuccessResponse, ApiErrorResponse } from '@/lib/core/api-response-formatter'
 import { ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
-import { supabaseBrowser } from '@/lib/database/supabase-browser'
+import { supabase } from '@/lib/database'
 
 export class ApiError extends Error {
   id: string
@@ -40,7 +40,7 @@ export const apiRequest = async (url: string, options?: RequestInit) => {
   const fullUrl = url.startsWith('http') || url.includes('/api/v1') ? url : 
     url.startsWith('/') ? url : `/${url}`
   
-  const { data: { session } } = await supabaseBrowser.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
   const accessToken = session?.access_token
   
   const headers: Record<string, string> = {
