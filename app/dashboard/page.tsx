@@ -292,16 +292,6 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">
-            {hasActivePackage 
-              ? `Welcome back! Here's your SEO performance overview.`
-              : 'Get started with professional rank tracking and SEO insights.'
-            }
-          </p>
-        </div>
-        
         {hasActivePackage && domains.length > 0 && (
           <div className="hidden lg:flex items-center space-x-3">
             <SharedDomainSelector

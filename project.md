@@ -2,6 +2,85 @@
 
 ## Recent Changes
 
+### 2025-10-19 - Fixed Mobile Header Add Keyword Button Visibility and Removed Dashboard Welcome Text
+
+**UI/UX Enhancement**: Fixed Add Keyword button visibility in mobile header and cleaned up dashboard page heading.
+
+#### ✅ Changes Implemented
+
+**1. Add Keyword Button Now Always Visible in Mobile Header**
+- **Issue**: Add Keyword button was not showing in mobile header because it was conditional on `domains.length > 0`
+- **User Impact**: Users couldn't see the Add Keyword button when they had no domains configured, even though they needed it to add their first domain/keywords
+- **Solution**: Removed the `domains.length > 0` condition so button always appears on relevant pages
+- **Implementation**:
+  - Modified `app/dashboard/layout.tsx` line 246
+  - Changed from: `{showAddKeywordButton && domains.length > 0 && (`
+  - Changed to: `{showAddKeywordButton && (`
+  - Button now shows whenever user is on dashboard, overview, or rank-history pages
+  - Button order remains correct: Notification icon → Add Keyword button → Hamburger menu
+- **Rationale**: The Add Keywords page can handle users without domains by guiding them to add a domain first, so hiding the button creates unnecessary friction
+- **Files Modified**:
+  - `app/dashboard/layout.tsx` - Removed domains.length condition from Add Keyword button (line 246)
+
+**2. Removed Dashboard Welcome Heading and Text**
+- **Issue**: Dashboard page had redundant heading "Dashboard" and welcome text that cluttered the UI
+- **Solution**: Removed the entire header section with title and description from main dashboard page
+- **Implementation**:
+  - Modified `app/dashboard/page.tsx` lines 296-303
+  - Removed `<h1>Dashboard</h1>` heading
+  - Removed welcome text paragraph ("Welcome back! Here's your SEO performance overview.")
+  - Kept only the domain selector and Add Keywords button for active packages
+- **User Impact**: Cleaner, more focused dashboard layout with better use of screen space
+- **Files Modified**:
+  - `app/dashboard/page.tsx` - Removed dashboard heading and welcome text (lines 296-303)
+
+#### ✅ Technical Details
+
+**Before (Add Keyword Button):**
+```typescript
+{showAddKeywordButton && domains.length > 0 && (
+  <button ... >
+    <Plus className="w-5 h-5" />
+  </button>
+)}
+```
+
+**After (Add Keyword Button):**
+```typescript
+{showAddKeywordButton && (
+  <button ... >
+    <Plus className="w-5 h-5" />
+  </button>
+)}
+```
+
+**Removed from Dashboard Page:**
+```typescript
+<div>
+  <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+  <p className="text-muted-foreground">
+    {hasActivePackage 
+      ? `Welcome back! Here's your SEO performance overview.`
+      : 'Get started with professional rank tracking and SEO insights.'
+    }
+  </p>
+</div>
+```
+
+#### ✅ Files Modified
+
+1. **app/dashboard/layout.tsx**
+   - Line 246: Removed `domains.length > 0` condition from Add Keyword button conditional rendering
+   - Button now appears on dashboard, overview, and rank-history pages regardless of domain count
+
+2. **app/dashboard/page.tsx**
+   - Lines 296-303: Removed dashboard heading and welcome text section
+   - Streamlined header layout for better mobile/desktop experience
+
+**Status**: Mobile header button visibility **FIXED** and dashboard page heading **REMOVED** for cleaner UI.
+
+---
+
 ### 2025-10-19 - Enhanced Mobile/Tablet UX for Keyword Tracker Dashboard (COMPLETED ✅)
 
 **UX Enhancement**: Improved mobile and tablet user experience for keyword tracking dashboard with better navigation flow and accessibility.
