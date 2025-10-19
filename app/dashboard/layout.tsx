@@ -80,13 +80,6 @@ function DashboardLayoutContent({
       setCookie('sidebar-collapsed', sidebarCollapsed.toString())
     }
   }, [sidebarCollapsed, cookiesLoaded])
-  
-  // Check if we're on pages that show Add Keyword button
-  const showAddKeywordButton = mounted && typeof window !== 'undefined' && (
-    pathname === '/dashboard' ||
-    pathname === '/dashboard/indexnow/overview' ||
-    pathname === '/dashboard/indexnow/rank-history'
-  )
 
   // Check if we're on pages that should be full-width (no sidebar)
   const isFullWidthPage = mounted && typeof window !== 'undefined' && (
@@ -240,16 +233,14 @@ function DashboardLayoutContent({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </button>
-                {showAddKeywordButton && (
-                  <button
-                    onClick={() => router.push('/dashboard/indexnow/add')}
-                    className="p-2 rounded-lg transition-colors duration-150 bg-primary text-primary-foreground hover:bg-primary/90"
-                    aria-label="Add Keywords"
-                    data-testid="button-add-keywords-header"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-                )}
+                <button
+                  onClick={() => router.push('/dashboard/indexnow/add')}
+                  className="p-2 rounded-lg transition-colors duration-150 bg-primary text-primary-foreground hover:bg-primary/90"
+                  aria-label="Add Keywords"
+                  data-testid="button-add-keywords-header"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="p-2 rounded-md text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150 flex-shrink-0"

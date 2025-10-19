@@ -9,18 +9,18 @@
 #### ✅ Changes Implemented
 
 **1. Add Keyword Button Now Always Visible in Mobile Header**
-- **Issue**: Add Keyword button was not showing in mobile header because it was conditional on `domains.length > 0`
-- **User Impact**: Users couldn't see the Add Keyword button when they had no domains configured, even though they needed it to add their first domain/keywords
-- **Solution**: Removed the `domains.length > 0` condition so button always appears on relevant pages
+- **Issue**: Add Keyword button was not showing in mobile header at all
+- **User Impact**: Users couldn't access the Add Keyword functionality from the mobile header
+- **Solution**: Removed ALL conditionals - button now appears ALWAYS in mobile header on all dashboard pages
 - **Implementation**:
-  - Modified `app/dashboard/layout.tsx` line 246
-  - Changed from: `{showAddKeywordButton && domains.length > 0 && (`
-  - Changed to: `{showAddKeywordButton && (`
-  - Button now shows whenever user is on dashboard, overview, or rank-history pages
-  - Button order remains correct: Notification icon → Add Keyword button → Hamburger menu
-- **Rationale**: The Add Keywords page can handle users without domains by guiding them to add a domain first, so hiding the button creates unnecessary friction
+  - Modified `app/dashboard/layout.tsx` lines 243-252
+  - Removed `{showAddKeywordButton && (` conditional wrapper completely
+  - Removed unused `showAddKeywordButton` variable definition (lines 84-89)
+  - Button now shows unconditionally in mobile header across all dashboard pages
+  - Button order: Notification icon → Add Keyword button (primary color) → Hamburger menu
+- **Rationale**: Mobile users need quick access to Add Keywords functionality regardless of which page they're on
 - **Files Modified**:
-  - `app/dashboard/layout.tsx` - Removed domains.length condition from Add Keyword button (line 246)
+  - `app/dashboard/layout.tsx` - Removed all conditionals, button now always visible (lines 84-89, 243-252)
 
 **2. Removed Dashboard Welcome Heading and Text**
 - **Issue**: Dashboard page had redundant heading "Dashboard" and welcome text that cluttered the UI
