@@ -223,7 +223,33 @@ function handlePreflightRequest(origin: string | null, isAllowed: boolean, pathn
   return setCORSHeaders(response, origin, isAllowed, pathname)
 }
 
+/**
+ * Helper to extract base domain from hostname for cookie clearing
+ */
+function getBaseDomain(hostname: string): string {
+  // For localhost/127.0.0.1, don't set domain attribute
+  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+    return ''
+  }
+  
+  // For Replit domains (*.replit.dev), use the full domain
+  if (hostname.includes('.replit.dev')) {
+    return hostname
+  }
+  
+  // For production domains, extract base domain (e.g., .example.com)
+  const parts = hostname.split('.')
+  if (parts.length >= 2) {
+    return `.${parts.slice(-2).join('.')}`
+  }
+  
+  return hostname
+}
+
 async function checkUserAuthentication(request: NextRequest, effectivePath: string): Promise<{ user: any; role: string } | null> {
+  // Create a placeholder response to collect cookie changes from Supabase
+  let cookieChanges: Array<{ name: string; value: string; options?: any }> = []
+  
   try {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -233,8 +259,13 @@ async function checkUserAuthentication(request: NextRequest, effectivePath: stri
           getAll() {
             return request.cookies.getAll()
           },
-          setAll() {
-            // Cannot set cookies in middleware
+          setAll(cookiesToSet) {
+            // Store cookie changes so we can apply them to the response later
+            cookieChanges = cookiesToSet.map(cookie => ({
+              name: cookie.name,
+              value: cookie.value,
+              options: cookie.options
+            }))
           },
         },
       }
@@ -247,6 +278,7 @@ async function checkUserAuthentication(request: NextRequest, effectivePath: stri
       // This prevents infinite retry loops by stopping auth checks immediately
       if (AuthErrorHandler.isRefreshTokenError(error)) {
         // Sign out to clear local session state in Supabase client
+        // This will populate cookieChanges with cookies to delete
         await supabase.auth.signOut({ scope: 'local' })
         return null
       }
@@ -396,17 +428,26 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url)
       const response = NextResponse.redirect(loginUrl)
       
+      // Extract base domain for proper cookie clearing
+      const hostname = request.headers.get('host') || ''
+      const baseDomain = getBaseDomain(hostname)
+      
       // Clear all Supabase auth cookies to prevent retry loops
       const cookiesToClear = request.cookies.getAll().filter(cookie => 
         cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
       )
       cookiesToClear.forEach(cookie => {
-        // Properly expire the cookie instead of just deleting
-        response.cookies.set(cookie.name, '', {
+        // Properly expire the cookie with correct domain attribute
+        const cookieOptions: any = {
           maxAge: 0,
           expires: new Date(0),
           path: '/',
-        })
+        }
+        // Only set domain if we have a base domain (not localhost)
+        if (baseDomain) {
+          cookieOptions.domain = baseDomain
+        }
+        response.cookies.set(cookie.name, '', cookieOptions)
       })
       
       return response
@@ -421,17 +462,26 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url)
       const response = NextResponse.redirect(loginUrl)
       
+      // Extract base domain for proper cookie clearing
+      const hostname = request.headers.get('host') || ''
+      const baseDomain = getBaseDomain(hostname)
+      
       // Clear all Supabase auth cookies to prevent retry loops
       const cookiesToClear = request.cookies.getAll().filter(cookie => 
         cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
       )
       cookiesToClear.forEach(cookie => {
-        // Properly expire the cookie instead of just deleting
-        response.cookies.set(cookie.name, '', {
+        // Properly expire the cookie with correct domain attribute
+        const cookieOptions: any = {
           maxAge: 0,
           expires: new Date(0),
           path: '/',
-        })
+        }
+        // Only set domain if we have a base domain (not localhost)
+        if (baseDomain) {
+          cookieOptions.domain = baseDomain
+        }
+        response.cookies.set(cookie.name, '', cookieOptions)
       })
       
       return response
@@ -514,17 +564,26 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL(protection.redirect, request.url)
     const response = NextResponse.redirect(redirectUrl)
     
+    // Extract base domain for proper cookie clearing
+    const hostname = request.headers.get('host') || ''
+    const baseDomain = getBaseDomain(hostname)
+    
     // Clear all Supabase auth cookies to prevent retry loops
     const cookiesToClear = request.cookies.getAll().filter(cookie => 
       cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
     )
     cookiesToClear.forEach(cookie => {
-      // Properly expire the cookie instead of just deleting
-      response.cookies.set(cookie.name, '', {
+      // Properly expire the cookie with correct domain attribute
+      const cookieOptions: any = {
         maxAge: 0,
         expires: new Date(0),
         path: '/',
-      })
+      }
+      // Only set domain if we have a base domain (not localhost)
+      if (baseDomain) {
+        cookieOptions.domain = baseDomain
+      }
+      response.cookies.set(cookie.name, '', cookieOptions)
     })
     
     return response
@@ -536,17 +595,26 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL(protection.redirect, request.url)
     const response = NextResponse.redirect(redirectUrl)
     
+    // Extract base domain for proper cookie clearing
+    const hostname = request.headers.get('host') || ''
+    const baseDomain = getBaseDomain(hostname)
+    
     // Clear all Supabase auth cookies to prevent retry loops
     const cookiesToClear = request.cookies.getAll().filter(cookie => 
       cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
     )
     cookiesToClear.forEach(cookie => {
-      // Properly expire the cookie instead of just deleting
-      response.cookies.set(cookie.name, '', {
+      // Properly expire the cookie with correct domain attribute
+      const cookieOptions: any = {
         maxAge: 0,
         expires: new Date(0),
         path: '/',
-      })
+      }
+      // Only set domain if we have a base domain (not localhost)
+      if (baseDomain) {
+        cookieOptions.domain = baseDomain
+      }
+      response.cookies.set(cookie.name, '', cookieOptions)
     })
     
     return response

@@ -28,8 +28,11 @@ export default function Login() {
           router.replace('/dashboard')
           return
         }
-        setIsCheckingAuth(false)
       } catch (error) {
+        console.error('Auth check error on login page:', error)
+        // Don't block login page if auth check fails
+      } finally {
+        // Always stop checking auth, even if there's an error
         setIsCheckingAuth(false)
       }
     }
@@ -181,8 +184,16 @@ export default function Login() {
     return () => window.removeEventListener('resize', checkIfMobile)
   }, [])
 
+  // Show loading spinner instead of white screen while checking auth
   if (isCheckingAuth) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+          <p className="text-muted-foreground text-sm">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
