@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { Plus } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import SkeletonSidebar from '@/components/SkeletonSidebar'
 import { useAuth } from '@/lib/contexts/AuthContext'
@@ -9,6 +11,7 @@ import { useFavicon, useSiteName, useSiteLogo } from '@/hooks/use-site-settings'
 import QuotaNotification from '@/components/QuotaNotification'
 import ServiceAccountQuotaNotification from '@/components/ServiceAccountQuotaNotification'
 import QueryProvider from '@/components/QueryProvider'
+import { DomainProvider, useDomain } from '@/lib/contexts/DomainContext'
 
 // Cookie utilities for sidebar state persistence
 const getCookie = (name: string): string | null => {
@@ -27,18 +30,31 @@ const setCookie = (name: string, value: string, days: number = 30) => {
 }
 
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode
 }) {
   // Use ONLY global auth context
   const { user, loading } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
   
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [cookiesLoaded, setCookiesLoaded] = useState(false)
+  
+  // Use domain context instead of local state
+  const {
+    domains,
+    selectedDomainId,
+    selectedDomainInfo,
+    setSelectedDomainId,
+    getDomainKeywordCount,
+    isDomainSelectorOpen,
+    setIsDomainSelectorOpen
+  } = useDomain()
   
   // Site settings hooks
   const siteName = useSiteName()
@@ -64,6 +80,13 @@ export default function DashboardLayout({
       setCookie('sidebar-collapsed', sidebarCollapsed.toString())
     }
   }, [sidebarCollapsed, cookiesLoaded])
+  
+  // Check if we're on pages that show Add Keyword button
+  const showAddKeywordButton = mounted && typeof window !== 'undefined' && (
+    pathname === '/dashboard' ||
+    pathname === '/dashboard/indexnow/overview' ||
+    pathname === '/dashboard/indexnow/rank-history'
+  )
 
   // Check if we're on pages that should be full-width (no sidebar)
   const isFullWidthPage = mounted && typeof window !== 'undefined' && (
@@ -76,21 +99,18 @@ export default function DashboardLayout({
   // Check if we're on a full-width page
   if (isFullWidthPage) {
     return (
-      <QueryProvider>
-        <ToastContainer>
-          <div className="min-h-screen bg-secondary">
-            {children}
-          </div>
-        </ToastContainer>
-      </QueryProvider>
+      <ToastContainer>
+        <div className="min-h-screen bg-secondary">
+          {children}
+        </div>
+      </ToastContainer>
     )
   }
 
   // Show loading only while auth is checking
   if (loading) {
     return (
-      <QueryProvider>
-        <ToastContainer>
+      <ToastContainer>
           <div className="min-h-screen bg-secondary">
             {/* Skeleton Sidebar */}
             <SkeletonSidebar isCollapsed={sidebarCollapsed} />
@@ -171,17 +191,15 @@ export default function DashboardLayout({
             </div>
           </div>
         </ToastContainer>
-      </QueryProvider>
     )
   }
 
   // Main dashboard layout
   return (
-    <QueryProvider>
-      <ToastContainer>
-        <div className="min-h-screen bg-secondary">
-          {/* Sidebar */}
-          <Sidebar 
+    <ToastContainer>
+      <div className="min-h-screen bg-secondary">
+        {/* Sidebar */}
+        <Sidebar 
             isOpen={sidebarOpen}
             onToggle={() => setSidebarOpen(!sidebarOpen)}
             onCollapse={() => {
@@ -191,6 +209,13 @@ export default function DashboardLayout({
             }}
             user={user}
             isCollapsed={sidebarCollapsed}
+            domains={domains}
+            selectedDomainId={selectedDomainId}
+            selectedDomainInfo={selectedDomainInfo}
+            onDomainSelect={setSelectedDomainId}
+            getDomainKeywordCount={getDomainKeywordCount}
+            isDomainSelectorOpen={isDomainSelectorOpen}
+            onDomainSelectorToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
           />
 
           {/* Main content area */}
@@ -215,10 +240,21 @@ export default function DashboardLayout({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </button>
+                {showAddKeywordButton && domains.length > 0 && (
+                  <button
+                    onClick={() => router.push('/dashboard/indexnow/add')}
+                    className="p-2 rounded-lg transition-colors duration-150 bg-primary text-primary-foreground hover:bg-primary/90"
+                    aria-label="Add Keywords"
+                    data-testid="button-add-keywords-header"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                )}
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="p-2 rounded-md text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150 flex-shrink-0"
                   aria-label="Mobile Menu"
+                  data-testid="button-toggle-sidebar"
                 >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -242,6 +278,19 @@ export default function DashboardLayout({
           {/* Error Notifications (Admin only) */}
         </div>
       </ToastContainer>
+  )
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <QueryProvider>
+      <DomainProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </DomainProvider>
     </QueryProvider>
   )
 }

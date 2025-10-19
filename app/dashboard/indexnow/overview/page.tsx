@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
-import { useDashboardData } from '@/hooks/useDashboardData'
+import { useDomain } from '@/lib/contexts/DomainContext'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { Card, Button } from '@/components/dashboard/ui'
@@ -28,7 +28,6 @@ export default function IndexNowOverview() {
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showDomainsManager, setShowDomainsManager] = useState(false)
-  const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([])
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -41,7 +40,16 @@ export default function IndexNowOverview() {
   usePageViewLogger('/dashboard/indexnow/overview', 'Keywords Overview', { section: 'keyword_tracker' })
   const { logActivity } = useActivityLogger()
 
-  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData()
+  // Use domain context instead of local state
+  const {
+    domains,
+    selectedDomainId,
+    selectedDomainInfo,
+    setSelectedDomainId,
+    getDomainKeywordCount,
+    isDomainSelectorOpen: showDomainsManagerContext,
+    setIsDomainSelectorOpen: setShowDomainsManagerContext
+  } = useDomain()
 
   const { data: countriesData } = useQuery({
     queryKey: [RANK_TRACKING_ENDPOINTS.COUNTRIES],
@@ -83,27 +91,13 @@ export default function IndexNowOverview() {
     }
   })
 
-  const domains = dashboardData?.rankTracking?.domains || []
   // Fix: API returns { success: true, data: { data: [...] } }, but query already unwraps to { data: [...] }
   const countries = countriesData?.data || []
-  const allKeywords = keywordCountsData?.data || []
-
-  useEffect(() => {
-    if (!selectedDomainId && domains.length > 0) {
-      setSelectedDomainId(domains[0].id)
-    }
-  }, [domains, selectedDomainId])
 
   // Clear selected keywords when domain changes
   useEffect(() => {
     setSelectedKeywords([])
   }, [selectedDomainId])
-
-  const selectedDomainInfo = domains.find((d: any) => d.id === selectedDomainId)
-
-  const getDomainKeywordCount = (domainId: string) => {
-    return allKeywords.filter((k: any) => k.domain_id === domainId).length
-  }
 
   // Fetch keywords with filters (for display)
   const { data: keywordsData, isLoading: keywordsLoading, refetch: refetchKeywords } = useQuery({
@@ -317,18 +311,13 @@ export default function IndexNowOverview() {
 
   return (
     <div className="space-y-6">
-      {dashboardLoading ? (
-        <Card>
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </Card>
-      ) : domains.length === 0 ? (
+      {domains.length === 0 ? (
         <NoDomainState />
       ) : (
         <>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-            <div className="w-full lg:w-auto">
+            {/* Domain Selector - Hidden on mobile/tablet, shown on desktop */}
+            <div className="w-full lg:w-auto hidden lg:block">
               <SharedDomainSelector
                 domains={domains}
                 selectedDomainId={selectedDomainId}
@@ -343,7 +332,8 @@ export default function IndexNowOverview() {
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+            {/* Device/Country Filter and Add Keywords Button - Hidden on mobile/tablet */}
+            <div className="hidden lg:flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
               <DeviceCountryFilter
                 selectedDevice={selectedDevice}
                 selectedCountry={selectedCountry}
@@ -361,6 +351,18 @@ export default function IndexNowOverview() {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Keywords
               </Button>
+            </div>
+            
+            {/* Device/Country Filter ONLY - Visible on mobile/tablet */}
+            <div className="lg:hidden w-full">
+              <DeviceCountryFilter
+                selectedDevice={selectedDevice}
+                selectedCountry={selectedCountry}
+                countries={countries}
+                onDeviceChange={setSelectedDevice}
+                onCountryChange={setSelectedCountry}
+                className="w-full"
+              />
             </div>
           </div>
 

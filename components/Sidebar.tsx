@@ -24,6 +24,7 @@ import { useSiteName, useSiteLogo } from '@/hooks/use-site-settings'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
+import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 
 interface SidebarProps {
   isOpen: boolean
@@ -31,9 +32,29 @@ interface SidebarProps {
   onCollapse?: () => void
   user?: any
   isCollapsed?: boolean
+  domains?: any[]
+  selectedDomainId?: string | null
+  selectedDomainInfo?: any
+  onDomainSelect?: (id: string) => void
+  getDomainKeywordCount?: (domainId: string) => number
+  isDomainSelectorOpen?: boolean
+  onDomainSelectorToggle?: () => void
 }
 
-const Sidebar = ({ isOpen, onToggle, onCollapse, user, isCollapsed = false }: SidebarProps) => {
+const Sidebar = ({ 
+  isOpen, 
+  onToggle, 
+  onCollapse, 
+  user, 
+  isCollapsed = false,
+  domains = [],
+  selectedDomainId = null,
+  selectedDomainInfo,
+  onDomainSelect,
+  getDomainKeywordCount,
+  isDomainSelectorOpen = false,
+  onDomainSelectorToggle
+}: SidebarProps) => {
   const pathname = usePathname()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
@@ -42,6 +63,20 @@ const Sidebar = ({ isOpen, onToggle, onCollapse, user, isCollapsed = false }: Si
   useEffect(() => {
     setMounted(true)
   }, [])
+  
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
   
   // Site settings hooks
   const siteName = useSiteName()
@@ -400,6 +435,29 @@ const Sidebar = ({ isOpen, onToggle, onCollapse, user, isCollapsed = false }: Si
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          {/* Domain Selector (Mobile Only) */}
+          {domains.length > 0 && onDomainSelect && (
+            <div className="px-6 py-4 bg-secondary border-b border-border">
+              {isLoading ? (
+                <div className="h-12 bg-muted animate-pulse rounded-xl"></div>
+              ) : (
+                <SharedDomainSelector
+                  domains={domains}
+                  selectedDomainId={selectedDomainId}
+                  selectedDomainInfo={selectedDomainInfo}
+                  isOpen={isDomainSelectorOpen}
+                  onToggle={onDomainSelectorToggle || (() => {})}
+                  onDomainSelect={onDomainSelect}
+                  getDomainKeywordCount={getDomainKeywordCount}
+                  showKeywordCount={true}
+                  addDomainRoute="/dashboard/indexnow/add"
+                  placeholder="Select Domain"
+                  className="w-full"
+                />
+              )}
+            </div>
+          )}
 
           {/* Search Bar */}
           <div className="px-6 py-4 bg-secondary">

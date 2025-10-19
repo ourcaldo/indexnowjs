@@ -2,6 +2,229 @@
 
 ## Recent Changes
 
+### 2025-10-19 - Enhanced Mobile/Tablet UX for Keyword Tracker Dashboard (COMPLETED ✅)
+
+**UX Enhancement**: Improved mobile and tablet user experience for keyword tracking dashboard with better navigation flow and accessibility.
+
+#### ✅ Enhancements Implemented
+
+**1. Domain Selector Moved to Mobile Sidebar**
+- **Problem**: Domain selector was cluttering the main content area on mobile devices, taking valuable screen space
+- **Solution**: Moved domain selector to off-canvas sidebar BEFORE the search bar on mobile/tablet (hidden on desktop)
+- **Implementation**:
+  - Added domain selector to mobile sidebar in `components/Sidebar.tsx` (lines 428-449)
+  - Domain selector appears between sidebar header and search bar
+  - Hidden from page content on mobile/tablet (lg:hidden classes)
+  - Full-width dropdown optimized for mobile touch interactions
+- **Files Modified**:
+  - `components/Sidebar.tsx` - Added SharedDomainSelector import and mobile section
+  - `app/dashboard/indexnow/overview/page.tsx` - Hidden domain selector on mobile (line 335)
+  - `app/dashboard/indexnow/rank-history/page.tsx` - Hidden domain selector on mobile (line 516)
+  - `app/dashboard/page.tsx` - Hidden domain selector on mobile (line 314)
+
+**2. Add Keyword Button Moved to Mobile Header**
+- **Problem**: Add Keyword button was in main content, requiring scrolling to access on mobile
+- **Solution**: Moved button to mobile header for quick access, positioned left of hamburger menu
+- **Button Order**: Notification icon → Add Keyword button → Hamburger menu
+- **Implementation**:
+  - Added Add Keyword button to mobile header in `app/dashboard/layout.tsx` (lines 255-264)
+  - Button shows only on relevant pages (dashboard, overview, rank-history)
+  - Conditional rendering based on pathname and domains availability
+  - Proper styling with primary color and Plus icon
+- **Files Modified**:
+  - `app/dashboard/layout.tsx` - Added Add Keyword button to mobile header
+  - Removed Add Keyword button from mobile views on all keyword tracker pages
+
+**3. Fixed Mobile Sidebar Scrolling Issue**
+- **Problem**: When sidebar was open, scrolling affected the background page instead of sidebar content
+- **Solution**: Implemented body scroll prevention when sidebar is open
+- **Implementation**:
+  - Added useEffect hook to prevent body scroll when sidebar is open (lines 70-82)
+  - Sets `document.body.style.overflow = 'hidden'` when sidebar opens
+  - Restores scroll on sidebar close and component unmount
+  - Sidebar content now scrolls independently from main page
+- **Files Modified**:
+  - `components/Sidebar.tsx` - Added scroll prevention logic
+
+**4. Created DomainContext for Centralized State Management**
+- **Problem**: Initial implementation had domain selector in sidebar but it didn't control page content (isolated state)
+- **Solution**: Created React Context to centralize domain selection across all pages
+- **Implementation**:
+  - Created `lib/contexts/DomainContext.tsx` with DomainProvider and useDomain hook
+  - Context provides: domains, selectedDomainId, selectedDomainInfo, setSelectedDomainId, getDomainKeywordCount, isDomainSelectorOpen, setIsDomainSelectorOpen
+  - Uses useDashboardData hook internally to fetch domain data
+  - Automatically selects first domain as default
+- **Files Created**:
+  - `lib/contexts/DomainContext.tsx` - Complete context implementation with TypeScript types
+
+**5. Enhanced Dashboard Layout Integration**
+- **Enhancement**: Unified domain management across dashboard layout using DomainContext
+- **Implementation**:
+  - Wrapped dashboard layout with DomainProvider (inside QueryProvider)
+  - Created DashboardLayoutContent component that uses useDomain hook
+  - Removed duplicate QueryProvider wrapping in early returns
+  - Pass domain props from context to Sidebar component for mobile display
+  - Mobile header Add Keyword button uses context to check domain availability
+- **Files Modified**:
+  - `app/dashboard/layout.tsx` - Split into DashboardLayoutContent (uses context) and wrapper (provides context) (lines 33-296)
+
+**6. Updated All Keyword Tracker Pages to Use DomainContext**
+- **Enhancement**: Removed local domain state from all pages, now using centralized context
+- **Implementation**:
+  - Replaced `useDashboardData` import with `useDomain` from context
+  - Removed local state: selectedDomainId, isDomainSelectorOpen, showDomainsManager
+  - Removed default domain selection useEffect (now in context)
+  - Removed getDomainKeywordCount function (now from context)
+  - Removed dashboardLoading checks (simplified loading states)
+- **Files Modified**:
+  - `app/dashboard/indexnow/overview/page.tsx` - Uses useDomain hook instead of local state
+  - `app/dashboard/indexnow/rank-history/page.tsx` - Uses useDomain hook instead of local state
+  - `app/dashboard/page.tsx` - Uses useDomain hook for domain state (retains useDashboardData for user/billing)
+
+#### ✅ Technical Details
+
+**Mobile Sidebar Domain Selector:**
+```typescript
+{/* Domain Selector (Mobile Only) */}
+{domains.length > 0 && onDomainSelect && (
+  <div className="px-6 py-4 bg-secondary border-b border-border">
+    <SharedDomainSelector
+      domains={domains}
+      selectedDomainId={selectedDomainId}
+      selectedDomainInfo={selectedDomainInfo}
+      isOpen={isDomainSelectorOpen}
+      onToggle={onDomainSelectorToggle || (() => {})}
+      onDomainSelect={onDomainSelect}
+      getDomainKeywordCount={getDomainKeywordCount}
+      showKeywordCount={true}
+      addDomainRoute="/dashboard/indexnow/add"
+      placeholder="Select Domain"
+      className="w-full"
+    />
+  </div>
+)}
+```
+
+**Mobile Header Add Keyword Button:**
+```typescript
+{showAddKeywordButton && domains.length > 0 && (
+  <button
+    onClick={() => router.push('/dashboard/indexnow/add')}
+    className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+    aria-label="Add Keywords"
+    data-testid="button-add-keywords-header"
+  >
+    <Plus className="w-5 h-5" />
+  </button>
+)}
+```
+
+**Scroll Prevention:**
+```typescript
+useEffect(() => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = 'unset'
+  }
+  
+  return () => {
+    document.body.style.overflow = 'unset'
+  }
+}, [isOpen])
+```
+
+#### ✅ User Experience Impact
+
+**Mobile Navigation Flow:**
+- ✅ Cleaner main content area - no domain selector cluttering the view
+- ✅ Quick access to Add Keyword button from header (always visible)
+- ✅ Organized sidebar with domain selector before search
+- ✅ Proper touch-friendly spacing and sizing
+- ✅ Consistent button ordering: notification → add keyword → menu
+
+**Scrolling Behavior:**
+- ✅ Sidebar content scrolls independently when open
+- ✅ Background page doesn't scroll when sidebar is active
+- ✅ Better control and predictable UX
+
+**Desktop Experience:**
+- ✅ No changes to desktop layout (preserved existing UX)
+- ✅ Domain selector and Add Keyword button remain in page content
+- ✅ Responsive breakpoint at lg (1024px)
+
+#### ✅ Files Created
+
+1. **lib/contexts/DomainContext.tsx** (NEW FILE)
+   - Complete React Context implementation for domain selection
+   - DomainProvider component wraps children and provides domain state
+   - useDomain hook for consuming domain context
+   - Automatically fetches domains using useDashboardData
+   - Manages selectedDomainId, domain selector open state, and helper functions
+
+#### ✅ Files Modified
+
+1. **components/Sidebar.tsx**
+   - Added domain selector props to interface (lines 37-43)
+   - Imported SharedDomainSelector component (line 30)
+   - Added scroll prevention useEffect (lines 70-82)
+   - Added domain selector to mobile sidebar before search (lines 428-449)
+
+2. **app/dashboard/layout.tsx**
+   - Added imports: useRouter, usePathname, Plus icon, DomainProvider, useDomain (lines 3-4, 14)
+   - Created DashboardLayoutContent component that uses domain context (lines 33-282)
+   - Wrapped layout with DomainProvider in exported DashboardLayout (lines 284-296)
+   - Removed duplicate QueryProvider wrapping in early returns
+   - Added Add Keyword button to mobile header (lines 248-257)
+   - Passed domain props from context to Sidebar component (lines 207-224)
+
+3. **app/dashboard/indexnow/overview/page.tsx**
+   - Replaced useDashboardData import with useDomain context (line 11)
+   - Removed local selectedDomainId state and related logic (previously lines 31, 92-95, 102, 104-106)
+   - Uses useDomain hook for all domain-related state (lines 47-55)
+   - Removed dashboardLoading check (simplified line 317)
+   - Hidden domain selector on mobile/tablet with lg:hidden (line 323)
+   - Hidden Add Keyword button on mobile/tablet with lg:hidden (line 342)
+   - Added mobile-only Device/Country filter (lines 372-381)
+
+4. **app/dashboard/indexnow/rank-history/page.tsx**
+   - Replaced useDashboardData import with useDomain context
+   - Removed local domain state management
+   - Uses useDomain hook for centralized domain state
+   - Hidden domain selector and Add Keyword button on mobile/tablet (line 516)
+   - Added mobile-only Device/Country filter (lines 553-562)
+
+5. **app/dashboard/page.tsx**
+   - Added useDomain context import alongside useDashboardData
+   - Removed local selectedDomainId and isDomainSelectorOpen state
+   - Uses useDomain hook for domain state (retained useDashboardData for user/billing info)
+   - Removed getDomainKeywordCount function
+   - Removed default domain selection useEffect
+   - Hidden domain selector and Add Keyword button on mobile/tablet (line 314)
+
+#### ✅ Testing Recommendations
+
+**Mobile Testing (< 1024px):**
+1. Verify domain selector appears in sidebar before search bar
+2. Confirm Add Keyword button appears in header (left of hamburger)
+3. Test sidebar scrolling - background page should not scroll
+4. Verify button order: notification → add keyword → hamburger
+5. Check domain selector is hidden from main content area
+
+**Desktop Testing (≥ 1024px):**
+1. Confirm domain selector remains in page content
+2. Verify Add Keyword button remains in page content
+3. Ensure no domain selector in sidebar
+4. Confirm no Add Keyword button in header
+
+**Cross-Page Testing:**
+1. Test on Dashboard page (/dashboard)
+2. Test on Overview page (/dashboard/indexnow/overview)
+3. Test on Rank History page (/dashboard/indexnow/rank-history)
+4. Verify consistent behavior across all pages
+
+**Status**: Mobile/tablet UX enhancements **COMPLETELY IMPLEMENTED** - Domain selector moved to sidebar, Add Keyword button in header, sidebar scrolling fixed, all pages updated with responsive visibility classes.
+
 ### 2025-10-19 - Fixed Refresh Token Endless Loop - Complete Solution (COMPLETED ✅)
 
 **Critical Fix**: Completely resolved Supabase authentication bug with invalid/expired refresh tokens using comprehensive middleware and client-side fixes.

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
 import { usePageViewLogger } from '@/hooks/useActivityLogger'
-import { useDashboardData } from '@/hooks/useDashboardData'
+import { useDomain } from '@/lib/contexts/DomainContext'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
@@ -125,9 +125,16 @@ export default function RankHistoryPage() {
   // Activity logging
   usePageViewLogger('/dashboard/indexnow/rank-history', 'Rank History', { section: 'keyword_tracker' })
 
-  // State for domain management
-  const [selectedDomainId, setSelectedDomainId] = useState<string>('')
-  const [showDomainsManager, setShowDomainsManager] = useState(false)
+  // Domain context
+  const {
+    domains,
+    selectedDomainId,
+    selectedDomainInfo,
+    setSelectedDomainId,
+    getDomainKeywordCount,
+    isDomainSelectorOpen: showDomainsManager,
+    setIsDomainSelectorOpen: setShowDomainsManager
+  } = useDomain()
 
   // State for filters
   const [selectedDevice, setSelectedDevice] = useState<string>('')
@@ -269,9 +276,6 @@ export default function RankHistoryPage() {
     }
   }
 
-  // Use merged dashboard API for better performance and to prevent loading glitches
-  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData()
-
   // Fetch domains with keyword counts (better than dashboard API for accurate counts)
   const { data: domainsWithCounts = [], isLoading: domainsLoading } = useQuery({
     queryKey: [RANK_TRACKING_ENDPOINTS.DOMAINS],
@@ -384,25 +388,7 @@ export default function RankHistoryPage() {
     }))
   }, [keywordsData, rankHistoryData])
 
-  const domains = domainsWithCounts || []
   const countries = countriesData?.data?.data || []
-
-  // Set default selected domain
-  useEffect(() => {
-    if (!selectedDomainId && domains.length > 0) {
-      setSelectedDomainId(domains[0].id)
-    }
-  }, [domains, selectedDomainId])
-
-  // Get selected domain info
-  const selectedDomainInfo = domains.find((d: any) => d.id === selectedDomainId)
-
-  // Get keyword count for each domain (now using domains API with keyword counts)
-  const getDomainKeywordCount = (domainId: string) => {
-    const domain = domains.find((d: any) => d.id === domainId)
-    // Supabase returns count as [{ count: number }] array structure
-    return domain?.keyword_count?.[0]?.count || 0
-  }
 
   // Get comparison date strings for calculations (needed before sorting)
   const { todayStr: currentDateStr, comparisonDate: prevDateStr, periodLabel } = getComparisonPeriods(dateRange)
@@ -494,7 +480,7 @@ export default function RankHistoryPage() {
   return (
     <div className="space-y-6">
       {/* Check if user has domains */}
-      {(dashboardLoading || domainsLoading) ? (
+      {domainsLoading ? (
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -509,8 +495,8 @@ export default function RankHistoryPage() {
         />
       ) : (
         <>
-          {/* Domain Section and Add Keyword Button - Same Row */}
-          <div className="flex items-center justify-between mb-6">
+          {/* Domain Section and Add Keyword Button - Desktop Only */}
+          <div className="hidden lg:flex items-center justify-between mb-6">
             <SharedDomainSelector 
                   domains={domains}
                   selectedDomainId={selectedDomainId}
@@ -544,6 +530,18 @@ export default function RankHistoryPage() {
                     Add Keyword
                   </Button>
                 </div>
+              </div>
+              
+              {/* Mobile/Tablet - Device and Country Filters Only */}
+              <div className="lg:hidden mb-6">
+                <DeviceCountryFilter
+                  selectedDevice={selectedDevice}
+                  selectedCountry={selectedCountry}
+                  countries={countries}
+                  onDeviceChange={setSelectedDevice}
+                  onCountryChange={setSelectedCountry}
+                  compact={false}
+                />
               </div>
 
               {/* Rank Overview Stats Widget - Always show when domain is selected */}

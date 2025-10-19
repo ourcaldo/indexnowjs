@@ -28,6 +28,7 @@ import {
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import PricingTable from '@/components/shared/PricingTable'
 import { useDashboardData } from '@/hooks/useDashboardData'
+import { useDomain } from '@/lib/contexts/DomainContext'
 
 // Import our new analytics widgets
 import { 
@@ -112,8 +113,6 @@ export default function Dashboard() {
   const router = useRouter()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
-  const [isDomainSelectorOpen, setIsDomainSelectorOpen] = useState(false);
   const [packagesData, setPackagesData] = useState<{ packages: PaymentPackage[], current_package_id: string | null } | null>(null);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [startingTrial, setStartingTrial] = useState<string | null>(null);
@@ -123,7 +122,18 @@ export default function Dashboard() {
   usePageViewLogger('/dashboard', 'Dashboard', { section: 'main_dashboard' })
   const { logDashboardActivity } = useActivityLogger()
 
-  // Use merged dashboard data
+  // Use domain context for domain-related state and data
+  const {
+    domains,
+    selectedDomainId,
+    selectedDomainInfo: selectedDomain,
+    setSelectedDomainId,
+    getDomainKeywordCount,
+    isDomainSelectorOpen,
+    setIsDomainSelectorOpen
+  } = useDomain()
+
+  // Use merged dashboard data for user and billing info
   const { 
     data: dashboardData, 
     isLoading: dashboardLoading, 
@@ -131,7 +141,6 @@ export default function Dashboard() {
   } = useDashboardData()
 
   // Extract data from merged dashboard endpoint
-  const domainsData = dashboardData?.rankTracking?.domains
   const recentKeywords = dashboardData?.rankTracking?.recentKeywords || []
   
   // Filter keywords by selected domain
@@ -140,15 +149,7 @@ export default function Dashboard() {
     return recentKeywords.filter((k: any) => k.domain?.id === domainId)
   }
   
-  const domains = domainsData || []
   const domainKeywords = getKeywordsForDomain(selectedDomainId)
-  
-  // Set default domain
-  useEffect(() => {
-    if (!selectedDomainId && domains.length > 0) {
-      setSelectedDomainId(domains[0].id)
-    }
-  }, [domains, selectedDomainId])
 
   // Handle subscription
   const handleSubscribe = async (packageId: string, period: string) => {
@@ -271,12 +272,6 @@ export default function Dashboard() {
     return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
   }, [domainKeywords, selectedDomainId, domains])
 
-  const selectedDomain = domains.find((d: any) => d.id === selectedDomainId)
-  
-  // Get keyword count for each domain
-  const getDomainKeywordCount = (domainId: string) => {
-    return recentKeywords.filter((k: any) => k.domain?.id === domainId).length
-  }
   const hasActivePackage = userProfile?.package || packagesData?.current_package_id
   const isDataLoading = loading || dashboardLoading
 
@@ -308,7 +303,7 @@ export default function Dashboard() {
         </div>
         
         {hasActivePackage && domains.length > 0 && (
-          <div className="flex items-center space-x-3">
+          <div className="hidden lg:flex items-center space-x-3">
             <SharedDomainSelector
               domains={domains}
               selectedDomainId={selectedDomainId}
