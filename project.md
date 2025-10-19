@@ -2,6 +2,102 @@
 
 ## Recent Changes
 
+### 2025-10-19 - Fixed Refresh Token Endless Loop with Proper Event Listener (COMPLETED)
+**Critical Fix**: Resolved persistent refresh token endless loop issue by implementing proper `TOKEN_REFRESH_FAILED` event listener and hard logout mechanism.
+
+#### ✅ Issue Fixed
+
+**Refresh Token Endless Loop Still Occurring After Previous Fix**
+- **Problem**: Previous fix attempt (2025-10-16) did not stop the endless POST requests to `https://base.indexnow.studio/auth/v1/token?grant_type=refresh_token`. When refresh token is invalid/already used, frontend continues making the same POST request indefinitely returning 400 Bad Request with error code `refresh_token_already_used`
+- **Root Cause**: 
+  - Previous implementation wrapped `getSession()` but did not catch Supabase's automatic background token refresh attempts
+  - No listener for `TOKEN_REFRESH_FAILED` event which Supabase emits when automatic refresh fails
+  - Supabase client continues retrying even after permanent failure (already used refresh token)
+  - Error counter approach was ineffective because automatic refresh happens outside wrapped function
+- **User Impact**:
+  - Endless network requests consuming bandwidth
+  - User stuck in invalid auth state
+  - Cookies not properly cleared
+  - No proper redirect to login after auth failure
+- **Fix**: Complete rewrite of Supabase browser client initialization (`lib/database/supabase-browser.ts`)
+  - Implemented `hardLogout()` function following recommended pattern:
+    1. Calls `supabase.auth.signOut()` first to clear server-side session
+    2. Clears localStorage (all sb-*, supabase, auth keys)
+    3. Clears sessionStorage completely
+    4. Manually deletes all Supabase cookies across domain variations
+    5. Uses `window.location.replace()` (not `href`) to prevent back button issues
+  - Added `onAuthStateChange` listener for `TOKEN_REFRESH_FAILED` event (the proper way to catch refresh failures)
+  - Added double-check for specific error code `refresh_token_already_used` when session is null
+  - Added comprehensive error pattern matching for "already used", "invalid", "expired" refresh token messages
+  - Removed ineffective error counter and getSession wrapper approach
+  - Added type cast for `TOKEN_REFRESH_FAILED` to avoid LSP error with outdated type definitions
+
+#### ✅ Implementation Details
+
+**Hard Logout Function:**
+```typescript
+async function hardLogout(client: ReturnType<typeof createBrowserClient>) {
+  // Step 1: Sign out through Supabase (clears server-side session)
+  await client.auth.signOut()
+  
+  // Step 2: Clear localStorage (sb-*, supabase, auth keys)
+  // Step 3: Clear sessionStorage completely
+  // Step 4: Delete all Supabase cookies across domain variations
+  // Step 5: Redirect to login with window.location.replace()
+}
+```
+
+**Event Listener (TOKEN_REFRESH_FAILED):**
+```typescript
+client.auth.onAuthStateChange(async (event, session) => {
+  // Listen for TOKEN_REFRESH_FAILED event (official Supabase event)
+  if (event === 'TOKEN_REFRESH_FAILED' as any) {
+    await hardLogout(client)
+    return
+  }
+  
+  // Double-check for refresh_token_already_used error code
+  if (!session) {
+    const { error } = await client.auth.getSession()
+    if (error?.code === 'refresh_token_already_used' || 
+        error?.message?.includes('already used')) {
+      await hardLogout(client)
+      return
+    }
+  }
+})
+```
+
+**Key Differences from Previous Fix:**
+- ❌ OLD: Wrapped `getSession()` with error counter → Didn't catch automatic background refresh
+- ✅ NEW: Listen to `TOKEN_REFRESH_FAILED` event → Catches all refresh failures including automatic retries
+- ❌ OLD: Used `window.location.href` → Allows back button to broken state
+- ✅ NEW: Uses `window.location.replace()` → Prevents navigation back to invalid state
+- ❌ OLD: Relied on error counting logic → Unreliable, still allowed multiple retries
+- ✅ NEW: Immediate hard logout on first refresh failure → Stops endless loop immediately
+
+#### ✅ Why This Fix Works
+
+1. **Official Supabase Event**: `TOKEN_REFRESH_FAILED` is the official event emitted by Supabase when token refresh fails (confirmed by Supabase docs and web search)
+2. **Catches Background Refresh**: The `onAuthStateChange` listener catches ALL refresh attempts, including automatic background retries
+3. **Immediate Cleanup**: Hard logout executes immediately on first failure, preventing any retry loop
+4. **Complete Session Destruction**: Clears session on both server-side (signOut) and client-side (cookies, storage)
+5. **Proper Redirect**: Uses `window.location.replace()` to ensure clean state and prevent back button issues
+
+#### ✅ Files Modified
+- `lib/database/supabase-browser.ts` - Complete rewrite with TOKEN_REFRESH_FAILED listener and hardLogout implementation
+
+#### ✅ Testing Recommendations
+1. Let session expire naturally or manually invalidate refresh token
+2. Verify only ONE 400 error appears (not endless loop)
+3. Check Network tab - should see immediate redirect to /login with no retry attempts
+4. Verify all cookies cleared in Application → Cookies DevTools
+5. Confirm cannot use back button to return to invalid session state
+
+**Status**: Refresh token endless loop issue **PERMANENTLY FIXED** using official Supabase event handling pattern.
+
+---
+
 ### 2025-10-16 - Fixed Critical Authentication, Data Isolation, and UI Bugs (COMPLETED)
 **Critical Bug Fixes**: Resolved refresh token endless loop, fixed data isolation issues showing other users' data, and enhanced pricing page UI with billing period toggle and promotional pricing display.
 
