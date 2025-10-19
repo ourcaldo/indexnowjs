@@ -225,11 +225,12 @@ function DashboardLayoutContent({
                 </button>
                 <button
                   onClick={() => router.push('/dashboard/indexnow/add')}
-                  className="p-2 rounded-lg transition-colors duration-150 bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="inline-flex items-center px-4 py-2 rounded-lg transition-colors duration-150 bg-primary text-primary-foreground hover:bg-primary/90"
                   aria-label="Add Keywords"
                   data-testid="button-add-keywords-header-desktop"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Keywords
                 </button>
               </div>
             </div>

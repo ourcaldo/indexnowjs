@@ -1,0 +1,139 @@
+# Error: Authentication required
+
+**Issue ID:** 6938409862
+**Project:** indexnow
+**Date:** 20/10/2025, 00.43.23
+
+## Root Cause
+```
+# Root Cause of the Issue
+
+Supabase client session, created without a refresh token, expired during request processing, causing subsequent internal validation to fail.
+
+### Client initiates GET request to fetch billing packages.
+The request targets the API endpoint responsible for retrieving package details, which requires user authentication.
+
+### Request enters authenticated wrapper, token is extracted and validated.
+The `Authorization` header is present and valid, allowing the request to proceed past the initial 401 check.
+
+```typescript
+// lib/core/api-middleware.ts
+const token = authHeader.substring(7)
+// ...
+// Set the session with provided token for authentication
+await supabase.auth.setSession({
+  access_token: token,
+  refresh_token: '' // <-- CRITICAL FLAW: No refresh token
+})
+```
+(See @lib/core/api-middleware.ts)
+
+### Handler executes first SecureWrapper call to fetch active packages.
+The first call to `SecureServiceRoleWrapper.executeWithUserSession` is made. This involves an internal call to `userSupabaseClient.auth.getUser()` to validate the session.
+(See @app/api/v1/billing/packages/route.ts)
+
+### First SecureWrapper succeeds, generating audit logs (breadcrumbs).
+The session token is still valid, allowing `getUser()` to succeed. The wrapper logs the start (POST 201) and end (PATCH 204) of the operation to `indb_security_audit_logs`. This confirms the handler executed successfully.
+(See @lib/services/security/SecureServiceRoleWrapper.ts)
+
+### Handler executes second SecureWrapper call to fetch user profile.
+The second call to `SecureServiceRoleWrapper.executeWithUserSession` is made to fetch `indb_auth_user_profiles`.
+(See @app/api/v1/billing/packages/route.ts)
+
+### Session token expires or is invalidated during processing.
+Due to the lack of a refresh token, the access token expires or is invalidated by the Supabase Auth service (e.g., due to rate limiting or time expiration) between the first and second SecureWrapper calls.
+
+### Second SecureWrapper fails due to invalid session.
+The internal call to `userSupabaseClient.auth.getUser()` fails because the token is no longer valid, and there is no refresh token to renew it.
+
+```typescript
+// lib/services/security/SecureServiceRoleWrapper.ts
+const { data: { user }, error: authError } = await userSupabaseClient.auth.getUser()
+if (authError || !user) { // <-- This condition is now true
+  throw new ServiceRoleSecurityViolationError(
+    'Invalid user session for secure operation',
+    { authError: authError?.message }
+  )
+}
+```
+(See @lib/services/security/SecureServiceRoleWrapper.ts)
+
+### Error is caught and wrapped as 'Authentication required'.
+The `ServiceRoleSecurityViolationError` is caught by the outer `authenticatedApiWrapper`'s catch block or an upstream error handler, which incorrectly translates the internal session failure into the generic `Authentication required` error (401) for the final response.
+(See @lib/core/api-response-middleware.ts)
+```
+
+## Solution
+```
+# Solution Plan
+
+### 1. Modify the `authenticateRequest` function in `lib/core/api-middleware.ts` to avoid setting the session with an empty refresh token. Instead, rely on the Authorization header that's already being set in the global headers.
+(See @null)
+
+### 2. Update the `SecureServiceRoleWrapper.executeWithUserSession` method in `lib/services/security/SecureServiceRoleWrapper.ts` to handle authentication validation more robustly by catching and wrapping transient errors from `auth.getUser()` calls with proper error context.
+(See @null)
+```
+
+## Tags
+
+- **browser:** Chrome 141
+- **browser.name:** Chrome
+- **client_os:** Windows
+- **client_os.name:** Windows
+- **environment:** production
+- **handled:** yes
+- **level:** error
+- **mechanism:** generic
+- **os:** Ubuntu Linux 22.04
+- **os.name:** Ubuntu Linux
+- **runtime.name:** server
+- **server_name:** cloud-2
+- **transaction:** GET /v1/rank-tracking/domains
+- **url:** http://api.indexnow.studio/v1/rank-tracking/domains
+
+## Exception
+
+### Exception 1
+**Type:** Error
+**Value:** Authentication required
+
+#### Stacktrace
+
+```
+ q.createError in /home/nexpocket/indexnowjs/.next/server/chunks/1290.js [Line 1] (In app)
+ Object.UNAUTHORIZED in /home/nexpocket/indexnowjs/.next/server/chunks/1290.js [Line 1] (In app)
+ i in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ AsyncLocalStorage.run in node:async_hooks [Line 327] (Not in app)
+ rN.do in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ Unknown function in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ Unknown function in /home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/trace/tracer.js [Line 170] (Not in app)
+                if (isRootSpan) {
+                    rootSpanAttributesStore.set(spanId, new Map(Object.entries(options.attributes ?? {})));
+                }
+                try {
+                    if (fn.length > 1) {
+                        return fn(span, (err)=>closeSpanWithError(span, err));
+                    }
+                    const result = fn(span);  <-- SUSPECT LINE
+                    if ((0, _isthenable.isThenable)(result)) {
+                        // If there's error make sure it throws
+                        return result.then((res)=>{
+                            span.end();
+                            // Need to pass down the promise result,
+                            // it could be react stream response with error { error, stream }
+                            return res;
+ AsyncLocalStorage.run in node:async_hooks [Line 338] (Not in app)
+ Unknown function in /home/nexpocket/indexnowjs/node_modules/next/dist/server/lib/router-utils/instrumentation-node-extensions.js [Line 93] (Not in app)
+        };
+        WeakTracers.add(tracer);
+        return tracer;
+    };
+}
+const WeakTracers = new WeakSet();
+function withWorkUnitContext(workUnitStore, fn) {
+    return (...args)=>_workunitasyncstorageexternal.workUnitAsyncStorage.run(workUnitStore, fn, ...args);  <-- SUSPECT LINE
+}
+
+//# sourceMappingURL=instrumentation-node-extensions.js.map
+```

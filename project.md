@@ -2,9 +2,59 @@
 
 ## Recent Changes
 
+### 2025-10-19 - Fixed Critical 401 Authentication Error and Enhanced Desktop Header
+
+**Critical Bug Fix & UI Enhancement**: Fixed root cause of 401 authentication errors across all API endpoints by removing setSession call with empty refresh token. Enhanced desktop Add Keyword button with text label.
+
+#### ✅ Critical Authentication Fix
+
+**Root Cause Identified by Sentry:**
+- **Problem**: All API calls were failing with 401 "Please log in to access this feature" even when users were authenticated
+- **Sentry Analysis**: `lib/core/api-middleware.ts` was calling `supabase.auth.setSession()` with an empty `refresh_token` (line 61-64)
+- **Impact**: During request processing, the access token would expire or become invalid. Without a refresh token, Supabase couldn't refresh the session, causing the second SecureWrapper call in the same request to fail with 401
+- **Example Flow**:
+  1. Request arrives with valid Authorization header
+  2. Middleware sets session with `access_token` but `refresh_token: ''`
+  3. First database operation succeeds (token still valid)
+  4. Token expires or is invalidated
+  5. Second database operation fails (no refresh token to renew session)
+  6. Returns 401 error to user
+
+**Solution:**
+- Removed the `setSession()` call entirely (lines 60-64)
+- Now relies solely on the `Authorization` header set in `global.headers` (lines 44-48)
+- This is the correct approach for token-based authentication in server-side contexts
+- The Authorization header persists throughout the request lifecycle without expiration issues
+
+**Files Modified:**
+- `lib/core/api-middleware.ts` - Removed setSession call with empty refresh_token (lines 60-64)
+
+**Technical Details:**
+```typescript
+// BEFORE (causing 401 errors):
+const supabase = createServerClient(..., {
+  global: { headers: { Authorization: `Bearer ${token}` } },
+  ...
+})
+await supabase.auth.setSession({
+  access_token: token,
+  refresh_token: ''  // <-- CRITICAL FLAW: Empty refresh token
+})
+
+// AFTER (fixed):
+const supabase = createServerClient(..., {
+  global: { headers: { Authorization: `Bearer ${token}` } },
+  ...
+})
+// Removed setSession() - rely on Authorization header which doesn't expire during request
+const { data: { user }, error: authError } = await supabase.auth.getUser()
+```
+
+---
+
 ### 2025-10-19 - Added Desktop Header with Add Keyword Button and Fixed Authentication in Add Keywords Page
 
-**UI/UX Enhancement & Bug Fix**: Added desktop header with notification icon and Add Keyword button, fixed 401 authentication error on Add Keywords page.
+**UI/UX Enhancement**: Added desktop header with notification icon and Add Keyword button with text label.
 
 #### ✅ Changes Implemented
 

@@ -56,14 +56,10 @@ export async function authenticateRequest(
         },
       }
     )
-
-    // Set the session with provided token for authentication
-    await supabase.auth.setSession({
-      access_token: token,
-      refresh_token: ''
-    })
     
     // Get authenticated user directly (don't use SecureServiceRoleWrapper here - it validates userId match)
+    // NOTE: We rely on the Authorization header set above instead of setSession() to avoid 
+    // setting an empty refresh_token which causes token expiration during request processing
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     // Handle errors from getUser() - distinguish between transient and auth failures
