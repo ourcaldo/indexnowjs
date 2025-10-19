@@ -2,6 +2,112 @@
 
 ## Recent Changes
 
+### 2025-10-19 - Added Desktop Header with Add Keyword Button and Fixed Authentication in Add Keywords Page
+
+**UI/UX Enhancement & Bug Fix**: Added desktop header with notification icon and Add Keyword button, fixed 401 authentication error on Add Keywords page.
+
+#### ✅ Changes Implemented
+
+**1. Added Desktop Header with Notification Icon and Add Keyword Button**
+- **Issue**: Desktop version had no header with notification icon and Add Keyword button (only mobile had this)
+- **User Requirement**: Desktop should have notification icon + Add Keyword button on the right side (similar to mobile but without hamburger)
+- **Solution**: Added desktop-only header with notification icon and Add Keyword button in top-right corner
+- **Implementation**:
+  - Added new desktop header section in `app/dashboard/layout.tsx` (lines 221-238)
+  - Header shows only on desktop (`hidden lg:flex`)
+  - Positioned on right side with `justify-end`
+  - Contains notification bell icon and Add Keyword button (Plus icon)
+  - Button order from left to right: Notification icon → Add Keyword button
+  - Consistent styling with mobile header
+- **User Impact**: Desktop users now have quick access to notifications and Add Keywords functionality from the top-right corner
+- **Files Modified**:
+  - `app/dashboard/layout.tsx` - Added desktop header section (lines 221-238)
+
+**2. Fixed 401 Unauthorized Error on Add Keywords Page**
+- **Issue**: API calls to `/api/v1/rank-tracking/domains` and other endpoints were returning 401 Unauthorized even when user was logged in
+- **Root Cause**: 
+  - The add/page.tsx was using direct `fetch()` calls without proper authentication setup
+  - Cross-subdomain requests (from local frontend to api.indexnow.studio) weren't including authentication cookies properly
+  - Missing use of `apiRequest` helper which handles credentials and authentication automatically
+- **Solution**: Replaced all direct `fetch()` calls with `apiRequest()` helper from `@/lib/core/queryClient`
+- **Implementation**:
+  - Added import: `import { apiRequest } from '@/lib/core/queryClient'` (line 8)
+  - Updated domains fetch to use `apiRequest(RANK_TRACKING_ENDPOINTS.DOMAINS)` (line 139)
+  - Updated countries fetch to use `apiRequest(RANK_TRACKING_ENDPOINTS.COUNTRIES)` (line 147)
+  - Updated createDomainMutation to use `apiRequest()` with POST method (lines 154-157)
+  - Updated addKeywordsMutation to use `apiRequest()` with POST method
+  - Removed manual error handling as apiRequest handles it automatically
+  - Fixed response data access: `data.data.id` → `data.id` (apiRequest unwraps the response)
+- **Why This Works**:
+  - `apiRequest` automatically includes `credentials: 'include'` for cookie-based authentication
+  - It properly sets Content-Type headers and handles CORS
+  - It unwraps the standardized API response format `{success: true, data: T}` automatically
+  - Handles authentication errors consistently
+- **Files Modified**:
+  - `app/dashboard/indexnow/add/page.tsx` - Replaced fetch with apiRequest (lines 8, 139, 147, 154-157, mutation functions)
+
+#### ✅ Technical Details
+
+**Desktop Header Structure:**
+```typescript
+{/* Desktop header (hidden on mobile) */}
+<div className="hidden lg:flex bg-background border-b border-border px-6 py-3 items-center justify-end">
+  <div className="flex items-center space-x-2">
+    <button className="...notification-button...">
+      {/* Bell icon SVG */}
+    </button>
+    <button onClick={() => router.push('/dashboard/indexnow/add')} className="...primary-button...">
+      <Plus className="w-5 h-5" />
+    </button>
+  </div>
+</div>
+```
+
+**API Request Fix (Before & After):**
+```typescript
+// BEFORE (causing 401 errors):
+const response = await fetch(RANK_TRACKING_ENDPOINTS.DOMAINS, { 
+  credentials: 'include' 
+})
+if (!response.ok) throw new Error('Failed to fetch domains')
+return response.json()
+
+// AFTER (fixed):
+return await apiRequest(RANK_TRACKING_ENDPOINTS.DOMAINS)
+```
+
+**Response Data Access Fix:**
+```typescript
+// BEFORE:
+onSuccess: (data) => {
+  setSelectedDomain(data.data.id) // Double-nested
+}
+
+// AFTER:
+onSuccess: (data) => {
+  setSelectedDomain(data.id) // apiRequest unwraps response
+}
+```
+
+#### ✅ Files Modified
+
+1. **app/dashboard/layout.tsx**
+   - Lines 221-238: Added desktop header with notification icon and Add Keyword button
+   - Desktop header shown only on lg+ screens (`hidden lg:flex`)
+   - Positioned on right side of header bar
+
+2. **app/dashboard/indexnow/add/page.tsx**
+   - Line 8: Added `apiRequest` import from `@/lib/core/queryClient`
+   - Lines 136-141: Updated domains query to use `apiRequest`
+   - Lines 143-149: Updated countries query to use `apiRequest`
+   - Lines 152-166: Updated createDomainMutation to use `apiRequest`
+   - Updated addKeywordsMutation to use `apiRequest`
+   - Line 161: Fixed data access from `data.data.id` to `data.id`
+
+**Status**: Desktop header **ADDED** with notification and Add Keyword button, 401 authentication error **FIXED** using apiRequest helper.
+
+---
+
 ### 2025-10-19 - Fixed Mobile Header Add Keyword Button Visibility and Removed Dashboard Welcome Text
 
 **UI/UX Enhancement**: Fixed Add Keyword button visibility in mobile header and cleaned up dashboard page heading.

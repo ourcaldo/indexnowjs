@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
+import { apiRequest } from '@/lib/core/queryClient'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { useApiError } from '@/hooks/useApiError'
 import { 
@@ -132,9 +133,7 @@ export default function AddKeywords() {
   const { data: domainsData, error: domainsError, isLoading: domainsLoading, refetch: refetchDomains } = useQuery({
     queryKey: [RANK_TRACKING_ENDPOINTS.DOMAINS],
     queryFn: async () => {
-      const response = await fetch(RANK_TRACKING_ENDPOINTS.DOMAINS, { credentials: 'include' })
-      if (!response.ok) throw new Error('Failed to fetch domains')
-      return response.json()
+      return await apiRequest(RANK_TRACKING_ENDPOINTS.DOMAINS)
     }
   })
 
@@ -142,30 +141,21 @@ export default function AddKeywords() {
   const { data: countriesData, error: countriesError, isLoading: countriesLoading, refetch: refetchCountries } = useQuery({
     queryKey: [RANK_TRACKING_ENDPOINTS.COUNTRIES],
     queryFn: async () => {
-      const response = await fetch(RANK_TRACKING_ENDPOINTS.COUNTRIES, { credentials: 'include' })
-      if (!response.ok) throw new Error('Failed to fetch countries')
-      return response.json()
+      return await apiRequest(RANK_TRACKING_ENDPOINTS.COUNTRIES)
     }
   })
 
   // Create domain mutation
   const createDomainMutation = useMutation({
     mutationFn: async (domainData: { domain_name: string; display_name?: string }) => {
-      const response = await fetch(RANK_TRACKING_ENDPOINTS.DOMAINS, {
+      return await apiRequest(RANK_TRACKING_ENDPOINTS.DOMAINS, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(domainData)
       })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create domain')
-      }
-      return response.json()
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [RANK_TRACKING_ENDPOINTS.DOMAINS] })
-      setSelectedDomain(data.data.id)
+      setSelectedDomain(data.id)
       setNewDomainName('')
       setErrors({ ...errors, domain: '' })
     },
@@ -175,17 +165,10 @@ export default function AddKeywords() {
   // Add keywords mutation
   const addKeywordsMutation = useMutation({
     mutationFn: async (keywordData: any) => {
-      const response = await fetch(RANK_TRACKING_ENDPOINTS.KEYWORDS, {
+      return await apiRequest(RANK_TRACKING_ENDPOINTS.KEYWORDS, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(keywordData)
       })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to add keywords')
-      }
-      return response.json()
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [RANK_TRACKING_ENDPOINTS.KEYWORDS] })
