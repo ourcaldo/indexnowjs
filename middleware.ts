@@ -398,10 +398,15 @@ export async function middleware(request: NextRequest) {
       
       // Clear all Supabase auth cookies to prevent retry loops
       const cookiesToClear = request.cookies.getAll().filter(cookie => 
-        cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+        cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
       )
       cookiesToClear.forEach(cookie => {
-        response.cookies.delete(cookie.name)
+        // Properly expire the cookie instead of just deleting
+        response.cookies.set(cookie.name, '', {
+          maxAge: 0,
+          expires: new Date(0),
+          path: '/',
+        })
       })
       
       return response
@@ -418,10 +423,15 @@ export async function middleware(request: NextRequest) {
       
       // Clear all Supabase auth cookies to prevent retry loops
       const cookiesToClear = request.cookies.getAll().filter(cookie => 
-        cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+        cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
       )
       cookiesToClear.forEach(cookie => {
-        response.cookies.delete(cookie.name)
+        // Properly expire the cookie instead of just deleting
+        response.cookies.set(cookie.name, '', {
+          maxAge: 0,
+          expires: new Date(0),
+          path: '/',
+        })
       })
       
       return response
@@ -506,10 +516,15 @@ export async function middleware(request: NextRequest) {
     
     // Clear all Supabase auth cookies to prevent retry loops
     const cookiesToClear = request.cookies.getAll().filter(cookie => 
-      cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+      cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
     )
     cookiesToClear.forEach(cookie => {
-      response.cookies.delete(cookie.name)
+      // Properly expire the cookie instead of just deleting
+      response.cookies.set(cookie.name, '', {
+        maxAge: 0,
+        expires: new Date(0),
+        path: '/',
+      })
     })
     
     return response
@@ -523,10 +538,15 @@ export async function middleware(request: NextRequest) {
     
     // Clear all Supabase auth cookies to prevent retry loops
     const cookiesToClear = request.cookies.getAll().filter(cookie => 
-      cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+      cookie.name.startsWith('sb-') || cookie.name.includes('supabase') || cookie.name.includes('auth')
     )
     cookiesToClear.forEach(cookie => {
-      response.cookies.delete(cookie.name)
+      // Properly expire the cookie instead of just deleting
+      response.cookies.set(cookie.name, '', {
+        maxAge: 0,
+        expires: new Date(0),
+        path: '/',
+      })
     })
     
     return response

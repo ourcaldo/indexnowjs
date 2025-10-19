@@ -2,6 +2,53 @@
 
 ## Recent Changes
 
+### 2025-10-19 - Fixed Refresh Token Endless Loop - Middleware Cookie Clearing (IN PROGRESS)
+
+**Update**: Fixed middleware cookie deletion to properly expire cookies using `maxAge: 0` instead of `.delete()` method.
+
+#### ✅ Progress So Far
+
+**What's Working:**
+- ✅ Client-side endless POST requests STOPPED (no more infinite loop from browser)
+- ✅ `TOKEN_REFRESH_FAILED` event listener properly implemented in `supabase-browser.ts`
+- ✅ Middleware catches refresh token errors using `AuthErrorHandler.isRefreshTokenError()`
+
+**What's Still Broken:**
+- ❌ Cookies NOT being cleared from browser (`sb-base-auth-token` still present in DevTools)
+- ❌ Login page shows white screen
+- ❌ Middleware logs show repeated "Already Used" errors
+
+#### 🔍 Root Cause Analysis
+
+**Issue #1: Middleware Cookie Deletion Not Working**
+- **Problem**: Middleware uses `response.cookies.delete(name)` which doesn't reliably clear cookies in Next.js
+- **Fix Applied**: Changed to `response.cookies.set(name, '', { maxAge: 0, expires: new Date(0), path: '/' })`
+- **Files Modified**: `middleware.ts` lines 408-412, 433-437, 526-530, 548-552
+- **Status**: FIXED (needs testing)
+
+**Issue #2: Login Page White Screen**
+- **Problem**: Login page renders `null` while checking auth (line 184-186 in `app/login/page.tsx`)
+  - When invalid refresh token exists, `getCurrentUser()` call triggers `TOKEN_REFRESH_FAILED`
+  - The `hardLogout()` function runs but doesn't redirect (already on /login)
+  - Page stuck in `isCheckingAuth=true` state showing white screen
+- **Root Cause**: Race condition between middleware cookie clearing and client-side auth check
+- **Status**: IDENTIFIED (fix pending)
+
+**Issue #3: Middleware Logs Still Showing Errors**
+- **Problem**: Server-side middleware logs show repeated "AuthApiError: Invalid Refresh Token: Already Used"
+- **Why**: Supabase throws error internally before middleware can catch it
+- **Impact**: Visual noise in logs but doesn't break functionality
+- **Status**: Expected behavior (not critical)
+
+#### 🔧 Proposed Next Steps
+
+1. **Test middleware cookie fix** - Verify `sb-base-auth-token` is now properly cleared after refresh token failure
+2. **Fix login page white screen** - Options:
+   - Option A: Show loading spinner instead of `null` during auth check
+   - Option B: Add timeout to auth check (2-3 seconds max)
+   - Option C: Skip auth check entirely on login page (let middleware handle it)
+3. **Suppress middleware error logs** - Wrap `supabase.auth.getUser()` in middleware to catch and suppress expected refresh token errors
+
 ### 2025-10-19 - Fixed Refresh Token Endless Loop with Proper Event Listener (COMPLETED)
 **Critical Fix**: Resolved persistent refresh token endless loop issue by implementing proper `TOKEN_REFRESH_FAILED` event listener and hard logout mechanism.
 
