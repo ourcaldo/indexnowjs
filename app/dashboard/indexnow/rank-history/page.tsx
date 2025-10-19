@@ -495,54 +495,17 @@ export default function RankHistoryPage() {
         />
       ) : (
         <>
-          {/* Domain Section and Add Keyword Button - Desktop Only */}
-          <div className="hidden lg:flex items-center justify-between mb-6">
-            <SharedDomainSelector 
-                  domains={domains}
-                  selectedDomainId={selectedDomainId}
-                  selectedDomainInfo={selectedDomainInfo}
-                  isOpen={showDomainsManager}
-                  onToggle={() => setShowDomainsManager(!showDomainsManager)}
-                  onDomainSelect={setSelectedDomainId}
-                  getDomainKeywordCount={getDomainKeywordCount}
-                  showKeywordCount={true}
-                  addDomainRoute="/dashboard/indexnow/add"
-                  data-testid="rank-history-domain-selector"
-                />
-
-                {/* Device and Country Filters + Add Keyword Button */}
-                <div className="flex items-center gap-3">
-                  <DeviceCountryFilter
-                    selectedDevice={selectedDevice}
-                    selectedCountry={selectedCountry}
-                    countries={countries}
-                    onDeviceChange={setSelectedDevice}
-                    onCountryChange={setSelectedCountry}
-                    compact={true}
-                  />
-
-                  <Button 
-                    onClick={() => router.push('/dashboard/indexnow/add')}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    data-testid="button-add-keyword"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Keyword
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Mobile/Tablet - Device and Country Filters Only */}
-              <div className="lg:hidden mb-6">
-                <DeviceCountryFilter
-                  selectedDevice={selectedDevice}
-                  selectedCountry={selectedCountry}
-                  countries={countries}
-                  onDeviceChange={setSelectedDevice}
-                  onCountryChange={setSelectedCountry}
-                  compact={false}
-                />
-              </div>
+          {/* Device and Country Filters - Full width on all devices */}
+          <div className="mb-6">
+            <DeviceCountryFilter
+              selectedDevice={selectedDevice}
+              selectedCountry={selectedCountry}
+              countries={countries}
+              onDeviceChange={setSelectedDevice}
+              onCountryChange={setSelectedCountry}
+              compact={false}
+            />
+          </div>
 
               {/* Rank Overview Stats Widget - Always show when domain is selected */}
               {selectedDomainId && (

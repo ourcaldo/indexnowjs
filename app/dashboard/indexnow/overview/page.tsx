@@ -315,55 +315,16 @@ export default function IndexNowOverview() {
         <NoDomainState />
       ) : (
         <>
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-            {/* Domain Selector - Hidden on mobile/tablet, shown on desktop */}
-            <div className="w-full lg:w-auto hidden lg:block">
-              <SharedDomainSelector
-                domains={domains}
-                selectedDomainId={selectedDomainId}
-                selectedDomainInfo={selectedDomainInfo}
-                isOpen={showDomainsManager}
-                onToggle={() => setShowDomainsManager(!showDomainsManager)}
-                onDomainSelect={setSelectedDomainId}
-                getDomainKeywordCount={getDomainKeywordCount}
-                showKeywordCount={true}
-                addDomainRoute="/dashboard/indexnow/add"
-                placeholder="Select Domain"
-              />
-            </div>
-
-            {/* Device/Country Filter and Add Keywords Button - Hidden on mobile/tablet */}
-            <div className="hidden lg:flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-              <DeviceCountryFilter
-                selectedDevice={selectedDevice}
-                selectedCountry={selectedCountry}
-                countries={countries}
-                onDeviceChange={setSelectedDevice}
-                onCountryChange={setSelectedCountry}
-                className="flex-1 sm:flex-initial"
-              />
-              
-              <Button
-                onClick={() => router.push('/dashboard/indexnow/add')}
-                className="btn-hover whitespace-nowrap w-full sm:w-auto"
-                data-testid="button-add-keywords"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Keywords
-              </Button>
-            </div>
-            
-            {/* Device/Country Filter ONLY - Visible on mobile/tablet */}
-            <div className="lg:hidden w-full">
-              <DeviceCountryFilter
-                selectedDevice={selectedDevice}
-                selectedCountry={selectedCountry}
-                countries={countries}
-                onDeviceChange={setSelectedDevice}
-                onCountryChange={setSelectedCountry}
-                className="w-full"
-              />
-            </div>
+          {/* Device/Country Filter - Full width on all devices */}
+          <div className="w-full mb-6">
+            <DeviceCountryFilter
+              selectedDevice={selectedDevice}
+              selectedCountry={selectedCountry}
+              countries={countries}
+              onDeviceChange={setSelectedDevice}
+              onCountryChange={setSelectedCountry}
+              className="w-full"
+            />
           </div>
 
           {/* Statistics Overview */}

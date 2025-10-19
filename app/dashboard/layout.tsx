@@ -12,6 +12,7 @@ import QuotaNotification from '@/components/QuotaNotification'
 import ServiceAccountQuotaNotification from '@/components/ServiceAccountQuotaNotification'
 import QueryProvider from '@/components/QueryProvider'
 import { DomainProvider, useDomain } from '@/lib/contexts/DomainContext'
+import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 
 // Cookie utilities for sidebar state persistence
 const getCookie = (name: string): string | null => {
@@ -216,7 +217,27 @@ function DashboardLayoutContent({
             sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
           }`}>
             {/* Desktop header (hidden on mobile) */}
-            <div className="hidden lg:flex bg-background border-b border-border px-6 py-3 items-center justify-end">
+            <div className="hidden lg:flex bg-background border-b border-border px-6 py-3 items-center justify-between">
+              {/* Left side: Domain Selector */}
+              <div className="flex-1">
+                {domains.length > 0 && (
+                  <SharedDomainSelector
+                    domains={domains}
+                    selectedDomainId={selectedDomainId}
+                    selectedDomainInfo={selectedDomainInfo}
+                    isOpen={isDomainSelectorOpen}
+                    onToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
+                    onDomainSelect={setSelectedDomainId}
+                    getDomainKeywordCount={getDomainKeywordCount}
+                    showKeywordCount={true}
+                    className="w-[320px]"
+                    addDomainRoute="/dashboard/indexnow/add"
+                    placeholder="Select domain"
+                  />
+                )}
+              </div>
+              
+              {/* Right side: Notification + Add Keywords Button */}
               <div className="flex items-center space-x-2">
                 <button className="p-2 rounded-lg transition-colors duration-150 bg-secondary text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

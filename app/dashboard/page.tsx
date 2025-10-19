@@ -290,36 +290,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-        {hasActivePackage && domains.length > 0 && (
-          <div className="hidden lg:flex items-center space-x-3">
-            <SharedDomainSelector
-              domains={domains}
-              selectedDomainId={selectedDomainId}
-              selectedDomainInfo={selectedDomain}
-              isOpen={isDomainSelectorOpen}
-              onToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
-              onDomainSelect={setSelectedDomainId}
-              getDomainKeywordCount={getDomainKeywordCount}
-              showKeywordCount={true}
-              className="w-[320px]"
-              addDomainRoute="/dashboard/indexnow/add"
-              placeholder="Select domain"
-            />
-            <Button 
-              size="sm"
-              onClick={() => router.push('/dashboard/indexnow/add')}
-              data-testid="button-add-keyword"
-              className="bg-primary text-primary-foreground border-primary"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Keywords
-            </Button>
-          </div>
-        )}
-      </div>
-
       {/* Dashboard Error State */}
       {dashboardError && !isDataLoading ? (
         <Card className="border-destructive/20 bg-destructive/10">
