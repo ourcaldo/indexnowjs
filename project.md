@@ -2,6 +2,68 @@
 
 ## Recent Changes
 
+### 2025-10-20 - Fixed Device and Country Selectors Not Showing in Desktop Header (CRITICAL BUG FIX)
+
+**Critical Bug Fix**: Fixed device and country selectors not rendering in desktop dashboard header on /indexnow/overview and /indexnow/rank-history pages.
+
+#### ✅ Root Cause Analysis
+
+**Problem:**
+- Device and Country selectors were implemented in DashboardHeader component but not appearing on the actual pages
+- Selectors were present in the code (lines 87-179 in DashboardHeader.tsx) but the conditional check was preventing them from rendering
+- Issue affected both /indexnow/overview and /indexnow/rank-history pages in desktop view
+
+**Root Cause:**
+- The pathname check in DashboardHeader.tsx (line 55) was looking for `/dashboard/indexnow/` prefix
+- However, due to Next.js redirects configured in next.config.js (lines 163-166), production URLs redirect from `/dashboard/indexnow/*` to `dashboard.indexnow.studio/indexnow/*`
+- After redirect, pathname becomes `/indexnow/rank-history` (without `/dashboard` prefix)
+- The check `pathname?.startsWith('/dashboard/indexnow/')` failed because pathname was `/indexnow/rank-history`
+- Since `isIndexNowPage` evaluated to `false`, the selectors never rendered (line 87: `{isIndexNowPage && ...}`)
+
+**URL Structure:**
+- Local development: `/dashboard/indexnow/rank-history` (with /dashboard prefix)
+- Production (after redirect): `/indexnow/rank-history` (without /dashboard prefix)
+- Previous check only worked for local, not production
+
+#### ✅ The Fix
+
+**Solution:**
+Updated the pathname check to work with both URL structures by using `.includes()` instead of `.startsWith()`:
+
+```typescript
+// BEFORE (only worked locally):
+const isIndexNowPage = pathname?.startsWith('/dashboard/indexnow/') && 
+                       (pathname.includes('/overview') || pathname.includes('/rank-history'))
+
+// AFTER (works for both local and production):
+const isIndexNowPage = (pathname?.includes('/indexnow/overview') || pathname?.includes('/indexnow/rank-history'))
+```
+
+**Why This Works:**
+- `.includes('/indexnow/overview')` matches both `/dashboard/indexnow/overview` (local) AND `/indexnow/overview` (production)
+- `.includes('/indexnow/rank-history')` matches both `/dashboard/indexnow/rank-history` (local) AND `/indexnow/rank-history` (production)
+- Removes dependency on URL structure and works regardless of redirect configuration
+
+#### ✅ Files Modified
+
+- `components/DashboardHeader.tsx` - Line 59: Updated pathname check to support both URL structures
+
+#### ✅ Impact
+
+**Before:**
+- Device and Country selectors invisible on production environment
+- Users couldn't filter keywords by device type or country from the header
+- Desktop header missing key filtering functionality
+
+**After:**
+- Device and Country selectors now visible on both local and production environments
+- Selectors appear correctly on /indexnow/overview and /indexnow/rank-history pages
+- Desktop header provides full filtering functionality as designed
+
+**Status**: Device and Country selectors **FIXED** and now rendering correctly in desktop header on all environments.
+
+---
+
 ### 2025-10-20 - Enhanced Dashboard Header Component and Sidebar Quota Section with Accordion UI
 
 **UI/UX Enhancement**: Refactored dashboard header into a single unified component and added accordion functionality to sidebar quota/usage section for improved user experience and code maintainability.

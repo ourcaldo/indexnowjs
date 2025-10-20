@@ -1,6 +1,12 @@
 # IndexNow Studio - Project Setup
 
 ## Recent Changes
+- **[x] Oct 20, 2025**: Fixed device/country selectors not rendering in desktop header (CRITICAL BUG FIX):
+  - **Issue**: Device and Country selectors invisible on /indexnow/overview and /indexnow/rank-history pages in production
+  - **Root Cause**: Pathname check in DashboardHeader.tsx looked for `/dashboard/indexnow/` prefix, but production URLs redirect to `/indexnow/*` (without /dashboard prefix)
+  - **Fix**: Updated pathname check from `pathname?.startsWith('/dashboard/indexnow/')` to `pathname?.includes('/indexnow/overview') || pathname?.includes('/indexnow/rank-history')`
+  - **Impact**: Selectors now render correctly on both local development and production environments
+  - **Files**: components/DashboardHeader.tsx (line 59)
 - **[x] Oct 20, 2025**: Enhanced dashboard UI/UX with improved header navigation and sidebar accordion animations:
   - **Created**: DeviceCountryFilterContext for centralized device/country filter state management (mirrors DomainContext pattern)
   - **Enhanced**: DashboardHeader with conditional device/country selectors on /indexnow/overview and /indexnow/rank-history pages (desktop only)

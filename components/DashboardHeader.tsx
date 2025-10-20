@@ -52,8 +52,8 @@ export default function DashboardHeader({
   }
 
   // Check if we're on /indexnow/* pages (overview or rank-history)
-  const isIndexNowPage = pathname?.startsWith('/dashboard/indexnow/') && 
-                         (pathname.includes('/overview') || pathname.includes('/rank-history'))
+  // Support both /dashboard/indexnow/* (local) and /indexnow/* (after redirect in production)
+  const isIndexNowPage = (pathname?.includes('/indexnow/overview') || pathname?.includes('/indexnow/rank-history'))
   
   // Show notification icon only on main dashboard page
   const showNotification = pathname === '/dashboard'
