@@ -6,7 +6,6 @@
 import { supabaseAdmin } from '../database/supabase'
 import { SecureServiceRoleWrapper } from '../services/security/SecureServiceRoleWrapper'
 import { logger } from '@/lib/monitoring/error-handling'
-import { convertCountryCodeToName } from '../utils/country-converter'
 import { firecrawlRateLimiter } from './firecrawl-rate-limiter'
 
 interface RankTrackerConfig {
@@ -50,7 +49,7 @@ interface FirecrawlCreditResponse {
 interface RankCheckRequest {
   keyword: string
   domain: string
-  country: string // ISO2 code
+  country: string // Full country name (e.g., "Indonesia", "Malaysia")
   deviceType: 'desktop' | 'mobile'
 }
 
@@ -128,19 +127,15 @@ export class RankTrackerService {
         throw new Error('Firecrawl service not properly initialized')
       }
 
-      logger.info({ keyword: request.keyword, domain: request.domain }, 'Firecrawl: Checking rank')
+      logger.info({ keyword: request.keyword, domain: request.domain, country: request.country }, 'Firecrawl: Checking rank')
 
-      // Convert country code to full country name using comprehensive mapping
-      const countryName = convertCountryCodeToName(request.country)
-      logger.debug({ countryCode: request.country, countryName }, 'Firecrawl: Converted country code to name')
-      
-      // Build Firecrawl search request
+      // Build Firecrawl search request using country name from database
       const searchRequest: FirecrawlSearchRequest = {
         query: request.keyword,
         sources: ['web'],
         categories: [],
         limit: 100,
-        location: countryName
+        location: request.country
       }
 
       // Make API request to Firecrawl

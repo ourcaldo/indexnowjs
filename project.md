@@ -2,6 +2,111 @@
 
 ## Recent Changes
 
+### 2025-10-20 - REFACTOR: Simplified Country Code Handling in Rank Tracking
+
+**Code Refactoring**: Eliminated unnecessary hardcoded country converter by using country name directly from database for Firecrawl API requests.
+
+#### ✅ Problem Statement
+
+**User Confusion:**
+- Database already had full country names in `indb_keyword_countries.name` (e.g., "Malaysia", "Indonesia")
+- Keywords stored with `country_id` reference to `indb_keyword_countries` table
+- Code was fetching ISO2 code, then converting back to name using hardcoded mapping in `lib/utils/country-converter.ts`
+- This created unnecessary dependency on hardcoded country list when database already had the data
+
+#### ✅ Previous Flow (Unnecessarily Complex)
+```typescript
+1. Database: country_id → indb_keyword_countries → iso2_code: 'MY'
+2. Fetch ISO2 code: 'MY'
+3. Convert using hardcoded list: 'MY' → 'Malaysia' (via country-converter.ts)
+4. Send to Firecrawl API: location: 'Malaysia'
+```
+
+#### ✅ New Flow (Simplified)
+```typescript
+1. Database: country_id → indb_keyword_countries → name: 'Malaysia'
+2. Fetch country name directly: 'Malaysia'
+3. Send to Firecrawl API: location: 'Malaysia'
+```
+
+#### ✅ Changes Implemented
+
+**1. Updated `lib/rank-tracking/rank-tracker.ts`**
+- **Line 23**: Added `countryName: string` to `KeywordToTrack` interface
+- **Line 71**: Changed API request to pass `countryName` instead of `countryCode`
+- **Line 386**: Updated database query to fetch `name, iso2_code` from `indb_keyword_countries` (previously only `iso2_code`)
+- **Lines 403-404**: Added `countryName: keyword.country.name` to return object
+- **Kept**: `countryCode` field for logging/reference purposes
+
+**2. Updated `lib/rank-tracking/rank-tracker-service.ts`**
+- **Line 12**: Removed `import { convertCountryCodeToName } from '../utils/country-converter'`
+- **Line 56**: Updated comment on `RankCheckRequest.country` from "ISO2 code" to "Full country name (e.g., "Indonesia", "Malaysia")"
+- **Lines 133-141**: Removed `convertCountryCodeToName()` call and conversion logic
+- **Line 141**: Now uses `request.country` directly (which is already the full name from database)
+
+#### ✅ What Was Eliminated
+
+- ❌ Unnecessary `convertCountryCodeToName()` function call in rank checking flow
+- ❌ Dependency on hardcoded country mapping (`lib/utils/countries.ts` with 250+ countries)
+- ❌ Extra lookup/conversion step that duplicated database data
+
+#### ✅ Files Preserved (But No Longer Used in Rank Tracking)
+
+**Note**: The following files are kept in codebase in case they're used elsewhere (e.g., frontend dropdowns):
+- `lib/utils/countries.ts` - Hardcoded list of 250+ countries with codes
+- `lib/utils/country-converter.ts` - Conversion utilities between ISO2 ↔ Name
+
+These files are **no longer imported or used** in the rank tracking service flow.
+
+#### ✅ Technical Benefits
+
+**Before (Redundant)**:
+```typescript
+// 1. Query database
+country:indb_keyword_countries(iso2_code)  // Only fetch ISO2
+
+// 2. Convert using hardcoded list
+const countryName = convertCountryCodeToName(request.country)  // 'MY' → 'Malaysia'
+
+// 3. Send to API
+location: countryName
+```
+
+**After (Direct)**:
+```typescript
+// 1. Query database with full data
+country:indb_keyword_countries(name, iso2_code)  // Fetch both
+
+// 2. Use directly from database
+location: request.country  // Already 'Malaysia' from DB
+```
+
+#### ✅ Database Schema (Already Correct)
+
+The database already had the correct structure:
+```sql
+-- indb_keyword_countries table
+id: UUID
+name: 'Malaysia' (full country name) ✅
+iso2_code: 'MY' (for reference)
+iso3_code: 'MYS'
+...
+
+-- indb_keyword_keywords table  
+country_id: UUID (references indb_keyword_countries.id) ✅
+```
+
+**Impact:**
+- ✅ Eliminated redundant hardcoded country mapping in rank tracking
+- ✅ Simplified code by using database as single source of truth
+- ✅ Reduced maintenance burden (no need to keep hardcoded list in sync)
+- ✅ Database query now fetches complete country info in single request
+- ✅ More maintainable and logical data flow
+
+**Status**: Rank tracking **REFACTORED** to use country name directly from database, eliminating unnecessary hardcoded converter dependency.
+
+---
+
 ### 2025-10-20 - UX FIX: Improved Mobile Spacing in Add Keywords Modal
 
 **UX Enhancement**: Added responsive padding to prevent content from appearing too close to screen edges on mobile devices.

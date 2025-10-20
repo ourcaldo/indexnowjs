@@ -17,6 +17,7 @@ interface KeywordToTrack {
   domain: string
   deviceType: 'desktop' | 'mobile'
   countryCode: string
+  countryName: string
   userId: string
 }
 
@@ -60,11 +61,11 @@ export class RankTracker {
       // 3. Initialize Firecrawl Rank Tracker service (loads API key from database)
       this.rankTrackerService = new RankTrackerService()
 
-      // 4. Make rank check request
+      // 4. Make rank check request using country name from database
       const rankResult = await this.rankTrackerService.checkKeywordRank({
         keyword: keywordData.keyword,
         domain: keywordData.domain,
-        country: keywordData.countryCode,
+        country: keywordData.countryName,
         deviceType: keywordData.deviceType
       })
 
@@ -379,7 +380,7 @@ export class RankTracker {
             .select(`
               *,
               domain:indb_keyword_domains(domain_name),
-              country:indb_keyword_countries(iso2_code)
+              country:indb_keyword_countries(name, iso2_code)
             `)
             .eq('id', keywordId)
             .eq('user_id', userId)
@@ -397,6 +398,7 @@ export class RankTracker {
             domain: keyword.domain.domain_name,
             deviceType: keyword.device_type,
             countryCode: keyword.country.iso2_code,
+            countryName: keyword.country.name,
             userId: keyword.user_id
           }
         }
