@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
 import { usePageViewLogger } from '@/hooks/useActivityLogger'
 import { useDomain } from '@/lib/contexts/DomainContext'
+import { useDeviceCountryFilter } from '@/lib/contexts/DeviceCountryFilterContext'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
@@ -136,9 +137,16 @@ export default function RankHistoryPage() {
     setIsDomainSelectorOpen: setShowDomainsManager
   } = useDomain()
 
+  // Use device/country filter context
+  const {
+    selectedDevice,
+    selectedCountry,
+    countries,
+    setSelectedDevice,
+    setSelectedCountry
+  } = useDeviceCountryFilter()
+
   // State for filters
-  const [selectedDevice, setSelectedDevice] = useState<string>('')
-  const [selectedCountry, setSelectedCountry] = useState<string>('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showTagsDropdown, setShowTagsDropdown] = useState(false)
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -294,23 +302,6 @@ export default function RankHistoryPage() {
     }
   })
 
-  // Fetch countries
-  const { data: countriesData } = useQuery({
-    queryKey: [RANK_TRACKING_ENDPOINTS.COUNTRIES],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const response = await fetch(RANK_TRACKING_ENDPOINTS.COUNTRIES, {
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      })
-      if (!response.ok) throw new Error('Failed to fetch countries')
-      return response.json()
-    }
-  })
-
   // Fetch all keywords for domain (regardless of ranking data)
   const { data: keywordsData = [], isLoading: keywordsLoading, refetch: refetchKeywords } = useQuery({
     queryKey: [RANK_TRACKING_ENDPOINTS.KEYWORDS, selectedDomainId, selectedDevice, selectedCountry],
@@ -387,8 +378,6 @@ export default function RankHistoryPage() {
       history: historyMap[keyword.id]?.history || {} // Empty history if no data
     }))
   }, [keywordsData, rankHistoryData])
-
-  const countries = countriesData?.data?.data || []
 
   // Get comparison date strings for calculations (needed before sorting)
   const { todayStr: currentDateStr, comparisonDate: prevDateStr, periodLabel } = getComparisonPeriods(dateRange)
@@ -495,8 +484,8 @@ export default function RankHistoryPage() {
         />
       ) : (
         <>
-          {/* Device and Country Filters - Full width on all devices */}
-          <div className="mb-6">
+          {/* Device and Country Filters - Mobile/Tablet only (hidden on desktop, shown in header) */}
+          <div className="mb-6 lg:hidden">
             <DeviceCountryFilter
               selectedDevice={selectedDevice}
               selectedCountry={selectedCountry}

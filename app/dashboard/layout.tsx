@@ -12,6 +12,7 @@ import QuotaNotification from '@/components/QuotaNotification'
 import ServiceAccountQuotaNotification from '@/components/ServiceAccountQuotaNotification'
 import QueryProvider from '@/components/QueryProvider'
 import { DomainProvider, useDomain } from '@/lib/contexts/DomainContext'
+import { DeviceCountryFilterProvider, useDeviceCountryFilter } from '@/lib/contexts/DeviceCountryFilterContext'
 
 // Cookie utilities for sidebar state persistence
 const getCookie = (name: string): string | null => {
@@ -55,6 +56,15 @@ function DashboardLayoutContent({
     isDomainSelectorOpen,
     setIsDomainSelectorOpen
   } = useDomain()
+
+  // Use device/country filter context
+  const {
+    selectedDevice,
+    selectedCountry,
+    countries,
+    setSelectedDevice,
+    setSelectedCountry
+  } = useDeviceCountryFilter()
   
   // Site settings hooks
   useFavicon() // Automatically updates favicon
@@ -222,6 +232,11 @@ function DashboardLayoutContent({
               onDomainSelect={setSelectedDomainId}
               getDomainKeywordCount={getDomainKeywordCount}
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+              selectedDevice={selectedDevice}
+              selectedCountry={selectedCountry}
+              countries={countries}
+              onDeviceChange={setSelectedDevice}
+              onCountryChange={setSelectedCountry}
             />
 
             {/* Service Account Quota Notification */}
@@ -250,7 +265,9 @@ export default function DashboardLayout({
   return (
     <QueryProvider>
       <DomainProvider>
-        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        <DeviceCountryFilterProvider>
+          <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        </DeviceCountryFilterProvider>
       </DomainProvider>
     </QueryProvider>
   )

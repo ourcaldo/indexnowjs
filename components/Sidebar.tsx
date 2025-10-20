@@ -328,7 +328,7 @@ const Sidebar = ({
                           aria-label={isQuotaExpanded ? 'Collapse quota details' : 'Expand quota details'}
                         >
                           <ChevronDown 
-                            className={`h-4 w-4 transition-transform duration-200 ${isQuotaExpanded ? 'rotate-180' : ''}`}
+                            className={`h-4 w-4 transition-transform duration-300 ease-in-out ${isQuotaExpanded ? 'rotate-180' : ''}`}
                           />
                         </button>
                       </div>
@@ -358,14 +358,18 @@ const Sidebar = ({
                           </>
                         )}
                       </div>
-                      {isQuotaExpanded && (
+                      <div 
+                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                          isQuotaExpanded ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
+                        }`}
+                      >
                         <a 
                           href="/dashboard/settings/plans-billing"
                           className="w-full bg-background text-primary text-sm font-semibold py-2 px-3 rounded-lg hover:bg-secondary transition-colors block text-center"
                         >
                           {!hasActivePackage ? 'Subscribe now →' : 'Upgrade plan →'}
                         </a>
-                      )}
+                      </div>
                     </>
                   )
                 })()}
@@ -566,7 +570,7 @@ const Sidebar = ({
                         aria-label={isQuotaExpanded ? 'Collapse quota details' : 'Expand quota details'}
                       >
                         <ChevronDown 
-                          className={`h-4 w-4 transition-transform duration-200 ${isQuotaExpanded ? 'rotate-180' : ''}`}
+                          className={`h-4 w-4 transition-transform duration-300 ease-in-out ${isQuotaExpanded ? 'rotate-180' : ''}`}
                         />
                       </button>
                     </div>
@@ -596,7 +600,11 @@ const Sidebar = ({
                         </>
                       )}
                     </div>
-                    {isQuotaExpanded && (
+                    <div 
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        isQuotaExpanded ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
+                      }`}
+                    >
                       <a 
                         href="/dashboard/settings/plans-billing"
                         onClick={onToggle}
@@ -604,7 +612,7 @@ const Sidebar = ({
                       >
                         {!hasActivePackage ? 'Subscribe now →' : 'Upgrade plan →'}
                       </a>
-                    )}
+                    </div>
                   </>
                 )
               })()}

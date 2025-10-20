@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
 import { useDomain } from '@/lib/contexts/DomainContext'
+import { useDeviceCountryFilter } from '@/lib/contexts/DeviceCountryFilterContext'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { Card, Button } from '@/components/dashboard/ui'
@@ -24,8 +25,6 @@ import { RankingDistribution } from '@/components/dashboard/enhanced'
 export default function IndexNowOverview() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedDevice, setSelectedDevice] = useState('')
-  const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showDomainsManager, setShowDomainsManager] = useState(false)
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([])
@@ -51,25 +50,14 @@ export default function IndexNowOverview() {
     setIsDomainSelectorOpen: setShowDomainsManagerContext
   } = useDomain()
 
-  const { data: countriesData } = useQuery({
-    queryKey: [RANK_TRACKING_ENDPOINTS.COUNTRIES],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const response = await fetch(RANK_TRACKING_ENDPOINTS.COUNTRIES, {
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      })
-      if (!response.ok) throw new Error('Failed to fetch countries')
-      const result = await response.json()
-      if (result.success === true && result.data) {
-        return result.data
-      }
-      return result
-    }
-  })
+  // Use device/country filter context
+  const {
+    selectedDevice,
+    selectedCountry,
+    countries,
+    setSelectedDevice,
+    setSelectedCountry
+  } = useDeviceCountryFilter()
 
   const { data: keywordCountsData } = useQuery({
     queryKey: [RANK_TRACKING_ENDPOINTS.KEYWORDS + '-counts'],
@@ -90,9 +78,6 @@ export default function IndexNowOverview() {
       return result
     }
   })
-
-  // Fix: API returns { success: true, data: { data: [...] } }, but query already unwraps to { data: [...] }
-  const countries = countriesData?.data || []
 
   // Clear selected keywords when domain changes
   useEffect(() => {
@@ -315,8 +300,8 @@ export default function IndexNowOverview() {
         <NoDomainState />
       ) : (
         <>
-          {/* Device/Country Filter - Full width on all devices */}
-          <div className="w-full mb-6">
+          {/* Device/Country Filter - Mobile/Tablet only (hidden on desktop, shown in header) */}
+          <div className="w-full mb-6 lg:hidden">
             <DeviceCountryFilter
               selectedDevice={selectedDevice}
               selectedCountry={selectedCountry}
