@@ -57,7 +57,7 @@ export default function DashboardHeader({
           )}
         </div>
         
-        {/* Right side: Notification + Add Keywords Button */}
+        {/* Right side: Notif/indexnow/rank-historyication + Add Keywords Button */}
         <div className="flex items-center space-x-2">
           <button 
             className="p-2 rounded-lg transition-colors duration-150 bg-secondary text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800"
