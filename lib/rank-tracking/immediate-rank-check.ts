@@ -23,13 +23,29 @@ export async function triggerImmediateRankCheck(
   keywordIds: string[],
   userId: string
 ): Promise<void> {
+  // Validate input parameters
   if (!keywordIds || keywordIds.length === 0) {
     logger.info({}, 'No keywords to check - skipping immediate rank check')
     return
   }
 
+  if (!userId) {
+    logger.error({}, 'Missing userId - cannot proceed with immediate rank check')
+    return
+  }
+
+  // Deduplicate keyword IDs to prevent duplicate checks
+  const uniqueKeywordIds = Array.from(new Set(keywordIds))
+  
+  if (uniqueKeywordIds.length !== keywordIds.length) {
+    logger.warn({ 
+      original: keywordIds.length, 
+      deduplicated: uniqueKeywordIds.length 
+    }, 'Duplicate keyword IDs detected - deduplication applied')
+  }
+
   logger.info({ 
-    keywordCount: keywordIds.length, 
+    keywordCount: uniqueKeywordIds.length, 
     userId 
   }, 'Starting immediate rank check for newly added keywords')
 
@@ -38,7 +54,7 @@ export async function triggerImmediateRankCheck(
 
   // Process keywords sequentially to avoid overwhelming the API
   // (rate limiting is already handled in RankTrackerService)
-  for (const keywordId of keywordIds) {
+  for (const keywordId of uniqueKeywordIds) {
     try {
       // Get keyword details (domain, country, etc.)
       const keywordData = await rankTracker.getKeywordWithDetails(keywordId, userId)
@@ -84,7 +100,7 @@ export async function triggerImmediateRankCheck(
 
     // Small delay between keywords to be respectful to API
     // (rate limiter already handles this, but extra safety)
-    if (keywordIds.indexOf(keywordId) < keywordIds.length - 1) {
+    if (uniqueKeywordIds.indexOf(keywordId) < uniqueKeywordIds.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
   }
@@ -93,7 +109,7 @@ export async function triggerImmediateRankCheck(
   const failureCount = results.filter(r => !r.success).length
 
   logger.info({ 
-    totalKeywords: keywordIds.length,
+    totalKeywords: uniqueKeywordIds.length,
     successCount,
     failureCount,
     userId

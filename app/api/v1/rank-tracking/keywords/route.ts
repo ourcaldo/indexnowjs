@@ -375,13 +375,23 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     if (error) throw new Error('Failed to add keywords')
 
+    // Validate that keywords were actually inserted
+    if (!insertedKeywords || insertedKeywords.length === 0) {
+      const validationError = await ErrorHandlingService.createError(
+        ErrorType.VALIDATION,
+        'No new keywords were added. All keywords may already exist.',
+        { severity: ErrorSeverity.LOW, userId: auth.userId, statusCode: 400 }
+      )
+      return formatError(validationError)
+    }
+
     // Trigger immediate rank check for newly added keywords (runs in background)
     const insertedKeywordIds = insertedKeywords.map((k: any) => k.id)
     startImmediateRankCheckInBackground(insertedKeywordIds, auth.userId)
 
     return formatSuccess({
       data: insertedKeywords,
-      message: `Successfully added ${insertedKeywords.length} keywords. Rank checking started in background.`
+      message: `Successfully added ${insertedKeywords.length} keyword${insertedKeywords.length > 1 ? 's' : ''}. Rank checking started in background.`
     }, 201)
 
   } catch (error) {
