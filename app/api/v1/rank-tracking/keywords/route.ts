@@ -372,7 +372,10 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     const { data: insertedKeywords, error } = insertResult
 
-    if (error) throw new Error('Failed to add keywords')
+    if (error) {
+      console.error('Supabase insert error:', JSON.stringify(error, null, 2))
+      throw new Error(`Failed to add keywords: ${error.message || JSON.stringify(error)}`)
+    }
 
     return formatSuccess({
       data: insertedKeywords,
