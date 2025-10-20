@@ -9,12 +9,19 @@ import {
   Plus, 
   Globe, 
   AlertCircle,
-  CheckCircle2,
-  Loader2
+  Loader2,
+  ChevronDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface Domain {
   id: string
@@ -38,6 +45,7 @@ export function DomainSelectionStep({
   const queryClient = useQueryClient()
   const { handleApiError } = useApiError()
   const [newDomainName, setNewDomainName] = useState('')
+  const [showAddDomain, setShowAddDomain] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
   // Create domain mutation
@@ -52,6 +60,7 @@ export function DomainSelectionStep({
       queryClient.invalidateQueries({ queryKey: [RANK_TRACKING_ENDPOINTS.DOMAINS] })
       onDomainSelect(data.id)
       setNewDomainName('')
+      setShowAddDomain(false)
       setErrors({ ...errors, domain: '' })
     },
     onError: handleApiError
@@ -70,88 +79,121 @@ export function DomainSelectionStep({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold mb-2 text-foreground">
+        <h3 className="text-base font-semibold mb-1 text-foreground">
           Select or Add Domain
-        </h2>
-        <p className="text-muted-foreground">
+        </h3>
+        <p className="text-sm text-muted-foreground">
           Choose an existing domain or add a new one to track keywords for.
         </p>
       </div>
 
-      {/* Existing Domains */}
+      {/* Domain Selector Dropdown */}
       {domains.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="font-medium text-foreground">Existing Domains</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {domains.map((domain) => (
-              <div
-                key={domain.id}
-                className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                  selectedDomain === domain.id 
-                    ? 'ring-2 bg-primary/10 border-primary ring-primary' 
-                    : 'bg-background border-border hover:border-primary/50'
-                }`}
-                onClick={() => onDomainSelect(domain.id)}
-                data-testid={`card-domain-${domain.id}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-primary" />
-                  <div className="flex-1">
-                    <div className="font-medium text-foreground">
-                      {domain.display_name || domain.domain_name}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {domain.domain_name}
-                    </div>
-                  </div>
-                  {selectedDomain === domain.id && (
-                    <CheckCircle2 className="w-5 h-5 ml-auto text-primary" />
-                  )}
-                </div>
+        <div className="space-y-2">
+          <Label htmlFor="domain-select" className="text-sm">Domain</Label>
+          <Select value={selectedDomain} onValueChange={onDomainSelect}>
+            <SelectTrigger 
+              id="domain-select"
+              className="w-full"
+              data-testid="select-domain"
+            >
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-muted-foreground" />
+                <SelectValue placeholder="Select a domain" />
               </div>
-            ))}
-          </div>
+            </SelectTrigger>
+            <SelectContent>
+              {domains.map((domain) => (
+                <SelectItem 
+                  key={domain.id} 
+                  value={domain.id}
+                  data-testid={`option-domain-${domain.id}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {domain.display_name || domain.domain_name}
+                    </span>
+                    {domain.display_name && domain.display_name !== domain.domain_name && (
+                      <span className="text-xs text-muted-foreground">
+                        ({domain.domain_name})
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
-      {/* Add New Domain */}
-      <div className={`space-y-4 ${domains.length > 0 ? 'border-t border-border pt-6' : ''}`}>
-        <h3 className="font-medium text-foreground">Add New Domain</h3>
-        <div className="flex gap-3">
-          <div className="flex-1">
+      {/* Add New Domain Toggle */}
+      {!showAddDomain ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAddDomain(true)}
+          className="w-full"
+          data-testid="button-toggle-add-domain"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Domain
+        </Button>
+      ) : (
+        <div className="space-y-3 p-3 rounded-lg border border-border bg-secondary/30">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Add New Domain</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowAddDomain(false)
+                setNewDomainName('')
+                setErrors({ ...errors, domain: '' })
+              }}
+              className="h-auto p-1 text-xs text-muted-foreground hover:text-foreground"
+              data-testid="button-cancel-add-domain"
+            >
+              Cancel
+            </Button>
+          </div>
+          <div className="flex gap-2">
             <Input
               placeholder="example.com"
               value={newDomainName}
               onChange={(e) => setNewDomainName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateDomain()}
+              className="flex-1"
               data-testid="input-new-domain"
             />
+            <Button 
+              onClick={handleCreateDomain} 
+              disabled={!newDomainName.trim() || createDomainMutation.isPending}
+              size="sm"
+              data-testid="button-add-domain"
+            >
+              {createDomainMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </>
+              )}
+            </Button>
           </div>
-          <Button 
-            onClick={handleCreateDomain} 
-            disabled={!newDomainName.trim() || createDomainMutation.isPending}
-            data-testid="button-add-domain"
-          >
-            {createDomainMutation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4 mr-2" />
-            )}
-            Add Domain
-          </Button>
+          {errors.domain && (
+            <div className="flex items-center gap-2 text-xs text-destructive" data-testid="error-domain">
+              <AlertCircle className="w-3 h-3" />
+              {errors.domain}
+            </div>
+          )}
         </div>
-        {errors.domain && (
-          <div className="flex items-center gap-2 text-sm text-destructive" data-testid="error-domain">
-            <AlertCircle className="w-4 h-4" />
-            {errors.domain}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Next Button */}
-      <div className="flex justify-end pt-4 border-t border-border">
+      <div className="flex justify-end pt-2">
         <Button 
           onClick={onNext} 
           disabled={!selectedDomain}

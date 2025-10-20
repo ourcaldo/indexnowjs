@@ -150,35 +150,38 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden" data-testid="modal-add-keyword">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0" data-testid="modal-add-keyword">
+        {/* Header - Compact */}
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+          <DialogTitle className="text-lg sm:text-xl">
             Add Keywords to Track
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Add keywords to monitor their search rankings and performance
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step indicator */}
-        <div className="flex items-center gap-4 py-4">
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${step >= 1 ? 'font-medium bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 1 ? 'bg-primary-foreground text-primary' : 'bg-transparent text-muted-foreground'}`}>
+        {/* Step indicator - Compact */}
+        <div className="flex items-center justify-center gap-2 px-5 py-3 bg-secondary/30">
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs sm:text-sm ${step >= 1 ? 'font-medium bg-primary text-primary-foreground' : 'bg-background text-muted-foreground border border-border'}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${step >= 1 ? 'bg-primary-foreground text-primary' : 'bg-secondary'}`}>
               1
             </span>
-            Select Domain
+            <span className="hidden sm:inline">Select Domain</span>
+            <span className="sm:hidden">Domain</span>
           </div>
-          <div className={`w-8 h-px ${step >= 2 ? 'bg-primary' : 'bg-border'}`}></div>
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${step >= 2 ? 'font-medium bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 2 ? 'bg-primary-foreground text-primary' : 'bg-transparent text-muted-foreground'}`}>
+          <div className={`w-6 sm:w-8 h-px ${step >= 2 ? 'bg-primary' : 'bg-border'}`}></div>
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs sm:text-sm ${step >= 2 ? 'font-medium bg-primary text-primary-foreground' : 'bg-background text-muted-foreground border border-border'}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${step >= 2 ? 'bg-primary-foreground text-primary' : 'bg-secondary'}`}>
               2
             </span>
-            Add Keywords
+            <span className="hidden sm:inline">Add Keywords</span>
+            <span className="sm:hidden">Keywords</span>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[60vh] pr-2">
+        {/* Content - Compact with better scrolling */}
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-5 py-4">
           {domainsLoading || countriesLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-3">
@@ -210,7 +213,7 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
               )}
 
               {step === 2 && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <KeywordConfigurationStep
                     domains={domains}
                     countries={countries}
@@ -228,12 +231,12 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
                     onChangeDomain={handleChangeDomain}
                   />
 
-                  {/* Submit Button - Separate from KeywordConfigurationStep for easier management */}
-                  <div className="flex gap-3 pt-4 border-t border-border">
+                  {/* Submit Button - Compact */}
+                  <div className="flex gap-2 pt-3 border-t border-border">
                     <Button 
                       onClick={handleSubmitKeywords}
                       disabled={!selectedDomain || keywordsList.length === 0 || !selectedCountry || addKeywordsMutation.isPending}
-                      className="flex-1"
+                      className="flex-1 h-9"
                       data-testid="button-submit-keywords"
                     >
                       {addKeywordsMutation.isPending ? (
