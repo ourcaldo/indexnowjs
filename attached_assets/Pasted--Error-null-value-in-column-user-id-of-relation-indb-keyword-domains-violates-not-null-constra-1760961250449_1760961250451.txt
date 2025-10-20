@@ -1,0 +1,47 @@
+# Error: null value in column "user_id" of relation "indb_keyword_domains" violates not-null constraint
+
+**Issue ID:** 6959701289
+**Project:** indexnow
+**Date:** 20/10/2025, 18.52.46
+## Issue Summary
+Missing User ID in Rank Tracking Domain Creation
+**What's wrong:** POST to **/v1/rank-tracking/domains** failed due to a **not-null constraint violation**.
+**In the trace:** The failure occurred when inserting into **indb_keyword_domains**; **user_id** was missing.
+
+## Tags
+
+- **browser:** Chrome 141
+- **browser.name:** Chrome
+- **client_os:** Windows
+- **client_os.name:** Windows
+- **environment:** production
+- **handled:** yes
+- **level:** error
+- **mechanism:** generic
+- **os:** Ubuntu Linux 22.04
+- **os.name:** Ubuntu Linux
+- **runtime.name:** server
+- **server_name:** cloud-2
+- **transaction:** POST /v1/rank-tracking/domains
+- **url:** http://api.indexnow.studio/v1/rank-tracking/domains
+
+## Exception
+
+### Exception 1
+**Type:** Error
+**Value:** null value in column "user_id" of relation "indb_keyword_domains" violates not-null constraint
+
+#### Stacktrace
+
+```
+ q.createError in /home/nexpocket/indexnowjs/.next/server/chunks/1290.js [Line 1] (In app)
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/domains/route.js [Line 4] (In app)
+ process.processTicksAndRejections in node:internal/process/task_queues [Line 95] (Not in app)
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ rN.do in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ rN.handle in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ k in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/domains/route.js [Line 4] (In app)
+ rN.handleResponse in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 1] (Not in app)
+ g in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/domains/route.js [Line 4] (In app)
+ G in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/domains/route.js [Line 4] (In app)
+```

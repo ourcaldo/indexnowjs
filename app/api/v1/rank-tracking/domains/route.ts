@@ -99,7 +99,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
           .insert({
             domain_name: cleanDomain,
             display_name: display_name || cleanDomain,
-            verification_status: 'verified'
+            verification_status: 'verified',
+            user_id: auth.userId
           })
           .select()
           .single()
