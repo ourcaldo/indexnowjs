@@ -1,6 +1,21 @@
 # IndexNow Studio - Project Setup
 
 ## Recent Changes
+- **[x] Oct 20, 2025**: Enhanced dashboard UI/UX with improved header navigation and sidebar accordion animations:
+  - **Created**: DeviceCountryFilterContext for centralized device/country filter state management (mirrors DomainContext pattern)
+  - **Enhanced**: DashboardHeader with conditional device/country selectors on /indexnow/overview and /indexnow/rank-history pages (desktop only)
+    - Display order: Device selector → Country selector → Add Keywords button
+    - Selectors only appear on /indexnow/* routes in desktop view
+  - **Updated**: Notification icon visibility - now shown only on main dashboard page (/), hidden on /indexnow/* pages (desktop only)
+  - **Improved**: Overview and rank-history pages to use shared DeviceCountryFilterContext
+    - Inline device/country filters hidden on desktop with lg:hidden class
+    - Mobile/tablet layouts unchanged - selectors remain in page content
+  - **Enhanced**: Sidebar quota accordion animation with smooth 300ms transitions
+    - Arrow rotation: updated from 200ms to 300ms ease-in-out
+    - Button container: added overflow-hidden with max-height and opacity transitions
+    - Result: Smooth expand/collapse animation for upgrade button
+  - **Impact**: Improved header consistency, cleaner desktop layout with centralized filters, smoother accordion interactions
+  - **Files**: Created lib/contexts/DeviceCountryFilterContext.tsx, updated components/DashboardHeader.tsx, app/dashboard/layout.tsx, app/dashboard/indexnow/overview/page.tsx, app/dashboard/indexnow/rank-history/page.tsx, components/Sidebar.tsx
 - **[x] Oct 16, 2025**: Removed all WebSocket/Socket.IO functionality:
   - **Removed**: Complete WebSocket infrastructure (Socket.IO server, client hooks, providers)
   - **Deleted**: 9 files including useSocketIO, useGlobalWebSocket, useFastIndexingWebSocket, SocketIOBroadcaster
