@@ -775,6 +775,74 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### October 20, 2025: Rank Tracking Enhancement - Immediate Rank Check After Keyword Addition ✅
+
+🚀 **IMMEDIATE RANK CHECKING IMPLEMENTATION**: Enhanced rank tracking system to trigger immediate rank checking when users add new keywords, eliminating the wait until next day's 2 AM cron job
+
+**✅ PROBLEM IDENTIFIED**:
+- **Previous Behavior**: When users added new keywords, rank checking was NOT triggered immediately
+- **Impact**: Users had to wait until the next scheduled cron job (2 AM UTC daily) to see their first rank result
+- **User Experience**: Poor UX - users couldn't see immediate results after adding keywords
+- **Verification**: Deep code analysis confirmed POST `/api/v1/rank-tracking/keywords` only inserted keywords without triggering rank checks
+
+**✅ ENHANCEMENT IMPLEMENTED**:
+- **Immediate Rank Check**: New keywords now trigger immediate rank checking in background after successful insertion
+- **Async Processing**: Rank checks run asynchronously (fire-and-forget) so users get immediate API response
+- **Scheduled Checks Continue**: Daily 2 AM cron job continues to run for regular rank updates
+- **Background Processing**: Checks run in background without blocking user experience
+
+**✅ TECHNICAL IMPLEMENTATION**:
+
+**New Service Created** (`lib/rank-tracking/immediate-rank-check.ts`):
+- **triggerImmediateRankCheck()**: Main function that processes newly added keywords
+  - Fetches keyword details (domain, country info) using existing `RankTracker.getKeywordWithDetails()`
+  - Calls existing `RankTracker.trackKeyword()` for each keyword
+  - Processes keywords sequentially to avoid API overwhelming
+  - Stores results in database (rank_history and rankings tables)
+  - Logs success/failure for each keyword
+- **startImmediateRankCheckInBackground()**: Fire-and-forget wrapper function
+  - Starts rank checking without waiting for completion
+  - Returns immediately to avoid blocking API response
+  - Handles errors gracefully with comprehensive logging
+
+**API Endpoint Enhanced** (`app/api/v1/rank-tracking/keywords/route.ts`):
+- **POST Endpoint Update**: Added immediate rank check trigger after successful keyword insertion
+  - Line 5: Added import for `startImmediateRankCheckInBackground`
+  - Lines 381-383: Trigger background rank check with newly inserted keyword IDs
+  - Line 387: Updated success message to inform users rank checking started
+- **User Flow**: Insert keywords → Get immediate success response → Background rank check runs
+- **No Breaking Changes**: Existing functionality preserved, enhancement is additive
+
+**✅ ARCHITECTURE PATTERNS FOLLOWED**:
+- **Separation of Concerns**: New immediate check service is separate from daily batch processor
+- **Code Reuse**: Leverages existing `RankTracker` class methods for checking logic
+- **Error Handling**: Comprehensive error logging and graceful failure handling
+- **Rate Limiting**: Respects existing Firecrawl rate limiter (already integrated in RankTrackerService)
+- **Async Processing**: Non-blocking background execution for better UX
+
+**✅ IMPACT & BENEFITS**:
+- **Improved UX**: Users see rank results immediately after adding keywords (within seconds/minutes)
+- **No Wait Time**: Eliminates 24-hour wait for first rank result
+- **Maintained Reliability**: Daily cron job continues for regular scheduled checks
+- **Graceful Degradation**: If immediate check fails, daily cron will still check the keyword
+- **No Performance Impact**: Background processing doesn't slow down API response
+
+**Files Created**:
+- `lib/rank-tracking/immediate-rank-check.ts` - New immediate rank check service
+
+**Files Modified**:
+- `app/api/v1/rank-tracking/keywords/route.ts` - Enhanced POST endpoint to trigger immediate checks
+
+**Expected User Flow**:
+1. User adds new keyword(s) via Add Keywords modal
+2. API validates, checks quota, inserts keywords into database
+3. API triggers immediate rank check in background (fire-and-forget)
+4. User receives immediate success response with keyword details
+5. Background process fetches keyword details and performs rank checking
+6. Rank results stored in database (rank_history and rankings tables)
+7. User can see results on Overview page within seconds/minutes
+8. Daily cron at 2 AM UTC continues to update ranks for all keywords
+
 ### October 16, 2025: Midtrans 3DS Authentication Fix - Proper Callback Implementation ✅
 
 🔐 **MIDTRANS 3DS AUTHENTICATION POPUP FIX**: Fixed critical 3DS authentication issues following Midtrans official documentation for `callback_type: "js_event"` implementation
