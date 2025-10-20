@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { authenticatedApiWrapper, formatSuccess, formatError } from '@/lib/core/api-response-middleware'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
+import { startImmediateRankCheckInBackground } from '@/lib/rank-tracking/immediate-rank-check'
 
 export const GET = authenticatedApiWrapper(async (request, auth) => {
   try {
@@ -374,9 +375,13 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     if (error) throw new Error('Failed to add keywords')
 
+    // Trigger immediate rank check for newly added keywords (runs in background)
+    const insertedKeywordIds = insertedKeywords.map((k: any) => k.id)
+    startImmediateRankCheckInBackground(insertedKeywordIds, auth.userId)
+
     return formatSuccess({
       data: insertedKeywords,
-      message: `Successfully added ${insertedKeywords.length} keywords`
+      message: `Successfully added ${insertedKeywords.length} keywords. Rank checking started in background.`
     }, 201)
 
   } catch (error) {
