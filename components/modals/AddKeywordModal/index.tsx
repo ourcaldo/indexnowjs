@@ -152,7 +152,7 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0" data-testid="modal-add-keyword">
         {/* Header - Compact */}
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+        <DialogHeader className="px-6 sm:px-5 pt-5 pb-3 border-b border-border">
           <DialogTitle className="text-lg sm:text-xl">
             Add Keywords to Track
           </DialogTitle>
@@ -162,7 +162,7 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
         </DialogHeader>
 
         {/* Step indicator - Compact */}
-        <div className="flex items-center justify-center gap-2 px-5 py-3 bg-secondary/30">
+        <div className="flex items-center justify-center gap-2 px-6 sm:px-5 py-3 bg-secondary/30">
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs sm:text-sm ${step >= 1 ? 'font-medium bg-primary text-primary-foreground' : 'bg-background text-muted-foreground border border-border'}`}>
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${step >= 1 ? 'bg-primary-foreground text-primary' : 'bg-secondary'}`}>
               1
@@ -181,7 +181,7 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
         </div>
 
         {/* Content - Compact with better scrolling */}
-        <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-5 py-4">
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-6 sm:px-5 py-4">
           {domainsLoading || countriesLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-3">
@@ -232,7 +232,7 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
                   />
 
                   {/* Submit Button - Compact */}
-                  <div className="flex gap-2 pt-3 border-t border-border">
+                  <div className="flex gap-2 pt-3 border-t border-border -mx-1">
                     <Button 
                       onClick={handleSubmitKeywords}
                       disabled={!selectedDomain || keywordsList.length === 0 || !selectedCountry || addKeywordsMutation.isPending}

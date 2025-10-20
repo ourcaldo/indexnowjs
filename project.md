@@ -2,6 +2,41 @@
 
 ## Recent Changes
 
+### 2025-10-20 - UX FIX: Improved Mobile Spacing in Add Keywords Modal
+
+**UX Enhancement**: Added responsive padding to prevent content from appearing too close to screen edges on mobile devices.
+
+#### ✅ Problem Statement
+
+**User Feedback:**
+- On mobile/small screen devices, modal content appeared too close to screen edges
+- Device selector, country dropdown, and form inputs had insufficient breathing room
+- Made the interface feel cramped and harder to interact with on mobile
+
+#### ✅ Solution Implemented
+
+**Responsive Padding Strategy:**
+- Mobile (< 640px): `px-6` (24px padding) for better spacing
+- Desktop (≥ 640px): `px-5` (20px padding) - original compact design
+
+**Files Modified:** `components/modals/AddKeywordModal/index.tsx`
+
+**Changes Applied:**
+1. **Header**: `px-5` → `px-6 sm:px-5` (line 158)
+2. **Step Indicator**: `px-5` → `px-6 sm:px-5` (line 168)
+3. **Content Area**: `px-5` → `px-6 sm:px-5` (line 187)
+4. **Submit Button**: Added `-mx-1` to compensate for padding (line 238)
+
+**Impact:**
+- ✅ 20% more horizontal space on mobile (24px vs 20px)
+- ✅ Content no longer touches screen edges on small devices
+- ✅ Better tap targets and visual comfort on mobile
+- ✅ Desktop layout unchanged - maintains compact design
+
+**Status:** Mobile spacing **IMPROVED**, content has proper breathing room on all screen sizes.
+
+---
+
 ### 2025-10-20 - CRITICAL BUG FIX: Domain Dropdown Not Showing in Add Keywords Modal
 
 **Critical Bug Fix**: Fixed domain dropdown not rendering due to incorrect data path access after `apiRequest` unwrapping.
