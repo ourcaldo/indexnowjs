@@ -2,6 +2,108 @@
 
 ## Recent Changes
 
+### 2025-10-20 - CRITICAL BUG FIX: Domain Dropdown Not Showing in Add Keywords Modal
+
+**Critical Bug Fix**: Fixed domain dropdown not rendering due to incorrect data path access after `apiRequest` unwrapping.
+
+#### ✅ Problem Statement
+
+**User Report:**
+- Add Keywords modal only showing "+ Add New Domain" button
+- Domain dropdown completely missing despite API returning 2 verified domains (cetta.id, nexjob.tech)
+- API call to `/v1/rank-tracking/domains` working correctly and returning data
+
+**API Response Structure:**
+```json
+{
+  "success": true,
+  "data": {
+    "data": [
+      { "id": "...", "domain_name": "cetta.id", ... },
+      { "id": "...", "domain_name": "nexjob.tech", ... }
+    ]
+  }
+}
+```
+
+**Root Cause:**
+- The `apiRequest` function unwraps one level of the API response (returns `jsonResponse.data`)
+- Modal component was using **double nested** path: `domainsData?.data?.data`
+- Should have been using **single nested** path: `domainsData?.data`
+- Result: `domains` array was empty, triggering conditional hide of dropdown (`domains.length > 0`)
+
+#### ✅ Technical Analysis
+
+**apiRequest Behavior** (`lib/core/queryClient.ts` lines 73-74):
+```typescript
+if (isStandardizedFormat && jsonResponse.success === true) {
+  return jsonResponse.data  // <-- Unwraps outer wrapper
+}
+```
+
+**Data Flow:**
+1. API returns: `{ success: true, data: { data: [...] } }`
+2. `apiRequest` unwraps to: `{ data: [...] }`
+3. `useQuery` stores result as: `domainsData = { data: [...] }`
+
+**Incorrect Code** (line 80):
+```typescript
+const domains = domainsData?.data?.data || []  // ❌ Accessing .data.data on unwrapped response
+// Result: undefined, because domainsData.data is the array, not an object with .data property
+```
+
+**Fixed Code** (line 80):
+```typescript
+const domains = domainsData?.data || []  // ✓ Correct path after apiRequest unwrapping
+```
+
+#### ✅ Fix Applied
+
+**File Modified:** `components/modals/AddKeywordModal/index.tsx`
+
+**Line 83-84:** Changed data access paths:
+```typescript
+// BEFORE
+const domains = domainsData?.data?.data || []
+const countries = countriesData?.data?.data || []
+
+// AFTER
+const domains = domainsData?.data || []
+const countries = countriesData?.data || []
+```
+
+**Impact:**
+- Domain dropdown now renders with all available domains
+- Countries dropdown also fixed (same issue)
+- Modal UX restored to working state
+
+#### ✅ Why This Happened
+
+**Context from Recent Changes:**
+- Previous project-wide fix (Oct 11, 2025) addressed similar issues in backend/admin pages
+- Those pages accessed `data.data?.stats` because they were using **raw fetch** responses
+- This modal uses `apiRequest` which **already unwraps** one level
+- Inconsistent understanding of when unwrapping occurs led to double-nesting
+
+**Key Learning:**
+- `apiRequest` always returns `jsonResponse.data` for standardized responses
+- Don't assume all API responses need double-nesting
+- Check what the data-fetching function returns, not just the raw API response
+
+#### ✅ Testing Performed
+
+**Verified:**
+1. ✅ Domain dropdown renders with correct data
+2. ✅ Shows both verified domains (cetta.id, nexjob.tech)
+3. ✅ Domain selection works correctly
+4. ✅ Countries dropdown also works (same fix applied)
+5. ✅ "Add New Domain" toggle still functional
+6. ✅ All existing functionality preserved
+
+**Status:** Domain dropdown **FIXED** and **VERIFIED**, modal now shows existing domains correctly, critical bug resolved.
+
+---
+
 ### 2025-10-20 - Redesigned Add Keywords Modal for Compact, Mobile-Optimized UX (ENHANCEMENT)
 
 **UX Enhancement**: Completely redesigned the Add Keywords modal with compact layout, dropdown domain selector, and improved mobile/tablet responsiveness based on user feedback.

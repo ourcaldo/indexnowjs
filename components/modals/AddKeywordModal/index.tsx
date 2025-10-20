@@ -77,8 +77,8 @@ function AddKeywordModal({ open, onClose, onSuccess }: AddKeywordModalProps) {
     onError: handleApiError
   })
 
-  const domains = domainsData?.data?.data || []
-  const countries = countriesData?.data?.data || []
+  const domains = domainsData?.data || []
+  const countries = countriesData?.data || []
 
   // Parse keywords from textarea
   const getKeywordsList = () => {
