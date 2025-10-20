@@ -23,8 +23,8 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking',
         reason: 'User fetching their keywords for rank tracking',
         metadata: { endpoint: '/api/v1/rank-tracking/keywords', filters: { domain_id, device_type, country_id, tags }, pagination: { page, limit } },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
-        userAgent: request.headers.get('user-agent') || undefined
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent')
       },
       { table: 'indb_keyword_keywords', operationType: 'select' },
       async (db) => {
@@ -91,8 +91,8 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking',
         reason: 'User fetching historical rank data for position change calculations',
         metadata: { endpoint: '/api/v1/rank-tracking/keywords', keywordIds, dates: [yesterdayStr, threeDaysAgoStr, sevenDaysAgoStr] },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
-        userAgent: request.headers.get('user-agent') || undefined
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent')
       },
       { table: 'indb_keyword_rank_history', operationType: 'select' },
       async (db) => {
@@ -199,8 +199,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking',
         reason: 'User verifying domain ownership for keyword creation',
         metadata: { endpoint: '/api/v1/rank-tracking/keywords', domainId: domain_id },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
-        userAgent: request.headers.get('user-agent') || undefined
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent')
       },
       { table: 'indb_keyword_domains', operationType: 'select' },
       async (db) => {
@@ -215,7 +215,7 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     if (domain.error || !domain.data) {
       const notFoundError = await ErrorHandlingService.createError(
-        ErrorType.BUSINESS_LOGIC,
+        ErrorType.NOT_FOUND,
         'Access denied',
         { severity: ErrorSeverity.LOW, userId: auth.userId, statusCode: 404 }
       )
@@ -230,8 +230,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking',
         reason: 'User checking keyword quota before creating new keywords',
         metadata: { endpoint: '/api/v1/rank-tracking/keywords', requestedKeywords: keywords.length },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
-        userAgent: request.headers.get('user-agent') || undefined
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent')
       },
       { table: 'multiple_tables', operationType: 'select' },
       async (db) => {
@@ -263,8 +263,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
           source: 'rank-tracking',
           reason: 'User checking active subscriptions for quota limits',
           metadata: { endpoint: '/api/v1/rank-tracking/keywords', fallbackQuotaCheck: 'active_subscriptions' },
-          ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
-          userAgent: request.headers.get('user-agent') || undefined
+          ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+          userAgent: request.headers.get('user-agent')
         },
         { table: 'indb_payment_subscriptions', operationType: 'select' },
         async (db) => {
@@ -293,7 +293,7 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     if (keywordLimit !== Infinity && (currentKeywordCount || 0) + keywords.length > keywordLimit) {
       const quotaError = await ErrorHandlingService.createError(
-        ErrorType.BUSINESS_LOGIC,
+        ErrorType.QUOTA_EXCEEDED,
         `Adding ${keywords.length} keywords would exceed your limit of ${keywordLimit === Infinity ? 'unlimited' : keywordLimit}. Current usage: ${currentKeywordCount || 0}`,
         { severity: ErrorSeverity.LOW, userId: auth.userId, statusCode: 400 }
       )
@@ -308,8 +308,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking',
         reason: 'User checking for existing keywords before creation',
         metadata: { domainId: domain_id, deviceType: device_type, countryId: country_id, keywords },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
-        userAgent: request.headers.get('user-agent') || undefined
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent')
       },
       { table: 'indb_keyword_keywords', operationType: 'select' },
       async (db) => {
@@ -353,8 +353,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking',
         reason: 'User creating new keywords for rank tracking',
         metadata: { domainId: domain_id, keywordCount: newKeywords.length, deviceType: device_type, countryId: country_id },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
-        userAgent: request.headers.get('user-agent') || undefined
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent')
       },
       { table: 'indb_keyword_keywords', operationType: 'insert' },
       async (db) => {
@@ -363,8 +363,8 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
           .insert(keywordEntries)
           .select(`
             id, user_id, domain_id, keyword, device_type, country_id, tags, created_at, updated_at,
-            domain:indb_keyword_domains(id, domain_name, display_name),
-            country:indb_keyword_countries(id, name, iso2_code)
+            domain:indb_keyword_domains(domain_name, display_name),
+            country:indb_keyword_countries(name, iso2_code)
           `)
         return { data, error }
       }
@@ -372,15 +372,12 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     const { data: insertedKeywords, error } = insertResult
 
-    if (error) {
-      console.error('Supabase insert error:', JSON.stringify(error, null, 2))
-      throw new Error(`Failed to add keywords: ${error.message || JSON.stringify(error)}`)
-    }
+    if (error) throw new Error('Failed to add keywords')
 
     return formatSuccess({
       data: insertedKeywords,
-      message: `Successfully added ${insertedKeywords?.length || 0} keywords`
-    })
+      message: `Successfully added ${insertedKeywords.length} keywords`
+    }, 201)
 
   } catch (error) {
     const structuredError = await ErrorHandlingService.createError(
