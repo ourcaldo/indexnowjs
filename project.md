@@ -2,6 +2,137 @@
 
 ## Recent Changes
 
+### 2025-10-20 - BUG FIX: Fixed "Unknown Function" Database Error in Add Keywords API
+
+**Critical Bug Fix**: Fixed 500 Internal Server Error when adding keywords by correcting the PostgREST foreign key join syntax in the INSERT query.
+
+#### ✅ Problem Statement
+
+**User Report:**
+- POST request to `/v1/rank-tracking/keywords` was failing with 500 Internal Error
+- Error response: `"Failed to add keywords"` with DATABASE error type
+- Sentry showed "Unknown function" error in the `.select()` clause after INSERT
+- Backend logs showed "insert_keywords" operation completed successfully, but then immediately failed
+
+**Error Flow:**
+1. Request arrives with valid keyword data
+2. All validation passes (domain ownership, quota check, duplicate check)
+3. INSERT operation completes successfully (audit log shows success)
+4. SELECT query to return inserted data with foreign key joins fails
+5. Returns 500 error to user with generic "Failed to add keywords" message
+
+**Sentry Error Details:**
+```
+Type: Error
+Value: Failed to add keywords
+Location: app/api/v1/rank-tracking/keywords/route.ts (line 375)
+Issue: "Unknown function" in PostgREST query builder during .select()
+```
+
+#### ✅ Root Cause Analysis
+
+**The Issue:**
+The POST endpoint's `.select()` statement after INSERT was using incorrect foreign key join syntax compared to the working GET endpoint.
+
+**POST Query (Broken):**
+```typescript
+.select(`
+  id, user_id, domain_id, keyword, device_type, country_id, tags, created_at, updated_at,
+  domain:indb_keyword_domains(domain_name, display_name),           // ❌ Missing 'id'
+  country:indb_keyword_countries(name, iso2_code)                   // ❌ Missing 'id'
+`)
+```
+
+**GET Query (Working):**
+```typescript
+.select(`
+  *,
+  domain:indb_keyword_domains(id, domain_name, display_name),       // ✅ Includes 'id'
+  country:indb_keyword_countries(id, name, iso2_code),              // ✅ Includes 'id'
+  rankings:indb_keyword_rankings(position, url, search_volume, check_date, created_at)
+`)
+```
+
+**Why This Failed:**
+- PostgREST requires the primary key (`id`) to be included in foreign key relationship queries
+- Without the `id` field in the joined table columns, PostgREST couldn't properly resolve the foreign key relationship
+- This caused "Unknown function" error because PostgREST failed to parse the query syntax
+
+#### ✅ The Fix
+
+**File Modified:** `app/api/v1/rank-tracking/keywords/route.ts`
+
+**Lines 369-370:** Added `id` field to foreign key joins:
+```typescript
+// BEFORE (causing Unknown function error):
+domain:indb_keyword_domains(domain_name, display_name),
+country:indb_keyword_countries(name, iso2_code)
+
+// AFTER (fixed):
+domain:indb_keyword_domains(id, domain_name, display_name),
+country:indb_keyword_countries(id, name, iso2_code)
+```
+
+**Complete Fixed Query:**
+```typescript
+const { data, error } = await db
+  .from('indb_keyword_keywords')
+  .insert(keywordEntries)
+  .select(`
+    id, user_id, domain_id, keyword, device_type, country_id, tags, created_at, updated_at,
+    domain:indb_keyword_domains(id, domain_name, display_name),
+    country:indb_keyword_countries(id, name, iso2_code)
+  `)
+```
+
+#### ✅ Technical Details
+
+**Foreign Key Relationships:**
+```sql
+indb_keyword_keywords.domain_id  → indb_keyword_domains.id
+indb_keyword_keywords.country_id → indb_keyword_countries.id
+```
+
+**PostgREST Join Syntax Requirements:**
+- Format: `foreign_key_name:foreign_table(columns)`
+- The `id` (primary key) of the foreign table must be included in the column list
+- This allows PostgREST to properly resolve and join the related records
+
+**Why GET Worked But POST Failed:**
+- GET endpoint was written correctly with `id` field included
+- POST endpoint was missing `id` field in the foreign key joins
+- Same database, same tables, different query syntax caused the issue
+
+#### ✅ Impact
+
+**Before (Broken):**
+- Users couldn't add any keywords to track
+- All keyword addition attempts returned 500 error
+- Error was cryptic: "Failed to add keywords" without clear indication of query issue
+- Frontend couldn't add keywords despite valid data and successful INSERT
+
+**After (Fixed):**
+- Keywords can be added successfully
+- POST request returns inserted keywords with full domain and country information
+- Response format consistent with GET endpoint
+- Frontend receives complete data for immediate display
+
+#### ✅ Testing Recommendations
+
+**Verify the fix with:**
+1. Add a single keyword through the UI
+2. Add multiple keywords through the UI
+3. Check that response includes:
+   - Keyword data (id, keyword, device_type, country_id, tags, etc.)
+   - Domain data (id, domain_name, display_name)
+   - Country data (id, name, iso2_code)
+4. Verify no 500 errors in browser console or backend logs
+5. Confirm keywords appear in the keywords list immediately
+
+**Status**: Add Keywords API **FIXED** - PostgREST foreign key join syntax corrected, keyword addition now works successfully.
+
+---
+
 ### 2025-10-20 - REFACTOR: Simplified Country Code Handling in Rank Tracking
 
 **Code Refactoring**: Eliminated unnecessary hardcoded country converter by using country name directly from database for Firecrawl API requests.

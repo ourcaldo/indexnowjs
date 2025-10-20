@@ -1,0 +1,25 @@
+
+Now, please deep dive into this issue and help me to fix it.
+
+When I want to add a keyword to track, there's issue when frontend is send request POST to API https://api.indexnow.studio/v1/rank-tracking/keywords and it's got 500 Internal Error with the response:
+{
+    "success": false,
+    "error": {
+        "id": "a846da5b-bb6a-4bab-bbf5-85ef19e9f1f2",
+        "type": "DATABASE",
+        "message": "A database error occurred. Please try again.",
+        "severity": "HIGH",
+        "timestamp": "2025-10-20T12:03:52.930Z",
+        "statusCode": 500
+    }
+}
+
+The backend log was like this:
+0|indexnow  | {"level":"DEBUG","time":"2025-10-20T12:03:54.269Z","pid":3499343,"hostname":"cloud-2","userId":"915f50e5-0902-466a-b1af-bdf19d789722","email":"aldodkris@gmail.com","endpoint":"/v1/rank-tracking/keywords","method":"POST","msg":"User authenticated successfully"}
+0|indexnow  | {"level":"DEBUG","time":"2025-10-20T12:03:54.269Z","pid":3499343,"hostname":"cloud-2","userId":"915f50e5-0902-466a-b1af-bdf19d789722","endpoint":"/v1/rank-tracking/keywords","method":"POST","userEmail":"aldodkris@gmail.com","msg":"Authenticated API access: POST /v1/rank-tracking/keywords"}
+0|indexnow  | {"level":"INFO","time":"2025-10-20T12:03:54.292Z","pid":3499343,"hostname":"cloud-2","auditId":"9010aec5-a9a3-4c51-8aa2-94d4d7d31a07","userId":"915f50e5-0902-466a-b1af-bdf19d789722","operation":"verify_domain_ownership","msg":"User operation completed successfully"}
+0|indexnow  | {"level":"INFO","time":"2025-10-20T12:03:54.321Z","pid":3499343,"hostname":"cloud-2","auditId":"e78655fb-3e5d-4b69-9d01-1e7c9d15833b","userId":"915f50e5-0902-466a-b1af-bdf19d789722","operation":"check_keyword_quota","msg":"User operation completed successfully"}
+0|indexnow  | {"level":"INFO","time":"2025-10-20T12:03:54.350Z","pid":3499343,"hostname":"cloud-2","auditId":"10edd82f-0fbe-4c0b-8479-6fb6aa0dd234","userId":"915f50e5-0902-466a-b1af-bdf19d789722","operation":"check_duplicate_keywords","msg":"User operation completed successfully"}
+0|indexnow  | {"level":"INFO","time":"2025-10-20T12:03:54.375Z","pid":3499343,"hostname":"cloud-2","auditId":"5ef13122-cb97-4656-8eca-fe0e25bec880","userId":"915f50e5-0902-466a-b1af-bdf19d789722","operation":"insert_keywords","msg":"User operation completed successfully"}
+0|indexnow  | {"level":"ERROR","time":"2025-10-20T12:03:54.376Z","pid":3499343,"hostname":"cloud-2","errorId":"48233122-e0c7-4229-8fa9-929ceac741e5","type":"DATABASE","severity":"HIGH","userId":"915f50e5-0902-466a-b1af-bdf19d789722","endpoint":"/api/v1/rank-tracking/keywords","method":"POST","statusCode":500,"msg":"Failed to add keywords"}
+0|indexnow  | {"level":"INFO","time":"2025-10-20T12:03:54.384Z","pid":3499343,"hostname":"cloud-2","userId":"915f50e5-0902-466a-b1af-bdf19d789722","operation":"record_system_error_log","table":"indb_system_error_logs","operationType":"insert","msg":"Service role operation context validated successfully"}

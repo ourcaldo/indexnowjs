@@ -1,0 +1,94 @@
+# Error: Failed to add keywords
+
+**Issue ID:** 6959727936
+**Project:** indexnow
+**Date:** 20/10/2025, 19.03.54
+## Issue Summary
+Unknown Function Error During Keyword Addition
+**What's wrong:** Keyword addition failed due to an **Unknown function** error in route handler.
+**In the trace:** The request body contains **non-string values** for IDs and device type, which may cause issues.
+
+## Tags
+
+- **browser:** Chrome 141
+- **browser.name:** Chrome
+- **client_os:** Windows
+- **client_os.name:** Windows
+- **environment:** production
+- **handled:** yes
+- **level:** error
+- **mechanism:** generic
+- **os:** Ubuntu Linux 22.04
+- **os.name:** Ubuntu Linux
+- **runtime.name:** server
+- **server_name:** cloud-2
+- **transaction:** POST /v1/rank-tracking/keywords
+- **url:** http://api.indexnow.studio/v1/rank-tracking/keywords
+
+## Exception
+
+### Exception 1
+**Type:** Error
+**Value:** Failed to add keywords
+
+#### Stacktrace
+
+```
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/keywords/route.js [Line 10] (In app)
+            domain:indb_keyword_domains(id, domain_name, display_name),
+            country:indb_keyword_countries(id, name, iso2_code),
+            rankings:indb_keyword_rankings(position, url, search_volume, check_date, created_at)
+          `).eq("is_active",!0);if(d&&(b=b.eq("domain_id",d)),e&&(b=b.eq("device_type",e)),f&&(b=b.eq("country_id",f)),g){let a=g.split(",") {snip}
+            id, user_id, domain_id, keyword, device_type, country_id, tags, created_at, updated_at,
+            domain:indb_keyword_domains(domain_name, display_name),
+            country:indb_keyword_countries(name, iso2_code)
+          `);return{data:b,error:c}});if(y)throw Error("Failed to add keywords");return(0,v.DZ)({data:t,message:`Successfully added ${t.leng {snip}  <-- SUSPECT LINE
+ process.processTicksAndRejections in node:internal/process/task_queues [Line 95] (Not in app)
+ Unknown function in /home/nexpocket/indexnowjs/.next/server/chunks/5526.js [Line 1] (In app)
+ rN.do in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ rN.handle in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 5] (Not in app)
+ k in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/keywords/route.js [Line 10] (In app)
+            domain:indb_keyword_domains(id, domain_name, display_name),
+            country:indb_keyword_countries(id, name, iso2_code),
+            rankings:indb_keyword_rankings(position, url, search_volume, check_date, created_at)
+          `).eq("is_active",!0);if(d&&(b=b.eq("domain_id",d)),e&&(b=b.eq("device_type",e)),f&&(b=b.eq("country_id",f)),g){let a=g.split(",") {snip}
+            id, user_id, domain_id, keyword, device_type, country_id, tags, created_at, updated_at,
+            domain:indb_keyword_domains(domain_name, display_name),
+            country:indb_keyword_countries(name, iso2_code)
+          `);return{data:b,error:c}});if(y)throw Error("Failed to add keywords");return(0,v.DZ)({data:t,message:`Successfully added ${t.leng {snip}  <-- SUSPECT LINE
+ rN.handleResponse in /home/nexpocket/indexnowjs/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js [Line 1] (Not in app)
+ g in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/keywords/route.js [Line 10] (In app)
+            domain:indb_keyword_domains(id, domain_name, display_name),
+            country:indb_keyword_countries(id, name, iso2_code),
+            rankings:indb_keyword_rankings(position, url, search_volume, check_date, created_at)
+          `).eq("is_active",!0);if(d&&(b=b.eq("domain_id",d)),e&&(b=b.eq("device_type",e)),f&&(b=b.eq("country_id",f)),g){let a=g.split(",") {snip}
+            id, user_id, domain_id, keyword, device_type, country_id, tags, created_at, updated_at,
+            domain:indb_keyword_domains(domain_name, display_name),
+            country:indb_keyword_countries(name, iso2_code)
+          `);return{data:b,error:c}});if(y)throw Error("Failed to add keywords");return(0,v.DZ)({data:t,message:`Successfully added ${t.leng {snip}  <-- SUSPECT LINE
+ F in /home/nexpocket/indexnowjs/.next/server/app/api/v1/rank-tracking/keywords/route.js [Line 10] (In app)
+            domain:indb_keyword_domains(id, domain_name, display_name),
+            country:indb_keyword_countries(id, name, iso2_code),
+            rankings:indb_keyword_rankings(position, url, search_volume, check_date, created_at)
+          `).eq("is_active",!0);if(d&&(b=b.eq("domain_id",d)),e&&(b=b.eq("device_type",e)),f&&(b=b.eq("country_id",f)),g){let a=g.split(",") {snip}
+            id, user_id, domain_id, keyword, device_type, country_id, tags, created_at, updated_at,
+            domain:indb_keyword_domains(domain_name, display_name),
+            country:indb_keyword_countries(name, iso2_code)
+          `);return{data:b,error:c}});if(y)throw Error("Failed to add keywords");return(0,v.DZ)({data:t,message:`Successfully added ${t.leng {snip}  <-- SUSPECT LINE
+ NextNodeServer.renderToResponseWithComponentsImpl in /home/nexpocket/indexnowjs/node_modules/next/dist/server/base-server.js [Line 1422] (Not in app)
+                    ;
+                    req.fetchMetrics = value;
+                }
+                target[prop] = value;
+                return true;
+            }
+        }) : request;
+        await handler(maybeDevRequest, response, {  <-- SUSPECT LINE
+            waitUntil: this.getWaitUntil()
+        });
+        // response is handled fully in handler
+        return null;
+    }
+    stripNextDataPath(path, stripLocale = true) {
+        if (path.includes(this.buildId)) {
+```
