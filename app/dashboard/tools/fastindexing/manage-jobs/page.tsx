@@ -290,14 +290,10 @@ export default function ManageJobsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Manage Jobs</h1>
-          <p className="text-muted-foreground mt-1">View and manage your indexing jobs</p>
-        </div>
         {selectedJobs.length > 0 && (
           <Button 
             variant="destructive"
-            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground ml-auto"
           >
             <Archive className="h-4 w-4 mr-2" />
             Delete Selected ({selectedJobs.length})

@@ -392,13 +392,6 @@ export default function IndexNowPage() {
 
   return (
     <div className="space-y-6">
-
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">IndexNow</h1>
-        <p className="mt-1 text-muted-foreground">Submit URLs for indexing and manage schedules</p>
-      </div>
-
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Form */}
         <div className="lg:col-span-2">
@@ -586,14 +579,14 @@ export default function IndexNowPage() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 px-6 py-3 rounded-lg font-medium text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 bg-brand-primary"
+                className="flex-1 px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 bg-brand-primary text-sm md:text-base"
               >
                 <Zap className="w-4 h-4 mr-2 inline" />
                 {loading ? 'Creating Job...' : 'Submit for Indexing'}
               </button>
               <button
                 onClick={clearForm}
-                className="px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:opacity-90 bg-secondary text-foreground border border-border"
+                className="px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium transition-all duration-200 hover:opacity-90 bg-secondary text-foreground border border-border text-sm md:text-base"
               >
                 Clear Form
               </button>
