@@ -9,6 +9,7 @@ import { supabaseAdmin } from '../database/supabase'
 import { errorTracker, ErrorTracker } from '../monitoring/error-tracker'
 import { SecureServiceRoleWrapper } from '../services/security/SecureServiceRoleWrapper'
 import { logger } from '@/lib/monitoring/error-handling'
+import { removeUrlParameters } from '../utils/url-utils'
 
 interface KeywordToTrack {
   id: string
@@ -103,6 +104,17 @@ export class RankTracker {
    */
   private async storeRankResult(keywordId: string, result: RankResult): Promise<void> {
     try {
+      // Sanitize URL by removing query parameters before storing
+      // Example: "https://cetta.id/en/?srsltid=..." -> "https://cetta.id/en"
+      const cleanUrl = removeUrlParameters(result.url)
+      
+      if (result.url && cleanUrl !== result.url) {
+        logger.debug({ 
+          original: result.url, 
+          cleaned: cleanUrl 
+        }, 'URL sanitized: Removed query parameters')
+      }
+
       await SecureServiceRoleWrapper.executeSecureOperation(
         {
           userId: 'system',
@@ -132,13 +144,13 @@ export class RankTracker {
             throw new Error(`Failed to get keyword details: ${keywordError?.message}`)
           }
 
-          // Insert into rank history
+          // Insert into rank history with sanitized URL
           const { error: historyError } = await supabaseAdmin
             .from('indb_keyword_rank_history')
             .insert({
               keyword_id: keywordId,
               position: result.position,
-              url: result.url,
+              url: cleanUrl, // Use sanitized URL
               search_volume: null, // Firecrawl doesn't provide search volume
               difficulty_score: null, // Firecrawl doesn't provide difficulty
               check_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
@@ -152,13 +164,13 @@ export class RankTracker {
             throw new Error(`Failed to store rank history: ${historyError.message}`)
           }
 
-          // Update or insert current ranking (for quick access on Overview page)
+          // Update or insert current ranking (for quick access on Overview page) with sanitized URL
           const { error: rankingError } = await supabaseAdmin
             .from('indb_keyword_rankings')
             .upsert({
               keyword_id: keywordId,
               position: result.position,
-              url: result.url,
+              url: cleanUrl, // Use sanitized URL
               search_volume: null,
               difficulty_score: null,
               check_date: new Date().toISOString().split('T')[0]
@@ -171,7 +183,7 @@ export class RankTracker {
             throw new Error(`Failed to update current ranking: ${rankingError.message}`)
           }
 
-          logger.info({ keywordId }, 'Successfully stored rank result')
+          logger.info({ keywordId, cleanUrl }, 'Successfully stored rank result with sanitized URL')
         }
       );
 

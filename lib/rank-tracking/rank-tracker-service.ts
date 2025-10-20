@@ -6,6 +6,8 @@
 import { supabaseAdmin } from '../database/supabase'
 import { SecureServiceRoleWrapper } from '../services/security/SecureServiceRoleWrapper'
 import { logger } from '@/lib/monitoring/error-handling'
+import { convertCountryCodeToName } from '../utils/country-converter'
+import { firecrawlRateLimiter } from './firecrawl-rate-limiter'
 
 interface RankTrackerConfig {
   apiKey: string
@@ -128,8 +130,9 @@ export class RankTrackerService {
 
       logger.info({ keyword: request.keyword, domain: request.domain }, 'Firecrawl: Checking rank')
 
-      // Convert country code to full country name
-      const countryName = this.convertCountryCodeToName(request.country)
+      // Convert country code to full country name using comprehensive mapping
+      const countryName = convertCountryCodeToName(request.country)
+      logger.debug({ countryCode: request.country, countryName }, 'Firecrawl: Converted country code to name')
       
       // Build Firecrawl search request
       const searchRequest: FirecrawlSearchRequest = {
@@ -214,7 +217,7 @@ export class RankTrackerService {
   }
 
   /**
-   * Make HTTP request to Firecrawl API with error handling and retries
+   * Make HTTP request to Firecrawl API with rate limiting, error handling and retries
    */
   private async makeFirecrawlRequest(searchRequest: FirecrawlSearchRequest): Promise<FirecrawlApiResponse> {
     if (!this.config) {
@@ -225,12 +228,23 @@ export class RankTrackerService {
 
     logger.info(`Firecrawl: Making search request for keyword "${searchRequest.query}" in location "${searchRequest.location}"`)
 
+    // CRITICAL: Acquire rate limit slot before making request
+    // This prevents 429 errors by respecting 30 req/min limit
+    const rateLimitAcquired = await firecrawlRateLimiter.acquireSlot(this.config.apiKey, 65000)
+    
+    if (!rateLimitAcquired) {
+      throw new Error('Rate limit timeout: Could not acquire slot within 65 seconds. Please retry later.')
+    }
+
+    const remainingSlots = firecrawlRateLimiter.getRemainingSlots(this.config.apiKey)
+    logger.info({ remainingSlots }, 'Firecrawl: Rate limit slot acquired')
+
     // Retry logic
     let lastError: Error | null = null
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         logger.info(`Firecrawl: Sending request to ${url}`)
-        logger.info(`Firecrawl: Request body: ${JSON.stringify(searchRequest)}`)
+        logger.debug(`Firecrawl: Request body: ${JSON.stringify(searchRequest)}`)
         
         const response = await fetch(url, {
           method: 'POST',
@@ -252,6 +266,15 @@ export class RankTrackerService {
           } catch (e) {
             logger.error('Firecrawl: Could not read error response body')
           }
+          
+          // Special handling for 429 errors
+          if (response.status === 429) {
+            logger.error({ 
+              currentCount: firecrawlRateLimiter.getCurrentCount(this.config.apiKey),
+              limit: 30
+            }, 'Firecrawl: 429 Rate limit exceeded despite rate limiter - API limit may have changed')
+          }
+          
           throw new Error(`HTTP ${response.status}: ${response.statusText}${errorDetails ? ` - ${errorDetails}` : ''}`)
         }
 
@@ -273,70 +296,6 @@ export class RankTrackerService {
     throw lastError || new Error('All retry attempts failed')
   }
 
-  /**
-   * Convert ISO2 country code to full country name for Firecrawl
-   */
-  private convertCountryCodeToName(countryCode: string): string {
-    const countryMap: Record<string, string> = {
-      'ID': 'Indonesia',
-      'US': 'United States',
-      'MY': 'Malaysia',
-      'SG': 'Singapore',
-      'TH': 'Thailand',
-      'PH': 'Philippines',
-      'VN': 'Vietnam',
-      'GB': 'United Kingdom',
-      'AU': 'Australia',
-      'CA': 'Canada',
-      'IN': 'India',
-      'JP': 'Japan',
-      'KR': 'South Korea',
-      'CN': 'China',
-      'HK': 'Hong Kong',
-      'TW': 'Taiwan',
-      'DE': 'Germany',
-      'FR': 'France',
-      'IT': 'Italy',
-      'ES': 'Spain',
-      'NL': 'Netherlands',
-      'BR': 'Brazil',
-      'MX': 'Mexico',
-      'AR': 'Argentina',
-      'CL': 'Chile',
-      'CO': 'Colombia',
-      'PE': 'Peru',
-      'ZA': 'South Africa',
-      'EG': 'Egypt',
-      'NG': 'Nigeria',
-      'KE': 'Kenya',
-      'MA': 'Morocco',
-      'TR': 'Turkey',
-      'SA': 'Saudi Arabia',
-      'AE': 'United Arab Emirates',
-      'IL': 'Israel',
-      'RU': 'Russia',
-      'UA': 'Ukraine',
-      'PL': 'Poland',
-      'CZ': 'Czech Republic',
-      'HU': 'Hungary',
-      'RO': 'Romania',
-      'BG': 'Bulgaria',
-      'HR': 'Croatia',
-      'RS': 'Serbia',
-      'SK': 'Slovakia',
-      'SI': 'Slovenia',
-      'LT': 'Lithuania',
-      'LV': 'Latvia',
-      'EE': 'Estonia',
-      'FI': 'Finland',
-      'SE': 'Sweden',
-      'NO': 'Norway',
-      'DK': 'Denmark',
-      'IS': 'Iceland'
-    }
-    
-    return countryMap[countryCode.toUpperCase()] || countryCode
-  }
 
   /**
    * Update credit usage in database after API call
