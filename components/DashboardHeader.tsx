@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Plus, Monitor, Smartphone } from 'lucide-react'
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { useSiteName, useSiteLogo } from '@/hooks/use-site-settings'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { AddKeywordModal } from '@/components/modals/AddKeywordModal'
 
 interface Country {
   id: string
@@ -46,9 +48,14 @@ export default function DashboardHeader({
   const pathname = usePathname()
   const siteName = useSiteName()
   const iconUrl = useSiteLogo(false)
+  const [isAddKeywordModalOpen, setIsAddKeywordModalOpen] = useState(false)
 
   const handleAddKeywords = () => {
-    router.push('/dashboard/indexnow/add')
+    setIsAddKeywordModalOpen(true)
+  }
+
+  const handleModalClose = () => {
+    setIsAddKeywordModalOpen(false)
   }
 
   // Check if we're on /indexnow/* pages (overview or rank-history)
@@ -246,6 +253,12 @@ export default function DashboardHeader({
           </button>
         </div>
       </div>
+
+      {/* Add Keyword Modal */}
+      <AddKeywordModal 
+        open={isAddKeywordModalOpen} 
+        onClose={handleModalClose}
+      />
     </>
   )
 }

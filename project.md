@@ -2,6 +2,290 @@
 
 ## Recent Changes
 
+### 2025-10-20 - Converted Add Keywords Page to Modal Overlay (UX ENHANCEMENT)
+
+**UX Enhancement**: Converted the Add Keywords page from full-page navigation to modal/overlay implementation, allowing users to add keywords without leaving their current page.
+
+#### ✅ Problem Statement
+
+**User Experience Issue:**
+- Adding keywords required full-page navigation to `/dashboard/indexnow/add`
+- User lost context of their current page when adding keywords
+- Required navigating back after completion
+- Disrupted workflow when managing keywords from overview or rank-history pages
+
+**User Request:**
+> "Convert /indexnow/add page to overlay/popup. When user wants to add new keyword, they didn't leave the page just show the overlay and all the things/flow is still same with the current one."
+
+#### ✅ Solution Implemented
+
+**Modal-Based Approach:**
+- Created AddKeywordModal component using Radix UI Dialog (project standard)
+- Refactored logic into well-structured sub-components following best practices
+- Updated DashboardHeader to trigger modal instead of navigation
+- Maintained all existing functionality and 2-step flow
+- Kept /add page for backward compatibility (renders modal)
+
+#### ✅ Implementation Details
+
+**1. Created AddKeywordModal Components** (`components/modals/AddKeywordModal/`)
+
+**Main Modal Component** (`index.tsx`):
+- Uses Radix UI Dialog for consistency with project UI patterns
+- Manages all form state (step, domain, keywords, device, country, tags, errors)
+- Fetches domains and countries via TanStack Query
+- Handles keyword submission mutation
+- Resets state on modal close
+- Provides 2-step wizard interface with visual step indicator
+- Props: `open`, `onClose`, `onSuccess`
+
+**DomainSelectionStep Component** (`DomainSelectionStep.tsx`):
+- Handles Step 1: Domain selection and creation
+- Displays existing domains in grid layout
+- Inline domain creation with validation
+- Visual selection indicator with checkmark
+- Create domain mutation integrated
+- Props: `domains`, `selectedDomain`, `onDomainSelect`, `onNext`
+- Features:
+  - Grid display of existing domains with hover states
+  - Inline "Add New Domain" form with real-time validation
+  - Enter key support for quick domain creation
+  - Loading states during domain creation
+  - Error handling with clear user feedback
+
+**KeywordConfigurationStep Component** (`KeywordConfigurationStep.tsx`):
+- Handles Step 2: Keyword configuration
+- Device type selector (Desktop/Mobile) with recommended badge
+- Country dropdown with visual selection states
+- Keywords textarea with live count display
+- Tag management (add/remove) with visual chips
+- Props: `domains`, `countries`, `selectedDomain`, `keywordText`, `deviceType`, `selectedCountry`, `tags`, `errors`, callbacks
+- Features:
+  - Selected domain info display with "Change Domain" option
+  - Visual device type cards with selection states
+  - Integrated country selector with MapPin icon
+  - Quota consumption calculation and display
+  - Tag input with Enter key support
+  - Tag removal with individual delete buttons
+
+**2. Updated DashboardHeader** (`components/DashboardHeader.tsx`)
+
+**Changes:**
+- Line 2: Added `useState` import for modal state management
+- Line 8: Added `AddKeywordModal` component import
+- Line 54: Added `isAddKeywordModalOpen` state
+- Lines 56-62: Replaced navigation with modal state management:
+  - `handleAddKeywords()`: Sets `isAddKeywordModalOpen(true)`
+  - `handleModalClose()`: Sets `isAddKeywordModalOpen(false)`
+- Lines 261-264: Rendered `AddKeywordModal` component at header level
+- Both desktop and mobile "Add Keywords" buttons now trigger modal
+
+**Before:**
+```typescript
+const handleAddKeywords = () => {
+  router.push('/dashboard/indexnow/add')
+}
+```
+
+**After:**
+```typescript
+const [isAddKeywordModalOpen, setIsAddKeywordModalOpen] = useState(false)
+
+const handleAddKeywords = () => {
+  setIsAddKeywordModalOpen(true)
+}
+
+const handleModalClose = () => {
+  setIsAddKeywordModalOpen(false)
+}
+```
+
+**3. Simplified /add Page** (`app/dashboard/indexnow/add/page.tsx`)
+
+**Before:** 569 lines of component code with inline UI components and complex logic
+
+**After:** 27 lines using modal component for backward compatibility
+
+**Implementation:**
+- Opens modal automatically on page mount
+- Closes modal and navigates back when user dismisses
+- Maintains URL-based access for direct navigation
+- Provides seamless transition between old and new UX patterns
+
+```typescript
+export default function AddKeywordsPage() {
+  const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    setIsOpen(true)
+  }, [])
+
+  const handleClose = () => {
+    setIsOpen(false)
+    router.back()
+  }
+
+  return <AddKeywordModal open={isOpen} onClose={handleClose} />
+}
+```
+
+#### ✅ Technical Architecture
+
+**Component Hierarchy:**
+```
+DashboardHeader
+└── AddKeywordModal (Dialog)
+    ├── Step Indicator (Visual progress)
+    ├── DomainSelectionStep (Step 1)
+    │   ├── Existing Domains Grid
+    │   ├── Domain Creation Form
+    │   └── Next Button
+    └── KeywordConfigurationStep (Step 2)
+        ├── Selected Domain Display
+        ├── Device Type Selector
+        ├── Country Dropdown
+        ├── Keywords Textarea
+        ├── Tags Manager
+        └── Submit Button
+```
+
+**Data Flow:**
+1. User clicks "Add Keywords" button in DashboardHeader
+2. Modal opens with `open={true}` state
+3. Modal fetches domains and countries (TanStack Query, enabled by `open` prop)
+4. User completes Step 1 → Domain selection
+5. User completes Step 2 → Keyword configuration
+6. On submit: Mutation → API call → Query invalidation → Modal close → Navigate to overview
+7. On cancel/close: State reset → Modal close
+
+**State Management:**
+- Modal state: Local component state in DashboardHeader
+- Form state: Local state within AddKeywordModal
+- API data: TanStack Query with automatic caching and invalidation
+- No global state needed - self-contained modal
+
+#### ✅ Code Quality Improvements
+
+**Refactoring Wins:**
+1. **Separation of Concerns**:
+   - Main modal: State management and orchestration
+   - Sub-components: UI and user interactions
+   - Each component has single, clear responsibility
+
+2. **Reusability**:
+   - DomainSelectionStep can be reused in other domain management flows
+   - KeywordConfigurationStep isolated from domain logic
+   - Modal wrapper can accept custom `onSuccess` callback
+
+3. **Maintainability**:
+   - Reduced page.tsx from 569 lines to 27 lines (95% reduction)
+   - Clear component boundaries
+   - Props interfaces for type safety
+   - Self-documenting component names
+
+4. **Testing**:
+   - Added `data-testid` attributes throughout components
+   - Isolated components easier to unit test
+   - Modal state management testable in isolation
+
+#### ✅ User Experience Impact
+
+**Before (Full Page Navigation):**
+- User clicks "Add Keywords" → Navigates to new page
+- Loses context of current view (overview/rank-history)
+- Must navigate back after completion
+- Disrupts workflow
+
+**After (Modal Overlay):**
+- User clicks "Add Keywords" → Modal opens on current page
+- Maintains context and current view
+- Modal closes after completion, user remains on same page
+- Seamless, non-disruptive workflow
+- Can cancel and return to work instantly
+
+**Maintained Features:**
+- ✅ 2-step wizard flow (Domain → Keywords)
+- ✅ Domain selection from existing or create new
+- ✅ Device type selection (Desktop/Mobile)
+- ✅ Country selection
+- ✅ Keywords entry (multi-line textarea)
+- ✅ Tag management (add/remove)
+- ✅ Form validation with error messages
+- ✅ Loading states during API calls
+- ✅ Success navigation to overview page
+- ✅ Quota consumption display
+- ✅ All existing functionality preserved
+
+**Enhanced Features:**
+- ✨ Non-disruptive UX (modal vs full page)
+- ✨ Context preservation
+- ✨ Better visual hierarchy with Dialog overlay
+- ✨ Improved focus management (Radix UI Dialog)
+- ✨ Keyboard accessibility (ESC to close)
+- ✨ Click outside to dismiss
+- ✨ Cleaner codebase with better organization
+
+#### ✅ Files Created
+
+**New Components:**
+1. `components/modals/AddKeywordModal/index.tsx` - Main modal wrapper (248 lines)
+2. `components/modals/AddKeywordModal/DomainSelectionStep.tsx` - Step 1 component (149 lines)
+3. `components/modals/AddKeywordModal/KeywordConfigurationStep.tsx` - Step 2 component (227 lines)
+
+#### ✅ Files Modified
+
+1. **components/DashboardHeader.tsx**:
+   - Line 2: Added `useState` import
+   - Line 8: Added `AddKeywordModal` import
+   - Line 54: Added modal state
+   - Lines 56-62: Replaced navigation with modal state management
+   - Lines 261-264: Rendered modal component
+
+2. **app/dashboard/indexnow/add/page.tsx**:
+   - Simplified from 569 lines to 27 lines
+   - Now uses AddKeywordModal component
+   - Auto-opens modal on mount
+   - Maintains backward compatibility for URL-based access
+
+#### ✅ Development Guidelines Followed
+
+**Adherence to 7-Point Requirements:**
+1. ✅ Deep dive: Fully read existing add page implementation and project modal patterns
+2. ✅ Documentation: Comprehensive timeline documentation in project.md (this entry)
+3. ✅ No test files: Created production components only
+4. ✅ Documented changes: This complete entry with technical details
+5. ✅ No database changes: Frontend-only modal implementation
+6. ✅ No console.log: Used proper error handling via useApiError hook
+7. ✅ Refactored code: Well-structured sub-components, not monolithic code
+
+**Best Practices Applied:**
+- Used Radix UI Dialog (project standard for modals)
+- Followed existing component patterns (ErrorDetailModal reference)
+- Implemented proper TypeScript interfaces
+- Added comprehensive `data-testid` attributes for testing
+- Used TanStack Query for data fetching (project standard)
+- Proper error handling with useApiError hook
+- Loading states for async operations
+- Form validation with user-friendly error messages
+
+#### ✅ Backward Compatibility
+
+**URL Access Preserved:**
+- Direct navigation to `/dashboard/indexnow/add` still works
+- Page auto-opens modal on mount
+- Provides smooth transition for existing bookmarks/links
+- No breaking changes to existing application flow
+
+**Migration Path:**
+- Old implementation: Removed (replaced with modal wrapper)
+- New implementation: Modal-based overlay
+- Transition: Seamless for end users
+
+**Status**: Add Keywords page **CONVERTED** to modal overlay, DashboardHeader **UPDATED** to trigger modal, backward compatibility **MAINTAINED**, code refactored into **WELL-STRUCTURED** components following project best practices.
+
+---
+
 ### 2025-10-20 - Cleaned Up FastIndexing Pages UI
 
 **UI Enhancement**: Removed redundant page headers and optimized button sizing on FastIndexing pages for better mobile experience.
