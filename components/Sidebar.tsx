@@ -16,7 +16,8 @@ import {
   Activity,
   TrendingUp,
   Search,
-  Shield
+  Shield,
+  ChevronDown
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -59,6 +60,7 @@ const Sidebar = ({
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isQuotaExpanded, setIsQuotaExpanded] = useState(false)
   
   useEffect(() => {
     setMounted(true)
@@ -313,11 +315,22 @@ const Sidebar = ({
                   
                   return (
                     <>
-                      <div className="flex items-center mb-2">
-                        <Zap className="h-5 w-5 mr-2" />
-                        <span className="text-sm font-semibold">
-                          {isLoading ? 'Loading...' : hasActivePackage ? 'Usage Limit' : 'No Active Package'}
-                        </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center">
+                          <Zap className="h-5 w-5 mr-2" />
+                          <span className="text-sm font-semibold">
+                            {isLoading ? 'Loading...' : hasActivePackage ? 'Usage Limit' : 'No Active Package'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setIsQuotaExpanded(!isQuotaExpanded)}
+                          className="p-1 hover:bg-white/10 rounded transition-colors"
+                          aria-label={isQuotaExpanded ? 'Collapse quota details' : 'Expand quota details'}
+                        >
+                          <ChevronDown 
+                            className={`h-4 w-4 transition-transform duration-200 ${isQuotaExpanded ? 'rotate-180' : ''}`}
+                          />
+                        </button>
                       </div>
                       <div className="mb-3">
                         {isLoading ? (
@@ -345,12 +358,14 @@ const Sidebar = ({
                           </>
                         )}
                       </div>
-                      <a 
-                        href="/dashboard/settings/plans-billing"
-                        className="w-full bg-background text-primary text-sm font-semibold py-2 px-3 rounded-lg hover:bg-secondary transition-colors block text-center"
-                      >
-                        {!hasActivePackage ? 'Subscribe now →' : 'Upgrade plan →'}
-                      </a>
+                      {isQuotaExpanded && (
+                        <a 
+                          href="/dashboard/settings/plans-billing"
+                          className="w-full bg-background text-primary text-sm font-semibold py-2 px-3 rounded-lg hover:bg-secondary transition-colors block text-center"
+                        >
+                          {!hasActivePackage ? 'Subscribe now →' : 'Upgrade plan →'}
+                        </a>
+                      )}
                     </>
                   )
                 })()}
@@ -538,11 +553,22 @@ const Sidebar = ({
                 
                 return (
                   <>
-                    <div className="flex items-center mb-2">
-                      <Zap className="h-5 w-5 mr-2" />
-                      <span className="text-sm font-semibold">
-                        {isLoading ? 'Loading...' : hasActivePackage ? 'Usage Limit' : 'No Active Package'}
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <Zap className="h-5 w-5 mr-2" />
+                        <span className="text-sm font-semibold">
+                          {isLoading ? 'Loading...' : hasActivePackage ? 'Usage Limit' : 'No Active Package'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setIsQuotaExpanded(!isQuotaExpanded)}
+                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                        aria-label={isQuotaExpanded ? 'Collapse quota details' : 'Expand quota details'}
+                      >
+                        <ChevronDown 
+                          className={`h-4 w-4 transition-transform duration-200 ${isQuotaExpanded ? 'rotate-180' : ''}`}
+                        />
+                      </button>
                     </div>
                     <div className="mb-3">
                       {isLoading ? (
@@ -570,13 +596,15 @@ const Sidebar = ({
                         </>
                       )}
                     </div>
-                    <a 
-                      href="/dashboard/settings/plans-billing"
-                      onClick={onToggle}
-                      className="w-full bg-background text-primary text-sm font-semibold py-2 px-3 rounded-lg hover:bg-secondary transition-colors block text-center"
-                    >
-                      {!hasActivePackage ? 'Subscribe now →' : 'Upgrade plan →'}
-                    </a>
+                    {isQuotaExpanded && (
+                      <a 
+                        href="/dashboard/settings/plans-billing"
+                        onClick={onToggle}
+                        className="w-full bg-background text-primary text-sm font-semibold py-2 px-3 rounded-lg hover:bg-secondary transition-colors block text-center"
+                      >
+                        {!hasActivePackage ? 'Subscribe now →' : 'Upgrade plan →'}
+                      </a>
+                    )}
                   </>
                 )
               })()}

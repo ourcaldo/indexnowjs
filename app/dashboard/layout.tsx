@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Plus } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import SkeletonSidebar from '@/components/SkeletonSidebar'
+import DashboardHeader from '@/components/DashboardHeader'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { ToastContainer } from '@/components/ui/toast'
 import { useFavicon, useSiteName, useSiteLogo } from '@/hooks/use-site-settings'
@@ -12,7 +12,6 @@ import QuotaNotification from '@/components/QuotaNotification'
 import ServiceAccountQuotaNotification from '@/components/ServiceAccountQuotaNotification'
 import QueryProvider from '@/components/QueryProvider'
 import { DomainProvider, useDomain } from '@/lib/contexts/DomainContext'
-import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 
 // Cookie utilities for sidebar state persistence
 const getCookie = (name: string): string | null => {
@@ -58,9 +57,6 @@ function DashboardLayoutContent({
   } = useDomain()
   
   // Site settings hooks
-  const siteName = useSiteName()
-  const logoUrl = useSiteLogo(!sidebarCollapsed) // Use expanded logo when sidebar is not collapsed
-  const iconUrl = useSiteLogo(false) // Always get icon for mobile header
   useFavicon() // Automatically updates favicon
 
   // Prevent hydration mismatch and load sidebar state from cookies
@@ -216,84 +212,17 @@ function DashboardLayoutContent({
           <div className={`transition-all duration-300 ml-0 ${
             sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
           }`}>
-            {/* Desktop header (hidden on mobile) */}
-            <div className="hidden lg:flex bg-background border-b border-border px-6 py-3 items-center justify-between">
-              {/* Left side: Domain Selector */}
-              <div className="flex-1">
-                {domains.length > 0 && (
-                  <SharedDomainSelector
-                    domains={domains}
-                    selectedDomainId={selectedDomainId}
-                    selectedDomainInfo={selectedDomainInfo}
-                    isOpen={isDomainSelectorOpen}
-                    onToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
-                    onDomainSelect={setSelectedDomainId}
-                    getDomainKeywordCount={getDomainKeywordCount}
-                    showKeywordCount={true}
-                    className="w-[320px]"
-                    addDomainRoute="/dashboard/indexnow/add"
-                    placeholder="Select domain"
-                  />
-                )}
-              </div>
-              
-              {/* Right side: Notification + Add Keywords Button */}
-              <div className="flex items-center space-x-2">
-                <button className="p-2 rounded-lg transition-colors duration-150 bg-secondary text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => router.push('/dashboard/indexnow/add')}
-                  className="inline-flex items-center px-4 py-2 rounded-lg transition-colors duration-150 bg-primary text-primary-foreground hover:bg-primary/90"
-                  aria-label="Add Keywords"
-                  data-testid="button-add-keywords-header-desktop"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Keywords
-                </button>
-              </div>
-            </div>
-
-            {/* Mobile header */}
-            <div className="lg:hidden bg-background border-b border-border px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                {iconUrl && (
-                  <img 
-                    src={iconUrl} 
-                    alt="Icon"
-                    className="w-6 h-6 rounded flex-shrink-0"
-                  />
-                )}
-                <h1 className="text-lg font-semibold text-foreground truncate">{siteName}</h1>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 rounded-lg transition-colors duration-150 bg-secondary text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => router.push('/dashboard/indexnow/add')}
-                  className="p-2 rounded-lg transition-colors duration-150 bg-primary text-primary-foreground hover:bg-primary/90"
-                  aria-label="Add Keywords"
-                  data-testid="button-add-keywords-header"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 rounded-md text-muted-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150 flex-shrink-0"
-                  aria-label="Mobile Menu"
-                  data-testid="button-toggle-sidebar"
-                >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                </button>
-              </div>
-            </div>
+            {/* Dashboard Header - Unified component for desktop and mobile */}
+            <DashboardHeader
+              domains={domains}
+              selectedDomainId={selectedDomainId}
+              selectedDomainInfo={selectedDomainInfo}
+              isDomainSelectorOpen={isDomainSelectorOpen}
+              onDomainSelectorToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
+              onDomainSelect={setSelectedDomainId}
+              getDomainKeywordCount={getDomainKeywordCount}
+              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            />
 
             {/* Service Account Quota Notification */}
             <ServiceAccountQuotaNotification />

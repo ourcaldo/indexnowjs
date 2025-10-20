@@ -2,6 +2,117 @@
 
 ## Recent Changes
 
+### 2025-10-20 - Enhanced Dashboard Header Component and Sidebar Quota Section with Accordion UI
+
+**UI/UX Enhancement**: Refactored dashboard header into a single unified component and added accordion functionality to sidebar quota/usage section for improved user experience and code maintainability.
+
+#### ✅ Changes Implemented
+
+**1. Unified Dashboard Header Component**
+- **Issue**: Desktop and mobile headers were duplicated inline code in `app/dashboard/layout.tsx`
+- **Solution**: Extracted both headers into a single reusable `DashboardHeader` component
+- **Implementation**:
+  - Created new `components/DashboardHeader.tsx` component
+  - Handles both desktop and mobile views within one component
+  - Accepts domain state and callbacks as props
+  - Cleaner separation of concerns and improved code maintainability
+- **Files Created**:
+  - `components/DashboardHeader.tsx` - New unified header component
+- **Files Modified**:
+  - `app/dashboard/layout.tsx` - Replaced inline header code with `DashboardHeader` component
+
+**2. Optimized Add Keywords Button Size**
+- **Issue**: Add Keywords button in desktop header was too large and not proportional to the domain selector
+- **Solution**: Adjusted button styling for better visual balance
+- **Changes**:
+  - Reduced padding from `px-4 py-2` to `px-3 py-2`
+  - Added `text-sm` class for smaller, more refined text
+  - Reduced icon margin from `mr-2` to `mr-1.5` for tighter spacing
+  - Added `shadow-sm` to match domain selector styling
+- **Result**: Button now has more proportional size matching the domain selector height
+- **Files Modified**:
+  - `components/DashboardHeader.tsx` - Updated button styling (line 74-82)
+
+**3. Enhanced Sidebar Quota Section with Accordion Functionality**
+- **Issue**: Quota/usage section in sidebar was too large and always showed the "Upgrade Plan" button
+- **Solution**: Implemented accordion-style collapsible section with toggle control
+- **Implementation**:
+  - Added `ChevronDown` icon import from lucide-react
+  - Created `isQuotaExpanded` state (default: `false` - collapsed)
+  - Added arrow button in top right corner of quota section header
+  - Arrow rotates 180° when expanded (smooth CSS transition)
+  - "Upgrade Plan" button conditionally rendered only when expanded
+  - Applied to both desktop and mobile sidebar quota sections
+- **User Experience**:
+  - Default state: Shows usage details only, hides upgrade button (cleaner, more compact)
+  - Expanded state: Shows full section including upgrade button
+  - Smooth transitions for arrow rotation and content visibility
+  - Consistent behavior across desktop and mobile sidebars
+- **Files Modified**:
+  - `components/Sidebar.tsx`:
+    - Line 23: Added `ChevronDown` import
+    - Line 66: Added `isQuotaExpanded` state
+    - Lines 321-336: Desktop quota section - added arrow button and flex justify-between layout
+    - Line 364-371: Desktop quota section - wrapped upgrade button with conditional rendering
+    - Lines 559-574: Mobile quota section - added arrow button and flex justify-between layout
+    - Lines 602-610: Mobile quota section - wrapped upgrade button with conditional rendering
+
+#### ✅ Technical Details
+
+**Component Architecture:**
+```typescript
+// New unified header component structure
+<DashboardHeader
+  domains={domains}
+  selectedDomainId={selectedDomainId}
+  selectedDomainInfo={selectedDomainInfo}
+  isDomainSelectorOpen={isDomainSelectorOpen}
+  onDomainSelectorToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
+  onDomainSelect={setSelectedDomainId}
+  getDomainKeywordCount={getDomainKeywordCount}
+  onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+/>
+```
+
+**Accordion Implementation:**
+```typescript
+// Desktop & Mobile Quota Section
+<div className="flex items-center justify-between mb-2">
+  <div className="flex items-center">
+    <Zap className="h-5 w-5 mr-2" />
+    <span className="text-sm font-semibold">Usage Limit</span>
+  </div>
+  <button onClick={() => setIsQuotaExpanded(!isQuotaExpanded)}>
+    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isQuotaExpanded ? 'rotate-180' : ''}`} />
+  </button>
+</div>
+// Usage details always visible
+{isQuotaExpanded && (
+  <a href="/dashboard/settings/plans-billing">Upgrade plan →</a>
+)}
+```
+
+#### ✅ User Experience Impact
+
+**Code Organization:**
+- Cleaner, more maintainable codebase with reusable header component
+- Easier to update header functionality in future (single source of truth)
+- Reduced code duplication between desktop and mobile layouts
+
+**Visual Improvements:**
+- More balanced, professional appearance with proportional button sizing
+- Cleaner sidebar with collapsible quota section (less visual clutter)
+- Consistent accordion behavior across all viewports
+
+**Interaction:**
+- Users can expand/collapse quota section as needed
+- Default collapsed state provides more vertical space in sidebar
+- Smooth animations enhance perceived polish and quality
+
+**Status**: Dashboard header **REFACTORED** into unified component, Add Keywords button **RESIZED** for better proportions, sidebar quota section **ENHANCED** with accordion functionality.
+
+---
+
 ### 2025-10-19 - Fixed Client-Side Authorization Header Missing in API Requests (CRITICAL FIX)
 
 **Critical Bug Fix**: Fixed persistent 401 authentication errors on indexnow/add page and other frontend pages by adding Authorization header to all client-side API requests.
