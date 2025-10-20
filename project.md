@@ -50,13 +50,12 @@
 - ❌ Dependency on hardcoded country mapping (`lib/utils/countries.ts` with 250+ countries)
 - ❌ Extra lookup/conversion step that duplicated database data
 
-#### ✅ Files Preserved (But No Longer Used in Rank Tracking)
+#### ✅ Files Deleted
 
-**Note**: The following files are kept in codebase in case they're used elsewhere (e.g., frontend dropdowns):
-- `lib/utils/countries.ts` - Hardcoded list of 250+ countries with codes
-- `lib/utils/country-converter.ts` - Conversion utilities between ISO2 ↔ Name
+**Removed unnecessary file:**
+- `lib/utils/country-converter.ts` - Conversion utilities that duplicated database data (DELETED)
 
-These files are **no longer imported or used** in the rank tracking service flow.
+**Note**: `lib/utils/countries.ts` is preserved as it may be used elsewhere in the frontend (e.g., country dropdowns, registration forms).
 
 #### ✅ Technical Benefits
 
