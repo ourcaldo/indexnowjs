@@ -1,6 +1,21 @@
 # IndexNow Studio - Project Setup
 
 ## Recent Changes
+- **[x] Oct 20, 2025**: Implemented Firecrawl Rank Tracking Enhancements - Rate Limiting, Country Mapping & URL Sanitization:
+  - **Enhancement #1 - Rate Limiter**: Created FirecrawlRateLimiter service with sliding window algorithm (30 req/min limit, 28 effective with safety buffer)
+    - Blocks until slot available (max 65s timeout) to prevent 429 errors
+    - Tracks requests per API key in-memory with automatic cleanup
+    - Integrated in RankTrackerService before all Firecrawl API calls
+  - **Enhancement #2 - Country Converter**: Enhanced country code conversion to use comprehensive countries.ts mapping (250+ countries)
+    - Replaced hardcoded ~50 country mapping with centralized utility
+    - Bidirectional conversion: ISO2 ↔ Full country name
+    - Graceful fallback returns code if country not found
+  - **Enhancement #3 - URL Sanitization**: Implemented URL cleaning utility to remove query parameters before database storage
+    - Strips `?` and `#` fragments from URLs for data consistency
+    - Example: `https://cetta.id/en/?srsltid=ABC` → `https://cetta.id/en`
+    - Integrated in RankTracker.storeRankResult() for both rank_history and rankings tables
+  - **Impact**: Eliminates 429 rate limit errors, supports all countries, ensures clean URL data in database
+  - **Files**: Created lib/rank-tracking/firecrawl-rate-limiter.ts, lib/utils/country-converter.ts, lib/utils/url-utils.ts, updated lib/rank-tracking/rank-tracker-service.ts and lib/rank-tracking/rank-tracker.ts
 - **[x] Oct 20, 2025**: Fixed device/country selectors not rendering in desktop header (CRITICAL BUG FIX):
   - **Issue**: Device and Country selectors invisible on /indexnow/overview and /indexnow/rank-history pages in production
   - **Root Cause**: Pathname check in DashboardHeader.tsx looked for `/dashboard/indexnow/` prefix, but production URLs redirect to `/indexnow/*` (without /dashboard prefix)
