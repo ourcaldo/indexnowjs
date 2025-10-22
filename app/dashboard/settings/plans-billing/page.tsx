@@ -518,92 +518,86 @@ export default function BillingPage() {
       {currentPlan ? (
         <Card className="bg-card border-border" data-testid="card-current-plan">
           <CardHeader>
-            <div>
-              <Badge className="mb-2 bg-primary text-primary-foreground" data-testid="badge-current-plan">Current Plan</Badge>
-              <CardTitle className="text-2xl" data-testid="text-plan-name">{currentPlan.name}</CardTitle>
-              <CardDescription className="text-foreground/70" data-testid="text-billing-info">
-                {billingData?.currentSubscription ? (
-                  <>
-                    {formatCurrency(billingData.currentSubscription.amount_paid, userCurrency)}/
-                    {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
-                  </>
-                ) : currentPlanPricing ? (
-                  `Active package • ${formatCurrency(currentPlanPricing.price, userCurrency)}/month`
-                ) : (
-                  'Active package'
-                )}
-              </CardDescription>
+            <div className="flex items-start justify-between">
+              <div>
+                <Badge className="mb-2 bg-primary text-primary-foreground" data-testid="badge-current-plan">Current Plan</Badge>
+                <CardTitle className="text-2xl" data-testid="text-plan-name">{currentPlan.name}</CardTitle>
+                <CardDescription className="text-foreground/70" data-testid="text-billing-info">
+                  {billingData?.currentSubscription ? (
+                    <>
+                      {formatCurrency(billingData.currentSubscription.amount_paid, userCurrency)}/
+                      {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
+                    </>
+                  ) : currentPlanPricing ? (
+                    `Active package • ${formatCurrency(currentPlanPricing.price, userCurrency)}/month`
+                  ) : (
+                    'Active package'
+                  )}
+                </CardDescription>
+              </div>
+              <Button variant="outline" className="bg-background" data-testid="button-manage-plan">Manage</Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Daily URLs */}
-              <div className="relative overflow-hidden rounded-lg border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-daily-urls">
-                <div 
-                  className="absolute inset-0 bg-[hsl(var(--usage-card-progress))] transition-all duration-300"
-                  style={{ 
-                    width: `${getUsagePercentage(
-                      usageData?.daily_quota_used || 0, 
-                      usageData?.daily_quota_limit || 0, 
-                      usageData?.is_unlimited || false
-                    )}%` 
-                  }}
+              <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-daily-urls">
+                <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-daily-urls">Daily URLs</p>
+                <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-daily-urls">
+                  {formatNumber(usageData?.daily_quota_used || 0)}
+                  <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
+                    /{usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}
+                  </span>
+                </p>
+                <Progress 
+                  value={getUsagePercentage(
+                    usageData?.daily_quota_used || 0, 
+                    usageData?.daily_quota_limit || 0, 
+                    usageData?.is_unlimited || false
+                  )} 
+                  className="h-1.5" 
+                  data-testid="progress-daily-urls"
                 />
-                <div className="relative bg-[hsl(var(--usage-card-bg))] p-4">
-                  <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-daily-urls">Daily URLs</p>
-                  <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold" data-testid="text-value-daily-urls">
-                    {formatNumber(usageData?.daily_quota_used || 0)}
-                    <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                      /{usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}
-                    </span>
-                  </p>
-                </div>
               </div>
               
               {/* Keywords */}
-              <div className="relative overflow-hidden rounded-lg border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-keywords">
-                <div 
-                  className="absolute inset-0 bg-[hsl(var(--usage-card-progress))] transition-all duration-300"
-                  style={{ 
-                    width: `${getUsagePercentage(
-                      totalKeywords || keywordUsage?.keywords_used || 0, 
-                      keywordUsage?.keywords_limit || 0, 
-                      keywordUsage?.is_unlimited || false
-                    )}%` 
-                  }}
+              <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-keywords">
+                <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-keywords">Keywords</p>
+                <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-keywords">
+                  {formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}
+                  <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
+                    /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
+                  </span>
+                </p>
+                <Progress 
+                  value={getUsagePercentage(
+                    totalKeywords || keywordUsage?.keywords_used || 0, 
+                    keywordUsage?.keywords_limit || 0, 
+                    keywordUsage?.is_unlimited || false
+                  )} 
+                  className="h-1.5" 
+                  data-testid="progress-keywords"
                 />
-                <div className="relative bg-[hsl(var(--usage-card-bg))] p-4">
-                  <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-keywords">Keywords</p>
-                  <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold" data-testid="text-value-keywords">
-                    {formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}
-                    <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                      /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
-                    </span>
-                  </p>
-                </div>
               </div>
               
               {/* Service Accounts */}
-              <div className="relative overflow-hidden rounded-lg border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-service-accounts">
-                <div 
-                  className="absolute inset-0 bg-[hsl(var(--usage-card-progress))] transition-all duration-300"
-                  style={{ 
-                    width: `${getUsagePercentage(
-                      serviceAccountCount, 
-                      currentPlan.quota_limits?.service_accounts_limit || 0, 
-                      currentPlan.quota_limits?.service_accounts_limit === -1
-                    )}%` 
-                  }}
+              <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-service-accounts">
+                <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-service-accounts">Service Accounts</p>
+                <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-service-accounts">
+                  {serviceAccountCount}
+                  <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
+                    /{currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}
+                  </span>
+                </p>
+                <Progress 
+                  value={getUsagePercentage(
+                    serviceAccountCount, 
+                    currentPlan.quota_limits?.service_accounts_limit || 0, 
+                    currentPlan.quota_limits?.service_accounts_limit === -1
+                  )} 
+                  className="h-1.5" 
+                  data-testid="progress-service-accounts"
                 />
-                <div className="relative bg-[hsl(var(--usage-card-bg))] p-4">
-                  <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-service-accounts">Service Accounts</p>
-                  <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold" data-testid="text-value-service-accounts">
-                    {serviceAccountCount}
-                    <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                      /{currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}
-                    </span>
-                  </p>
-                </div>
               </div>
             </div>
           </CardContent>
