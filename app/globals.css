@@ -104,11 +104,10 @@
   --slate-100: #f1f5f9;
   
   /* Usage card colors - Professional dark theme */
-  --usage-card-bg: 220 27% 12%; /* #181f2a - Darker blue-gray */
-  --usage-card-bg-from: 220 27% 12%; /* #181f2a */
-  --usage-card-bg-to: 220 30% 9%; /* #121722 */
-  --usage-card-border: 220 20% 20%; /* #2a303d */
-  --usage-card-label: 218 100% 70%; /* #66A3FF - Bright soft blue */
+  --usage-card-bg-from: 220 35% 8%; /* #0d1419 - Very dark blue-black */
+  --usage-card-bg-to: 220 40% 5%; /* #080b0d - Near black */
+  --usage-card-border: 220 30% 12%; /* #181d24 */
+  --usage-card-label: 0 0% 85%; /* #D9D9D9 - Light grey */
   --usage-card-value: 0 0% 100%; /* #FFFFFF */
 }
 
@@ -142,12 +141,11 @@
   --slate-100: hsl(215, 25%, 15%);
   
   /* Usage card colors - dark mode */
-  --usage-card-bg: 220 30% 8%; /* #0d1117 - Very dark blue-gray */
-  --usage-card-bg-from: 220 30% 8%; /* #0d1117 */
-  --usage-card-bg-to: 220 30% 5%; /* #080b0f */
-  --usage-card-border: 220 20% 15%; /* #1f252e */
-  --usage-card-label: 218 100% 65%; /* #52A3FF - Soft blue accent */
-  --usage-card-value: 0 0% 95%; /* #F2F2F2 */
+  --usage-card-bg-from: 220 40% 6%; /* #0a0e12 - Very dark blue-black */
+  --usage-card-bg-to: 220 45% 3%; /* #050708 - Almost black */
+  --usage-card-border: 220 30% 10%; /* #121619 */
+  --usage-card-label: 0 0% 80%; /* #CCCCCC - Light grey */
+  --usage-card-value: 0 0% 98%; /* #FAFAFA */
 }
 
 @layer base {
