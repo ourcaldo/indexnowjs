@@ -322,8 +322,11 @@ export default function BillingPage() {
 
   // Helper functions
   const getBillingPeriodPrice = (pkg: PaymentPackage, period: string): { price: number, originalPrice?: number, discount?: number } => {
-    if (pkg.pricing_tiers && typeof pkg.pricing_tiers === 'object' && pkg.pricing_tiers[period]) {
-      const periodTier = pkg.pricing_tiers[period]
+    // Map 'yearly' to 'annual' as the API returns 'annual' but UI uses 'yearly'
+    const apiPeriod = period === 'yearly' ? 'annual' : period
+    
+    if (pkg.pricing_tiers && typeof pkg.pricing_tiers === 'object' && pkg.pricing_tiers[apiPeriod]) {
+      const periodTier = pkg.pricing_tiers[apiPeriod]
       
       if (periodTier[userCurrency]) {
         const currencyTier = periodTier[userCurrency]
@@ -335,7 +338,7 @@ export default function BillingPage() {
       }
       
       if (Array.isArray(pkg.pricing_tiers)) {
-        const tier = pkg.pricing_tiers.find((t: any) => t.period === period)
+        const tier = pkg.pricing_tiers.find((t: any) => t.period === apiPeriod)
         if (tier) {
           return {
             price: tier.promo_price || tier.regular_price,
@@ -480,7 +483,7 @@ export default function BillingPage() {
     <div className="space-y-6">
       {/* Current Plan Card */}
       {currentPlan ? (
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-purple-500/5" data-testid="card-current-plan">
+        <Card className="border-accent/30 bg-gradient-to-br from-accent/10 to-accent/5" data-testid="card-current-plan">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
@@ -759,54 +762,6 @@ export default function BillingPage() {
                   <p className="text-muted-foreground">No transactions found</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Sidebar */}
-        <div className="space-y-6">
-          {/* Payment Method Card */}
-          <Card data-testid="card-payment-method">
-            <CardHeader>
-              <CardTitle>Payment Method</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {billingData?.currentSubscription ? (
-                <>
-                  <div className="bg-gradient-to-br from-primary to-purple-600 dark:from-primary/80 dark:to-purple-600/80 rounded-lg p-4 mb-4">
-                    <div className="flex justify-between mb-8">
-                      <div className="w-10 h-7 bg-white/20 rounded flex items-center justify-center">
-                        <span className="text-white text-[10px] font-bold">CARD</span>
-                      </div>
-                    </div>
-                    <p className="text-white text-sm mb-1">•••• •••• •••• ••••</p>
-                    <p className="text-xs text-white/70">Payment method on file</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full" data-testid="button-update-payment">
-                    Update
-                  </Button>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground mb-4">No payment method added</p>
-                  <Button variant="outline" size="sm" className="w-full" data-testid="button-add-payment">
-                    Add Payment Method
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Referral Card */}
-          <Card className="border-primary/20 bg-primary/5" data-testid="card-referral">
-            <CardHeader>
-              <CardTitle>Referral</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-foreground/70 mb-3">Get 1 month free per referral</p>
-              <Button size="sm" className="w-full" data-testid="button-share-referral">
-                Share link
-              </Button>
             </CardContent>
           </Card>
         </div>

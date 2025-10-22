@@ -8354,3 +8354,60 @@ ON public.indb_cms_posts(category, status);
   - **Visual Result**: Perfect alignment between "KEYWORD" header text and keyword row data text
 - **User Experience**: Cleaner, more professional table appearance with consistent column alignment
 - **Status**: ✅ **COMPLETE** - KEYWORD header now perfectly aligns with row data as requested
+
+### October 22, 2025 - Keyword Rank Tracker Metadata Storage & Settings Page UI Enhancements ✅
+
+- 🎯 **FIRECRAWL METADATA STORAGE IMPLEMENTATION**: Enhanced keyword rank tracking system to save complete Firecrawl API responses for debugging and analysis
+  - **Database Schema Enhancement**: Added `metadata` column (JSONB type) to `indb_keyword_rank_history` table
+  - **Complete Response Capture**: Full Firecrawl API response now stored in metadata field including search results, credits used, and all response data
+  - **Debugging Support**: Metadata enables troubleshooting of rank tracking issues by reviewing exact API responses
+  - **Data Analysis**: Historical API responses available for future analytics and pattern recognition
+  - **SQL Queries Provided**:
+    ```sql
+    ALTER TABLE "public"."indb_keyword_rank_history" ADD COLUMN "metadata" jsonb DEFAULT NULL;
+    COMMENT ON COLUMN "public"."indb_keyword_rank_history"."metadata" 
+    IS 'Stores the complete Firecrawl API response for debugging and analysis purposes';
+    ```
+
+- 🔧 **RANK TRACKER SERVICE MODIFICATIONS**: Updated rank tracking logic to capture and store Firecrawl responses
+  - **RankResult Interface Update**: Added `firecrawlResponse` optional field to capture full API response
+  - **RankTrackerService Enhancement**: Modified `checkKeywordRank` to attach complete Firecrawl response to result object
+  - **Database Storage Update**: Modified `storeRankResult` to save metadata field when inserting rank history records
+  - **Backwards Compatible**: Gracefully handles null metadata for existing records without Firecrawl responses
+  
+- ✅ **FILES MODIFIED FOR METADATA STORAGE**:
+  - `lib/rank-tracking/rank-tracker.ts` - Added firecrawlResponse field to RankResult interface and updated storeRankResult to save metadata
+  - `lib/rank-tracking/rank-tracker-service.ts` - Added firecrawlResponse to RankCheckResponse and attached full API response before returning
+
+- 🎨 **SETTINGS PAGE UI/UX ENHANCEMENTS**: Comprehensive improvements to Settings billing page for cleaner, more professional interface
+  - **Header Removal**: Removed "Settings" header and "Manage your account and preferences" subtitle from sidebar navigation for cleaner look
+  - **Current Plan Card Redesign**: Changed gradient colors from purple accent to brand soft blue accent for consistency
+    - **Before**: `bg-gradient-to-br from-primary/5 to-purple-500/5` with purple accent
+    - **After**: `bg-gradient-to-br from-accent/10 to-accent/5` with soft blue (#3D8BFF) accent
+    - **Border Enhancement**: Updated border from `border-primary/20` to `border-accent/30` for better visual emphasis
+  - **Yearly Pricing NaN Fix**: Resolved critical bug causing "NaN" display when switching to yearly billing period
+    - **Root Cause**: UI uses 'yearly' parameter but API returns pricing tiers with 'annual' key
+    - **Solution**: Added period mapping in `getBillingPeriodPrice` function to translate 'yearly' → 'annual' before API lookup
+    - **Impact**: Yearly pricing now displays correctly for all packages (Basic, Premium, Pro)
+  - **Payment Method Section Removal**: Deleted entire Payment Method card to streamline billing interface
+  - **Referral Section Removal**: Removed Referral card ("Get 1 month free per referral") from billing page
+  - **Layout Simplification**: Eliminated right sidebar entirely, creating cleaner single-column layout for billing information
+
+- ✅ **FILES MODIFIED FOR SETTINGS PAGE**:
+  - `app/dashboard/settings/page.tsx` - Removed Settings header and subtitle from sidebar navigation
+  - `app/dashboard/settings/plans-billing/page.tsx` - Updated current plan card colors, fixed yearly pricing bug, removed Payment Method and Referral sections
+
+- 🎯 **USER EXPERIENCE IMPROVEMENTS**:
+  - **Cleaner Navigation**: Settings sidebar is now more minimal and focused without redundant header text
+  - **Brand Consistency**: Current plan card uses project's soft blue accent color matching overall design system
+  - **Pricing Accuracy**: Yearly pricing now displays correctly without NaN errors, improving user trust
+  - **Simplified Billing Interface**: Removed unnecessary payment method and referral sections for cleaner, more focused billing management
+  - **Professional Appearance**: Overall settings page looks more polished and professional with streamlined design
+
+- 🔧 **TECHNICAL IMPLEMENTATION DETAILS**:
+  - **Type Safety**: All TypeScript interfaces updated with proper optional fields and type definitions
+  - **Period Mapping Logic**: Smart translation layer between UI terminology (yearly) and API terminology (annual)
+  - **Color System Usage**: Used project's established color variables (--accent) instead of hardcoded colors
+  - **Code Quality**: Clean removal of UI sections without breaking responsive layout grid system
+
+**Status**: ✅ **KEYWORD RANK TRACKER METADATA & SETTINGS UI ENHANCEMENTS COMPLETE** - Successfully implemented Firecrawl response storage, fixed yearly pricing bug, and streamlined Settings page interface

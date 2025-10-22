@@ -70,8 +70,6 @@ export default function SettingsPage() {
       {/* Sidebar Navigation - Desktop */}
       <aside className="hidden lg:block w-64 bg-white border-r border-gray-200 min-h-screen">
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Settings</h2>
-          <p className="text-sm text-gray-500 mb-6">Manage your account and preferences</p>
           <nav className="space-y-1">
             {tabs.map((tab) => {
               const Icon = tab.icon
