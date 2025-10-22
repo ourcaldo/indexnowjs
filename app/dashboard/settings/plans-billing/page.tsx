@@ -143,6 +143,8 @@ export default function BillingPage() {
   const [historyData, setHistoryData] = useState<BillingHistoryData | null>(null)
   const [usageData, setUsageData] = useState<UsageData | null>(null)
   const [keywordUsage, setKeywordUsage] = useState<KeywordUsageData | null>(null)
+  const [serviceAccountCount, setServiceAccountCount] = useState<number>(0)
+  const [totalKeywords, setTotalKeywords] = useState<number>(0)
   const [userCurrency, setUserCurrency] = useState<'USD' | 'IDR'>('USD')
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
@@ -276,6 +278,37 @@ export default function BillingPage() {
       // Extract keyword usage from rank tracking
       if (dashboardData.rankTracking?.usage) {
         setKeywordUsage(dashboardData.rankTracking.usage)
+      }
+      
+      // Extract service account count from profile (API returns correct count here)
+      if (profileData.service_account_count !== undefined) {
+        setServiceAccountCount(profileData.service_account_count)
+      } else if (dashboardData.indexing?.serviceAccounts !== undefined) {
+        setServiceAccountCount(dashboardData.indexing.serviceAccounts)
+      }
+      
+      // Fetch total keywords count across all domains
+      try {
+        const keywordsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/rank-tracking/keywords`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+        
+        if (keywordsResponse.ok) {
+          const keywordsResult = await keywordsResponse.json()
+          if (keywordsResult.success && keywordsResult.data) {
+            // Count total active keywords across all domains
+            const allKeywords = keywordsResult.data.keywords || []
+            const activeKeywordsCount = allKeywords.filter((kw: any) => kw.is_active).length
+            setTotalKeywords(activeKeywordsCount)
+          }
+        }
+      } catch (err) {
+        // Fallback to usage data if keywords endpoint fails
+        setTotalKeywords(keywordUsage?.keywords_used || 0)
       }
       
       // Extract trial eligibility from dashboard
@@ -483,7 +516,7 @@ export default function BillingPage() {
     <div className="space-y-6">
       {/* Current Plan Card */}
       {currentPlan ? (
-        <Card className="border-accent/30 bg-gradient-to-br from-accent/10 to-accent/5" data-testid="card-current-plan">
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10" data-testid="card-current-plan">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>
@@ -531,14 +564,14 @@ export default function BillingPage() {
               <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-keywords">
                 <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-keywords">Keywords</p>
                 <p className="text-2xl text-foreground mb-2" data-testid="text-value-keywords">
-                  {formatNumber(keywordUsage?.keywords_used || 0)}
+                  {formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}
                   <span className="text-sm text-muted-foreground">
                     /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
                   </span>
                 </p>
                 <Progress 
                   value={getUsagePercentage(
-                    keywordUsage?.keywords_used || 0, 
+                    totalKeywords || keywordUsage?.keywords_used || 0, 
                     keywordUsage?.keywords_limit || 0, 
                     keywordUsage?.is_unlimited || false
                   )} 
@@ -551,16 +584,16 @@ export default function BillingPage() {
               <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-service-accounts">
                 <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-service-accounts">Service Accounts</p>
                 <p className="text-2xl text-foreground mb-2" data-testid="text-value-service-accounts">
-                  {usageData?.service_account_count || 0}
+                  {serviceAccountCount}
                   <span className="text-sm text-muted-foreground">
-                    /{currentPlan.quota_limits?.service_accounts_limit || 0}
+                    /{currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}
                   </span>
                 </p>
                 <Progress 
                   value={getUsagePercentage(
-                    usageData?.service_account_count || 0, 
+                    serviceAccountCount, 
                     currentPlan.quota_limits?.service_accounts_limit || 0, 
-                    false
+                    currentPlan.quota_limits?.service_accounts_limit === -1
                   )} 
                   className="h-1.5" 
                   data-testid="progress-service-accounts"
@@ -622,9 +655,18 @@ export default function BillingPage() {
             return (
               <Card 
                 key={plan.id} 
-                className={isCurrentPlan ? 'border-2 border-border' : 'border border-border'} 
+                className={`relative flex flex-col ${isCurrentPlan ? 'border-2 border-border' : 'border border-border'}`}
                 data-testid={`card-plan-${plan.slug}`}
               >
+                {/* Save Badge - Top Right Corner */}
+                {pricing.discount && pricing.discount > 0 && (
+                  <div className="absolute -top-3 -right-3 z-10">
+                    <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-lg px-3 py-1.5 text-xs font-bold" data-testid={`badge-discount-${plan.slug}`}>
+                      Save {pricing.discount}%
+                    </Badge>
+                  </div>
+                )}
+                
                 <CardHeader>
                   <CardTitle data-testid={`text-plan-name-${plan.slug}`}>{plan.name}</CardTitle>
                   <div className="flex items-baseline gap-2">
@@ -638,14 +680,9 @@ export default function BillingPage() {
                     </span>
                     <span className="text-sm text-muted-foreground">/{selectedBillingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
                   </div>
-                  {pricing.discount && pricing.discount > 0 && (
-                    <Badge variant="secondary" className="bg-secondary text-foreground border border-border mt-2" data-testid={`badge-discount-${plan.slug}`}>
-                      Save {pricing.discount}%
-                    </Badge>
-                  )}
                 </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2.5 mb-4">
+                <CardContent className="flex-1 flex flex-col">
+                  <ul className="space-y-2.5 mb-6 flex-1">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm" data-testid={`text-feature-${plan.slug}-${i}`}>
                         <Check className="w-4 h-4 text-primary flex-shrink-0" />
@@ -653,7 +690,7 @@ export default function BillingPage() {
                       </li>
                     ))}
                   </ul>
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-auto">
                     <Button 
                       className="w-full"
                       variant={isCurrentPlan ? 'secondary' : 'default'}

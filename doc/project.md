@@ -973,6 +973,118 @@ while (true) {
 
 ---
 
+### October 22, 2025: Settings Page UI/UX Improvements - Current Plan Card & Pricing Cards Redesign ✅
+
+🎨 **UI/UX ENHANCEMENTS**: Improved Settings Plans & Billing page with better color scheme, correct data display, and enhanced pricing card layout
+
+**✅ CURRENT PLAN CARD IMPROVEMENTS**:
+
+**1. Color Scheme Updated**:
+- **Before**: `bg-gradient-to-br from-accent/10 to-accent/5 border-accent/30` (blue accent)
+- **After**: `bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20` (primary brand color)
+- **Impact**: More consistent with brand identity and better visual hierarchy
+
+**2. Keywords Display - Fixed to Show Total Across All Domains**:
+- **Before**: Showing only domain-specific keywords (1 keyword displayed)
+- **After**: Fetching and displaying ALL active keywords across all domains (15 keywords)
+- **Implementation**: Added API call to `/v1/rank-tracking/keywords` endpoint to count total active keywords
+- **Fallback**: Uses `rankTracking.usage.keywords_used` if API call fails
+- **Code**: Added `totalKeywords` state and fetch logic in `loadDashboardData()`
+
+**3. Service Accounts - Fixed to Show Correct Count**:
+- **Before**: Showing 0 service accounts (from usageData which had incorrect value)
+- **After**: Showing correct count of 2 from API profile data
+- **Data Source**: `data.user.profile.service_account_count` or `data.indexing.serviceAccounts`
+- **Code**: Added `serviceAccountCount` state extracted from dashboard API response
+
+**✅ PRICING CARDS IMPROVEMENTS**:
+
+**1. Save XX% Badge Repositioned**:
+- **Before**: Badge displayed below price in card header
+- **After**: Badge positioned at top-right corner of card (absolute positioning)
+- **Styling**: 
+  - Position: `absolute -top-3 -right-3 z-10`
+  - Color: `bg-emerald-500` with `shadow-lg` (emerald green, more standout)
+  - Font: `text-xs font-bold` for better emphasis
+  - Removed from header flow completely
+
+**2. Buttons Aligned at Bottom**:
+- **Before**: Buttons positioned based on content height (misaligned across cards)
+- **After**: All buttons aligned at bottom using flexbox layout
+- **Implementation**:
+  - Card: Added `flex flex-col` classes
+  - CardContent: Added `flex-1 flex flex-col` classes
+  - Features list: Added `flex-1` to push buttons down
+  - Button container: Added `mt-auto` to stick to bottom
+
+**3. Card Layout Enhanced**:
+- **Before**: Static height cards with varying button positions
+- **After**: Flex layout ensuring consistent button positioning across all cards
+- **Result**: Professional, uniform appearance with all "Upgrade" buttons aligned horizontally
+
+**🔧 TECHNICAL CHANGES** (`app/dashboard/settings/plans-billing/page.tsx`):
+
+**State Management** (Lines 149-150):
+```typescript
+const [serviceAccountCount, setServiceAccountCount] = useState<number>(0)
+const [totalKeywords, setTotalKeywords] = useState<number>(0)
+```
+
+**Data Fetching** (Lines 286-315):
+```typescript
+// Extract service account count from API profile
+setServiceAccountCount(profileData.service_account_count)
+
+// Fetch total keywords across all domains
+const keywordsResponse = await fetch('/v1/rank-tracking/keywords')
+const activeKeywordsCount = allKeywords.filter(kw => kw.is_active).length
+setTotalKeywords(activeKeywordsCount)
+```
+
+**Current Plan Card Color** (Line 489):
+```typescript
+// Before: border-accent/30 bg-gradient-to-br from-accent/10 to-accent/5
+// After:
+<Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+```
+
+**Pricing Cards Layout** (Lines 659-735):
+```typescript
+// Card with flex layout
+<Card className="relative flex flex-col">
+  {/* Save badge at top-right */}
+  <div className="absolute -top-3 -right-3 z-10">
+    <Badge className="bg-emerald-500 text-white shadow-lg">
+      Save {pricing.discount}%
+    </Badge>
+  </div>
+  
+  {/* Content with flex-grow */}
+  <CardContent className="flex-1 flex flex-col">
+    <ul className="flex-1">...</ul>
+    
+    {/* Buttons stick to bottom */}
+    <div className="mt-auto">
+      <Button className="w-full">Upgrade</Button>
+    </div>
+  </CardContent>
+</Card>
+```
+
+**✅ IMPACT & BENEFITS**:
+- **Accurate Data**: Users now see correct service account count and total keywords
+- **Better UX**: Professional layout with aligned buttons improves user experience
+- **Visual Hierarchy**: Save badges are more noticeable in top-right corner
+- **Brand Consistency**: Primary color gradient matches overall design system
+- **Responsive Design**: Flex layout ensures proper alignment across all screen sizes
+
+**Files Modified**:
+- `app/dashboard/settings/plans-billing/page.tsx` - Enhanced UI, fixed data sources, improved layout
+
+**Status**: ✅ **UI/UX IMPROVEMENTS COMPLETE** - Settings page now displays accurate data with improved visual design and layout
+
+---
+
 ### October 20, 2025: Rank Tracking Enhancement - Immediate Rank Check After Keyword Addition ✅
 
 🚀 **IMMEDIATE RANK CHECKING IMPLEMENTATION**: Enhanced rank tracking system to trigger immediate rank checking when users add new keywords, eliminating the wait until next day's 2 AM cron job
