@@ -223,7 +223,7 @@ function DashboardLayoutContent({
             sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
           }`}>
             {/* Dashboard Header - Unified component for desktop and mobile */}
-            {!pathname?.includes('/dashboard/settings') && (
+            {mounted && pathname && !pathname.includes('/dashboard/settings') && (
               <DashboardHeader
                 domains={domains}
                 selectedDomainId={selectedDomainId}

@@ -622,7 +622,7 @@ export default function BillingPage() {
             return (
               <Card 
                 key={plan.id} 
-                className={isCurrentPlan ? 'border-primary' : ''} 
+                className={isCurrentPlan ? 'border-2 border-border' : 'border border-border'} 
                 data-testid={`card-plan-${plan.slug}`}
               >
                 <CardHeader>
@@ -639,7 +639,7 @@ export default function BillingPage() {
                     <span className="text-sm text-muted-foreground">/{selectedBillingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
                   </div>
                   {pricing.discount && pricing.discount > 0 && (
-                    <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-0 mt-2" data-testid={`badge-discount-${plan.slug}`}>
+                    <Badge variant="secondary" className="bg-secondary text-foreground border border-border mt-2" data-testid={`badge-discount-${plan.slug}`}>
                       Save {pricing.discount}%
                     </Badge>
                   )}
@@ -656,7 +656,7 @@ export default function BillingPage() {
                   <div className="space-y-2">
                     <Button 
                       className="w-full"
-                      variant={isCurrentPlan ? 'default' : 'outline'}
+                      variant={isCurrentPlan ? 'secondary' : 'default'}
                       disabled={isCurrentPlan || subscribing === plan.id}
                       onClick={() => handleSubscribe(plan.id, selectedBillingPeriod)}
                       data-testid={`button-${isCurrentPlan ? 'current' : 'upgrade'}-${plan.slug}`}
@@ -675,7 +675,7 @@ export default function BillingPage() {
                     {!isCurrentPlan && isTrialEligiblePackage(plan) && trialEligible && (
                       <Button 
                         className="w-full"
-                        variant="default"
+                        variant="secondary"
                         disabled={startingTrial === plan.id}
                         onClick={() => handleStartTrial(plan.id)}
                         data-testid={`button-start-trial-${plan.slug}`}
@@ -732,11 +732,11 @@ export default function BillingPage() {
                           variant="secondary" 
                           className={`${
                             transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
-                              ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                              ? 'bg-secondary text-foreground border border-border'
                               : transaction.transaction_status === 'pending'
-                              ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
-                              : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                          } border-0`}
+                              ? 'bg-secondary/80 text-foreground border border-border'
+                              : 'bg-secondary/60 text-foreground border border-border'
+                          }`}
                           data-testid={`badge-status-${transaction.id}`}
                         >
                           {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
