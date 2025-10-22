@@ -1085,6 +1085,54 @@ setTotalKeywords(activeKeywordsCount)
 
 ---
 
+### October 22, 2025: Settings Page - Dark Color Scheme for Usage Cards ✅
+
+🎨 **DARK MODE ENHANCEMENT**: Updated usage statistics cards (Daily URLs, Keywords, Service Accounts) to use darker color scheme for better visual hierarchy and modern appearance
+
+**✅ VISUAL IMPROVEMENTS**:
+
+**Before** (Light theme):
+- Background: `bg-background` (white/light)
+- Border: `border-border` (light gray)
+- Text: Standard foreground colors
+
+**After** (Dark gradient theme):
+- **Background**: `bg-gradient-to-br from-slate-800/60 to-slate-900/60` (dark gradient)
+- **Dark Mode**: `dark:from-slate-900/80 dark:to-black/80` (even darker)
+- **Border**: `border-slate-700/50` with `dark:border-slate-800/50`
+- **Labels**: `text-slate-400 dark:text-slate-500`
+- **Values**: `text-white dark:text-slate-100` (bright white for contrast)
+- **Result**: Professional dark cards with subtle gradient and excellent text contrast
+
+**🔧 TECHNICAL CHANGES** (`app/dashboard/settings/plans-billing/page.tsx`, Lines 547-604):
+
+**Usage Card Styling**:
+```typescript
+// All three cards (Daily URLs, Keywords, Service Accounts)
+<div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 dark:from-slate-900/80 dark:to-black/80 rounded-lg p-4 border border-slate-700/50 dark:border-slate-800/50">
+  <p className="text-xs text-slate-400 dark:text-slate-500">Label</p>
+  <p className="text-2xl text-white dark:text-slate-100">
+    Value
+    <span className="text-sm text-slate-400 dark:text-slate-500">Limit</span>
+  </p>
+  <Progress className="h-1.5" />
+</div>
+```
+
+**✅ IMPACT & BENEFITS**:
+- **Better Contrast**: Dark backgrounds make white text values pop and easier to read
+- **Modern Design**: Gradient effect adds depth and sophistication
+- **Visual Hierarchy**: Darker cards create clear separation from lighter page background
+- **Dark Mode Ready**: Fully optimized for both light and dark themes
+- **Consistency**: Matches modern dashboard design patterns
+
+**Files Modified**:
+- `app/dashboard/settings/plans-billing/page.tsx` - Applied dark gradient styling to all three usage cards
+
+**Status**: ✅ **DARK THEME COMPLETE** - Usage cards now feature modern dark gradient design with excellent readability
+
+---
+
 ### October 20, 2025: Rank Tracking Enhancement - Immediate Rank Check After Keyword Addition ✅
 
 🚀 **IMMEDIATE RANK CHECKING IMPLEMENTATION**: Enhanced rank tracking system to trigger immediate rank checking when users add new keywords, eliminating the wait until next day's 2 AM cron job

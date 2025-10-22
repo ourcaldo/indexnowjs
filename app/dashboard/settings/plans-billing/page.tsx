@@ -541,11 +541,11 @@ export default function BillingPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Daily URLs */}
-              <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-daily-urls">
-                <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-daily-urls">Daily URLs</p>
-                <p className="text-2xl text-foreground mb-2" data-testid="text-value-daily-urls">
+              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 dark:from-slate-900/80 dark:to-black/80 rounded-lg p-4 border border-slate-700/50 dark:border-slate-800/50" data-testid="card-usage-daily-urls">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-2" data-testid="text-label-daily-urls">Daily URLs</p>
+                <p className="text-2xl text-white dark:text-slate-100 mb-2" data-testid="text-value-daily-urls">
                   {formatNumber(usageData?.daily_quota_used || 0)}
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-slate-400 dark:text-slate-500">
                     /{usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}
                   </span>
                 </p>
@@ -561,11 +561,11 @@ export default function BillingPage() {
               </div>
               
               {/* Keywords */}
-              <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-keywords">
-                <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-keywords">Keywords</p>
-                <p className="text-2xl text-foreground mb-2" data-testid="text-value-keywords">
+              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 dark:from-slate-900/80 dark:to-black/80 rounded-lg p-4 border border-slate-700/50 dark:border-slate-800/50" data-testid="card-usage-keywords">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-2" data-testid="text-label-keywords">Keywords</p>
+                <p className="text-2xl text-white dark:text-slate-100 mb-2" data-testid="text-value-keywords">
                   {formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-slate-400 dark:text-slate-500">
                     /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
                   </span>
                 </p>
@@ -581,11 +581,11 @@ export default function BillingPage() {
               </div>
               
               {/* Service Accounts */}
-              <div className="bg-background rounded-lg p-4 border border-border" data-testid="card-usage-service-accounts">
-                <p className="text-xs text-muted-foreground mb-2" data-testid="text-label-service-accounts">Service Accounts</p>
-                <p className="text-2xl text-foreground mb-2" data-testid="text-value-service-accounts">
+              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 dark:from-slate-900/80 dark:to-black/80 rounded-lg p-4 border border-slate-700/50 dark:border-slate-800/50" data-testid="card-usage-service-accounts">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-2" data-testid="text-label-service-accounts">Service Accounts</p>
+                <p className="text-2xl text-white dark:text-slate-100 mb-2" data-testid="text-value-service-accounts">
                   {serviceAccountCount}
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-slate-400 dark:text-slate-500">
                     /{currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}
                   </span>
                 </p>
