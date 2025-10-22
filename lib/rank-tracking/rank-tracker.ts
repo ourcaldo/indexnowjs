@@ -27,6 +27,7 @@ interface RankResult {
   found: boolean
   totalResults: number
   errorMessage?: string
+  firecrawlResponse?: any
 }
 
 export class RankTracker {
@@ -145,7 +146,7 @@ export class RankTracker {
             throw new Error(`Failed to get keyword details: ${keywordError?.message}`)
           }
 
-          // Insert into rank history with sanitized URL
+          // Insert into rank history with sanitized URL and Firecrawl response metadata
           const { error: historyError } = await supabaseAdmin
             .from('indb_keyword_rank_history')
             .insert({
@@ -157,6 +158,7 @@ export class RankTracker {
               check_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
               device_type: keyword.device_type,
               country_id: keyword.country_id,
+              metadata: result.firecrawlResponse || null, // Store complete Firecrawl API response
               created_at: new Date().toISOString()
             })
 

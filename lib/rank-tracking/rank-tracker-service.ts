@@ -59,6 +59,7 @@ interface RankCheckResponse {
   found: boolean
   totalResults: number
   errorMessage?: string
+  firecrawlResponse?: any
 }
 
 
@@ -147,6 +148,9 @@ export class RankTrackerService {
 
       // Process response to find domain position
       const result = this.processFirecrawlResponse(response, request.domain)
+      
+      // Attach full Firecrawl response for metadata storage
+      result.firecrawlResponse = response
       
       // Update credit usage in database
       await this.updateCreditUsage(response.data.creditsUsed)
