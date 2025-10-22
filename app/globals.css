@@ -104,11 +104,11 @@
   --slate-100: #f1f5f9;
   
   /* Usage card colors - Professional dark theme */
-  --usage-card-bg-from: 220 35% 8%; /* #0d1419 - Very dark blue-black */
-  --usage-card-bg-to: 220 40% 5%; /* #080b0d - Near black */
-  --usage-card-border: 220 30% 12%; /* #181d24 */
-  --usage-card-label: 0 0% 85%; /* #D9D9D9 - Light grey */
-  --usage-card-value: 0 0% 100%; /* #FFFFFF */
+  --usage-card-bg-from: 0 0% 7%; /* #121212 - Pure dark grey, no blue tint */
+  --usage-card-bg-to: 0 0% 4%; /* #0A0A0A - Almost pure black */
+  --usage-card-border: 0 0% 15%; /* #262626 - Dark border */
+  --usage-card-label: 0 0% 65%; /* #A6A6A6 - Medium grey for readability */
+  --usage-card-value: 0 0% 100%; /* #FFFFFF - Pure white */
 }
 
 .dark {
