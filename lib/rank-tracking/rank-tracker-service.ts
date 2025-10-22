@@ -238,11 +238,14 @@ export class RankTrackerService {
     const remainingSlots = firecrawlRateLimiter.getRemainingSlots(this.config.apiKey)
     logger.info({ remainingSlots }, 'Firecrawl: Rate limit slot acquired')
 
-    // Retry logic
+    // Retry logic with special handling for 429 rate limits
     let lastError: Error | null = null
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    let attempt = 1
+    const maxAttemptsForNonRateLimit = 3
+    
+    while (true) {
       try {
-        logger.info(`Firecrawl: Sending request to ${url}`)
+        logger.info({ attempt }, `Firecrawl: Sending request to ${url}`)
         logger.debug(`Firecrawl: Request body: ${JSON.stringify(searchRequest)}`)
         
         const response = await fetch(url, {
@@ -266,33 +269,56 @@ export class RankTrackerService {
             logger.error('Firecrawl: Could not read error response body')
           }
           
-          // Special handling for 429 errors
+          // Special handling for 429 rate limit errors
           if (response.status === 429) {
             logger.error({ 
               currentCount: firecrawlRateLimiter.getCurrentCount(this.config.apiKey),
-              limit: 30
-            }, 'Firecrawl: 429 Rate limit exceeded despite rate limiter - API limit may have changed')
+              limit: 30,
+              attempt
+            }, 'Firecrawl: 429 Rate limit exceeded - waiting 60 seconds before retry')
+            
+            // Wait 60 seconds (1 minute) for rate limit reset
+            await this.delay(60000)
+            
+            // Increment attempt counter and retry indefinitely for 429
+            attempt++
+            continue
           }
           
           throw new Error(`HTTP ${response.status}: ${response.statusText}${errorDetails ? ` - ${errorDetails}` : ''}`)
         }
 
         const data = await response.json() as FirecrawlApiResponse
-        logger.info(`Firecrawl: Request successful, found ${data.data.web.length} results, used ${data.data.creditsUsed} credits`)
+        logger.info(`Firecrawl: Request successful after ${attempt} attempt(s), found ${data.data.web.length} results, used ${data.data.creditsUsed} credits`)
         return data
 
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
-        logger.warn({ error: lastError.message, attempt }, `Firecrawl: Attempt ${attempt}/3 failed`)
         
-        if (attempt < 3) {
+        // Check if error is from 429 (already handled above with continue)
+        const is429Error = lastError.message.includes('HTTP 429')
+        
+        if (is429Error) {
+          // This shouldn't be reached due to continue above, but just in case
+          logger.warn({ error: lastError.message, attempt }, `Firecrawl: Rate limit error - waiting 60s and retrying`)
+          await this.delay(60000)
+          attempt++
+          continue
+        }
+        
+        // For non-429 errors, use standard retry logic with max attempts
+        logger.warn({ error: lastError.message, attempt, maxAttempts: maxAttemptsForNonRateLimit }, `Firecrawl: Attempt ${attempt}/${maxAttemptsForNonRateLimit} failed`)
+        
+        if (attempt < maxAttemptsForNonRateLimit) {
           // Wait before retry: 2s, 4s
           await this.delay(attempt * 2000)
+          attempt++
+        } else {
+          // Max attempts reached for non-429 errors
+          throw lastError
         }
       }
     }
-
-    throw lastError || new Error('All retry attempts failed')
   }
 
 

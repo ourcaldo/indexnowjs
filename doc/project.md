@@ -775,6 +775,204 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### October 22, 2025: Critical Bug Fix - Prevent last_check_date Update on Failed Rank Checks ✅
+
+🐛 **CRITICAL BUG FIX**: Fixed issue where keywords were marked as "checked" even when rank check failed, preventing retries on subsequent cron runs
+
+**✅ PROBLEM IDENTIFIED**:
+- **Bug Behavior**: When rank check failed (e.g., 429 rate limit from Firecrawl), `last_check_date` was still updated to today's date
+- **Impact**: Failed keywords were marked as "already checked today" and skipped by next day's cron job
+- **Root Cause**: `updateLastCheckDate()` was called unconditionally after every rank check attempt, regardless of success/failure
+- **User Impact**: Keywords with failed checks would never get properly checked until user manually set `last_check_date` to NULL
+
+**✅ ANALYSIS OF FLOW**:
+Located in `lib/rank-tracking/rank-tracker.ts` - `trackKeyword()` method:
+```
+1. Make Firecrawl API request → returns rankResult
+2. Check if rankResult.errorMessage exists
+3. Store result (both success AND failure) ← OLD BUG
+4. ALWAYS call updateLastCheckDate() ← OLD BUG  
+5. Return
+```
+
+**✅ FIX IMPLEMENTED**:
+- **Conditional Update**: `last_check_date` now only updates when rank check succeeds (no errorMessage)
+- **Failed Checks**: When rank check fails, error is logged, failed result stored for audit, and error is thrown WITHOUT updating `last_check_date`
+- **Retry Logic**: Failed keywords retain their old `last_check_date` (or NULL), ensuring they're retried on next cron run
+
+**🔧 TECHNICAL CHANGES** (`lib/rank-tracking/rank-tracker.ts`):
+
+**Before (Lines 73-89)**:
+```typescript
+if (!rankResult.errorMessage) {
+  logger.info('success')
+} else {
+  logger.warn('failed')
+  await this.logRankCheckError(...)
+}
+// ALWAYS store and update (BUG!)
+await this.storeRankResult(keywordData.id, rankResult)
+await this.updateLastCheckDate(keywordData.id)
+```
+
+**After (Lines 77-100)**:
+```typescript
+if (!rankResult.errorMessage) {
+  // SUCCESS path
+  logger.info('success')
+  await this.storeRankResult(keywordData.id, rankResult)
+  await this.updateLastCheckDate(keywordData.id) // ✅ Only on success
+  logger.info('Rank check completed successfully')
+} else {
+  // FAILURE path
+  logger.warn('API request failed - keyword will be retried next run')
+  await this.logRankCheckError(...)
+  await this.storeFailedResult(keywordData.id, rankResult.errorMessage)
+  throw new Error(rankResult.errorMessage) // ✅ Mark as failed, don't update date
+}
+```
+
+**✅ BEHAVIOR CHANGES**:
+- **Successful Check**: Stores result → Updates `last_check_date` → Keyword won't be checked again today ✅
+- **Failed Check (429, API error, etc.)**: Logs error → Stores failed result for audit → Throws error → `last_check_date` NOT updated → Keyword will be retried tomorrow ✅
+- **Exception Errors** (caught in catch block): Still handled as before, failed result stored, no date update ✅
+
+**✅ IMPACT & BENEFITS**:
+- **Automatic Retries**: Failed keywords automatically included in next day's cron run
+- **Rate Limit Handling**: When Firecrawl rate limits hit, keywords are properly queued for retry
+- **Audit Trail**: Failed results still stored in rank_history for troubleshooting
+- **No Manual Intervention**: Users don't need to manually reset `last_check_date` to NULL
+- **Data Integrity**: `last_check_date` now accurately reflects when keyword was SUCCESSFULLY checked
+
+**Files Modified**:
+- `lib/rank-tracking/rank-tracker.ts` - Fixed `trackKeyword()` method to only update `last_check_date` on successful checks
+
+**Status**: ✅ **BUG FIX COMPLETE** - Failed rank checks no longer prevent retry attempts on subsequent cron runs
+
+---
+
+### October 22, 2025: Enhanced 429 Rate Limit Handling - Infinite Retry with 60s Wait ✅
+
+🔄 **INFINITE RETRY FOR RATE LIMITS**: Enhanced Firecrawl API request handling to automatically retry 429 rate limit errors indefinitely with 60-second wait intervals
+
+**✅ PROBLEM IDENTIFIED**:
+- **Current Behavior**: Firecrawl rate limiter set to 28 requests/minute, but still receiving 429 errors after ~15 requests
+- **Old Retry Logic**: Max 3 retry attempts with 2-4 second delays, then fails permanently
+- **Impact**: Keywords fail permanently when rate limits hit, requiring manual intervention
+- **User Requirement**: ALL keywords must be checked eventually, no matter how many retry attempts needed
+
+**✅ SOLUTION IMPLEMENTED**:
+- **429-Specific Handling**: When 429 rate limit error occurs, wait 60 seconds (1 minute) and retry
+- **Infinite Retries for 429**: No maximum attempt limit for rate limit errors - will retry indefinitely until success
+- **Preserved Logic for Other Errors**: Non-429 errors (network, auth, etc.) still use standard 3-attempt retry logic
+- **Automatic Recovery**: System automatically waits for rate limit reset and continues processing
+
+**🔧 TECHNICAL CHANGES** (`lib/rank-tracking/rank-tracker-service.ts`):
+
+**Before (Lines 241-296)**:
+```typescript
+// Fixed 3 attempts for ALL errors
+for (let attempt = 1; attempt <= 3; attempt++) {
+  try {
+    const response = await fetch(...)
+    if (response.status === 429) {
+      logger.error('429 Rate limit exceeded')
+      // Just logs, doesn't handle specially
+    }
+    // ...
+  } catch (error) {
+    if (attempt < 3) {
+      await this.delay(attempt * 2000) // 2s, 4s delay
+    }
+  }
+}
+throw lastError // Fails after 3 attempts
+```
+
+**After (Lines 244-324)**:
+```typescript
+// Infinite loop with special 429 handling
+while (true) {
+  try {
+    const response = await fetch(...)
+    
+    if (response.status === 429) {
+      logger.error('429 Rate limit exceeded - waiting 60 seconds')
+      await this.delay(60000) // Wait 1 minute
+      attempt++
+      continue // ✅ Retry indefinitely for 429
+    }
+    
+    return data // Success
+  } catch (error) {
+    const is429Error = error.message.includes('HTTP 429')
+    
+    if (is429Error) {
+      await this.delay(60000) // 60 second wait
+      attempt++
+      continue // ✅ Infinite retry for 429
+    }
+    
+    // For non-429 errors, max 3 attempts
+    if (attempt < 3) {
+      await this.delay(attempt * 2000)
+      attempt++
+    } else {
+      throw lastError // ❌ Fail after 3 attempts for non-rate-limit errors
+    }
+  }
+}
+```
+
+**✅ RETRY LOGIC BREAKDOWN**:
+
+**For 429 Rate Limit Errors**:
+1. Detect 429 status code from Firecrawl API
+2. Log error with current attempt number
+3. Wait exactly 60 seconds (1 minute)
+4. Increment attempt counter
+5. **Retry indefinitely** - no max attempts
+6. Continue until request succeeds
+
+**For Other Errors** (Network, Auth, 500, etc.):
+1. Detect non-429 error
+2. Log error with attempt number
+3. Retry up to 3 times with 2s/4s delays
+4. After 3 failed attempts, throw error and mark keyword as failed
+
+**✅ IMPACT & BENEFITS**:
+- **Guaranteed Completion**: All keywords will eventually be checked, even during heavy rate limiting
+- **Automatic Recovery**: No manual intervention needed when rate limits hit
+- **Smart Waiting**: 60-second wait aligns with Firecrawl's rate limit reset window
+- **Preserved Error Handling**: Network/auth errors still fail fast (3 attempts) to avoid hanging
+- **Better Logging**: Each retry attempt logged with attempt number for monitoring
+
+**✅ EXPECTED BEHAVIOR**:
+
+**Scenario: Rate Limit Hit During Batch Processing**
+1. Keyword 1-15 checked successfully
+2. Keyword 16 gets 429 error
+3. System logs: "429 Rate limit exceeded - waiting 60 seconds before retry"
+4. Waits 60 seconds
+5. Retries keyword 16 (attempt 2)
+6. If 429 again, waits another 60 seconds and retries (attempt 3)
+7. Continues retrying until success
+8. Moves to next keyword
+
+**Scenario: Network Error**
+1. Request fails with network timeout
+2. Retry after 2 seconds (attempt 2)
+3. Retry after 4 seconds (attempt 3)
+4. After 3 attempts, mark as failed
+5. Keyword will be retried next day (thanks to previous bug fix)
+
+**Files Modified**:
+- `lib/rank-tracking/rank-tracker-service.ts` - Enhanced `makeFirecrawlRequest()` with infinite 429 retry logic
+
+**Status**: ✅ **ENHANCEMENT COMPLETE** - 429 rate limit errors now automatically retry indefinitely with 60-second wait intervals
+
+---
+
 ### October 20, 2025: Rank Tracking Enhancement - Immediate Rank Check After Keyword Addition ✅
 
 🚀 **IMMEDIATE RANK CHECKING IMPLEMENTATION**: Enhanced rank tracking system to trigger immediate rank checking when users add new keywords, eliminating the wait until next day's 2 AM cron job

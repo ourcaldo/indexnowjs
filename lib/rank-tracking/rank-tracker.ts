@@ -72,21 +72,29 @@ export class RankTracker {
 
       // 5. Handle API response with error logging
       if (!rankResult.errorMessage) {
-        // Credit usage is automatically updated by RankTrackerService after each API call
+        // SUCCESS: Credit usage is automatically updated by RankTrackerService after each API call
         logger.info({ keyword: keywordData.keyword }, 'API credits consumed for successful request')
+        
+        // Store successful result in database
+        await this.storeRankResult(keywordData.id, rankResult)
+        
+        // Update last check date ONLY on success
+        await this.updateLastCheckDate(keywordData.id)
+        
+        logger.info({ keywordId: keywordData.id, position: rankResult.position || 'Not found' }, 'Rank check completed successfully')
       } else {
-        logger.warn({ error: rankResult.errorMessage }, 'API request failed')
+        // FAILURE: API returned an error
+        logger.warn({ error: rankResult.errorMessage }, 'API request failed - keyword will be retried next run')
+        
         // Log API-level errors to error tracking system
-        await this.logRankCheckError(keywordData, rankResult.errorMessage, 'api_error')
+        await this.logRankCheckError(keywordData, rankResult.errorMessage, this.classifyError(rankResult.errorMessage))
+        
+        // Store failed result in database (for audit trail)
+        await this.storeFailedResult(keywordData.id, rankResult.errorMessage)
+        
+        // Throw error to mark check as failed - last_check_date will NOT be updated
+        throw new Error(rankResult.errorMessage)
       }
-
-      // 6. Store result in database (both success and failure)
-      await this.storeRankResult(keywordData.id, rankResult)
-
-      // 7. Update last check date
-      await this.updateLastCheckDate(keywordData.id)
-
-      logger.info({ keywordId: keywordData.id, position: rankResult.position || 'Not found' }, 'Rank check completed')
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
