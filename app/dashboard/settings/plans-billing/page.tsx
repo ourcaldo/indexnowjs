@@ -516,7 +516,7 @@ export default function BillingPage() {
     <div className="space-y-6">
       {/* Current Plan Card */}
       {currentPlan ? (
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10" data-testid="card-current-plan">
+        <Card className="bg-card border-border" data-testid="card-current-plan">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div>

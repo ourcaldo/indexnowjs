@@ -8898,3 +8898,17 @@ ON public.indb_cms_posts(category, status);
 
 **Status**: ✅ **USAGE CARD BACKGROUNDS FIXED** - Successfully eliminated grey backgrounds, now using professional dark blue-black
 
+
+
+### October 22, 2025 - Settings Page Current Plan Card Container Background Fix ✅
+
+- 🎨 **FIXED OUTER CARD GREY GRADIENT**: Changed "Current Plan" card container from grey gradient to white-grey base color
+  - **Problem**: Outer card container had hardcoded light grey/blue gradient (`from-primary/5 to-primary/10`)
+  - **Solution**: Changed to default card background (`bg-card`) matching base dashboard color
+  - **Impact**: Clean white-grey container matching rest of dashboard UI
+
+- ✅ **FILES MODIFIED**:
+  - `app/dashboard/settings/plans-billing/page.tsx` - Line 522: Changed from `border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10` to `bg-card border-border`
+
+**Status**: ✅ **OUTER CARD BACKGROUND FIXED** - Now uses white-grey base color matching dashboard
+
