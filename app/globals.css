@@ -102,6 +102,14 @@
   /* Table header colors - Semrush style */
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
+  
+  /* Usage card colors - Professional dark theme */
+  --usage-card-bg: 220 27% 12%; /* #181f2a - Darker blue-gray */
+  --usage-card-bg-from: 220 27% 12%; /* #181f2a */
+  --usage-card-bg-to: 220 30% 9%; /* #121722 */
+  --usage-card-border: 220 20% 20%; /* #2a303d */
+  --usage-card-label: 220 10% 60%; /* #8f95a3 */
+  --usage-card-value: 0 0% 100%; /* #FFFFFF */
 }
 
 .dark {
@@ -132,6 +140,14 @@
   /* Table header colors - dark mode */
   --slate-50: hsl(215, 25%, 12%);
   --slate-100: hsl(215, 25%, 15%);
+  
+  /* Usage card colors - dark mode */
+  --usage-card-bg: 220 30% 8%; /* #0d1117 - Very dark blue-gray */
+  --usage-card-bg-from: 220 30% 8%; /* #0d1117 */
+  --usage-card-bg-to: 220 30% 5%; /* #080b0f */
+  --usage-card-border: 220 20% 15%; /* #1f252e */
+  --usage-card-label: 220 10% 55%; /* #7d8491 */
+  --usage-card-value: 0 0% 95%; /* #F2F2F2 */
 }
 
 @layer base {

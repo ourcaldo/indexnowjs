@@ -8821,3 +8821,53 @@ ON public.indb_cms_posts(category, status);
   - **Border Hierarchy**: 2px vs 1px border width creates visual emphasis without color contrast
 
 **Status**: ✅ **SETTINGS PAGE HEADER & COLOR SCHEME FIXES COMPLETE** - Successfully hidden dashboard header on Settings pages and implemented professional muted color palette throughout billing interface with full accessibility compliance
+
+
+### October 22, 2025 - Settings Page Current Plan Card Professional Color Enhancement ✅
+
+- 🎨 **CURRENT PLAN CARD USAGE METRICS COLOR OVERHAUL**: Completely redesigned usage card colors (Daily URLs, Keywords, Service Accounts) to use professional dark theme with superior contrast and modern appearance
+  - **Problem**: Usage cards had washed-out, nude-tone slate colors with opacity creating unprofessional appearance (`slate-800/60`, `slate-900/60` with low contrast)
+  - **Solution**: Implemented dedicated CSS color variables for usage cards with dark, professional blue-gray gradients and crisp white text
+  - **Impact**: Dramatically improved visual professionalism, contrast, and readability with modern dark theme aesthetic
+
+- 🎨 **NEW USAGE CARD COLOR SYSTEM**: Added comprehensive CSS variables for light and dark modes
+  - **Light Mode Colors** (Professional Dark Blue-Gray):
+    - Background gradient: `#181f2a` → `#121722` (darker blue-gray gradient)
+    - Border: `#2a303d` (complementary dark border)
+    - Label text: `#8f95a3` (medium gray, high contrast)
+    - Value text: `#FFFFFF` (pure white, maximum contrast)
+  
+  - **Dark Mode Colors** (Ultra-Dark Blue-Gray):
+    - Background gradient: `#0d1117` → `#080b0f` (very dark blue-gray gradient)
+    - Border: `#1f252e` (dark complementary border)
+    - Label text: `#7d8491` (medium gray, excellent contrast)
+    - Value text: `#F2F2F2` (near-white, maximum contrast)
+
+- ✅ **VISUAL IMPROVEMENTS IMPLEMENTED**:
+  - **Before**: Washed-out slate colors with transparency (`from-slate-800/60 to-slate-900/60 dark:from-slate-900/80 dark:to-black/80`)
+  - **After**: Professional dark gradients with solid colors (`from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))]`)
+  - **Text Contrast Enhancement**: Replaced low-contrast slate text with crisp white values and medium-gray labels
+  - **Font Weight Addition**: Added `font-bold` to values and `font-medium` to labels for improved hierarchy
+  - **Opacity Removal**: Eliminated all transparency creating cleaner, more solid appearance
+  - **Professional Aesthetic**: Dark blue-gray theme matches project's professional design system
+
+- ✅ **FILES MODIFIED**:
+  - `app/globals.css` - Added 6 new CSS variables for usage card color system in both :root and .dark modes
+  - `app/dashboard/settings/plans-billing/page.tsx` - Updated all three usage cards (Daily URLs, Keywords, Service Accounts) to use new color system
+
+- 🎯 **COLOR SYSTEM COMPLIANCE**:
+  - **CSS Variables Only**: All colors use CSS custom properties (--usage-card-*) following project standards
+  - **No Hardcoded Colors**: Zero hardcoded hex/rgb values in component, maintaining color organization rules
+  - **Dark Mode Support**: Full parity between light and dark modes with appropriate color adjustments
+  - **Semantic Naming**: Clear, descriptive variable names (--usage-card-bg-from, --usage-card-label, etc.)
+  - **HSL Format**: All variables use HSL format matching project's color system convention
+
+- 🔧 **TECHNICAL IMPLEMENTATION DETAILS**:
+  - **Gradient Direction**: Maintained `bg-gradient-to-br` (bottom-right) for depth and dimension
+  - **Border Consistency**: Single solid border using dedicated `--usage-card-border` variable
+  - **Typography Hierarchy**: Values (24px, bold, white) clearly dominant over labels (12px, medium, gray)
+  - **Spacing Refinement**: Added `ml-0.5` to limit text for subtle spacing improvement
+  - **Data Attributes**: Preserved all `data-testid` attributes for testing compatibility
+
+**Status**: ✅ **CURRENT PLAN CARD COLOR ENHANCEMENT COMPLETE** - Successfully replaced washed-out slate colors with professional dark blue-gray theme featuring superior contrast, modern aesthetics, and full CSS variable compliance
+
