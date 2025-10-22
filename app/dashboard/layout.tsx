@@ -223,21 +223,23 @@ function DashboardLayoutContent({
             sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
           }`}>
             {/* Dashboard Header - Unified component for desktop and mobile */}
-            <DashboardHeader
-              domains={domains}
-              selectedDomainId={selectedDomainId}
-              selectedDomainInfo={selectedDomainInfo}
-              isDomainSelectorOpen={isDomainSelectorOpen}
-              onDomainSelectorToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
-              onDomainSelect={setSelectedDomainId}
-              getDomainKeywordCount={getDomainKeywordCount}
-              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-              selectedDevice={selectedDevice}
-              selectedCountry={selectedCountry}
-              countries={countries}
-              onDeviceChange={setSelectedDevice}
-              onCountryChange={setSelectedCountry}
-            />
+            {!pathname?.includes('/dashboard/settings') && (
+              <DashboardHeader
+                domains={domains}
+                selectedDomainId={selectedDomainId}
+                selectedDomainInfo={selectedDomainInfo}
+                isDomainSelectorOpen={isDomainSelectorOpen}
+                onDomainSelectorToggle={() => setIsDomainSelectorOpen(!isDomainSelectorOpen)}
+                onDomainSelect={setSelectedDomainId}
+                getDomainKeywordCount={getDomainKeywordCount}
+                onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+                selectedDevice={selectedDevice}
+                selectedCountry={selectedCountry}
+                countries={countries}
+                onDeviceChange={setSelectedDevice}
+                onCountryChange={setSelectedCountry}
+              />
+            )}
 
             {/* Service Account Quota Notification */}
             <ServiceAccountQuotaNotification />

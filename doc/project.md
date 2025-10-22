@@ -8380,7 +8380,7 @@ ON public.indb_cms_posts(category, status);
   - `lib/rank-tracking/rank-tracker-service.ts` - Added firecrawlResponse to RankCheckResponse and attached full API response before returning
 
 - 🎨 **SETTINGS PAGE UI/UX ENHANCEMENTS**: Comprehensive improvements to Settings billing page for cleaner, more professional interface
-  - **Header Removal**: Removed "Settings" header and "Manage your account and preferences" subtitle from sidebar navigation for cleaner look
+  - **Dashboard Header Hiding**: Hidden the main dashboard header (domain selector + Add Keywords button) on all Settings pages for focused settings interface
   - **Current Plan Card Redesign**: Changed gradient colors from purple accent to brand soft blue accent for consistency
     - **Before**: `bg-gradient-to-br from-primary/5 to-purple-500/5` with purple accent
     - **After**: `bg-gradient-to-br from-accent/10 to-accent/5` with soft blue (#3D8BFF) accent
@@ -8394,11 +8394,11 @@ ON public.indb_cms_posts(category, status);
   - **Layout Simplification**: Eliminated right sidebar entirely, creating cleaner single-column layout for billing information
 
 - ✅ **FILES MODIFIED FOR SETTINGS PAGE**:
-  - `app/dashboard/settings/page.tsx` - Removed Settings header and subtitle from sidebar navigation
+  - `app/dashboard/layout.tsx` - Added conditional rendering to hide DashboardHeader on Settings pages
   - `app/dashboard/settings/plans-billing/page.tsx` - Updated current plan card colors, fixed yearly pricing bug, removed Payment Method and Referral sections
 
 - 🎯 **USER EXPERIENCE IMPROVEMENTS**:
-  - **Cleaner Navigation**: Settings sidebar is now more minimal and focused without redundant header text
+  - **Focused Settings Interface**: Main dashboard header now hidden on Settings pages, eliminating domain selector and Add Keywords button distractions
   - **Brand Consistency**: Current plan card uses project's soft blue accent color matching overall design system
   - **Pricing Accuracy**: Yearly pricing now displays correctly without NaN errors, improving user trust
   - **Simplified Billing Interface**: Removed unnecessary payment method and referral sections for cleaner, more focused billing management
