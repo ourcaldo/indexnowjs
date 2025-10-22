@@ -8871,3 +8871,30 @@ ON public.indb_cms_posts(category, status);
 
 **Status**: ✅ **CURRENT PLAN CARD COLOR ENHANCEMENT COMPLETE** - Successfully replaced washed-out slate colors with professional dark blue-gray theme featuring superior contrast, modern aesthetics, and full CSS variable compliance
 
+
+
+### October 22, 2025 - Settings Page Usage Cards Label Color Enhancement ✅
+
+- 🎨 **ELIMINATED GREY FROM USAGE CARD LABELS**: Replaced all grey label colors with brand accent soft blue for modern, professional appearance
+  - **Problem**: Usage card labels ("Daily URLs", "Keywords", "Service Accounts") were using grey colors (#8f95a3, #7d8491) creating dull appearance
+  - **Solution**: Changed to vibrant soft blue accent colors matching project's brand identity
+  - **Impact**: More vibrant, modern appearance with consistent branding throughout
+
+- ✅ **NEW LABEL COLOR SCHEME**:
+  - **Before**: `--usage-card-label: 220 10% 60%` (#8f95a3 - medium grey)
+  - **After**: `--usage-card-label: 218 100% 70%` (#66A3FF - bright soft blue) in light mode
+  - **Dark Mode Before**: `220 10% 55%` (#7d8491 - grey)
+  - **Dark Mode After**: `218 100% 65%` (#52A3FF - soft blue accent)
+  - **Brand Consistency**: Uses same blue hue (218°) as project's --soft-blue and --accent colors
+
+- ✅ **FILES MODIFIED**:
+  - `app/globals.css` - Updated `--usage-card-label` variable in both :root and .dark modes
+
+- 🎯 **VISUAL IMPROVEMENTS**:
+  - **Zero Grey Colors**: Completely eliminated grey from usage cards
+  - **Brand Alignment**: Label colors now match project's soft blue brand accent (#3D8BFF family)
+  - **Better Contrast**: Bright blue on dark background provides excellent readability
+  - **Modern Aesthetic**: Vibrant blue labels create contemporary, professional look
+
+**Status**: ✅ **USAGE CARD LABEL COLORS UPDATED** - Successfully replaced all grey with brand accent soft blue for modern, vibrant appearance
+

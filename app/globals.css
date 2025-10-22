@@ -108,7 +108,7 @@
   --usage-card-bg-from: 220 27% 12%; /* #181f2a */
   --usage-card-bg-to: 220 30% 9%; /* #121722 */
   --usage-card-border: 220 20% 20%; /* #2a303d */
-  --usage-card-label: 220 10% 60%; /* #8f95a3 */
+  --usage-card-label: 218 100% 70%; /* #66A3FF - Bright soft blue */
   --usage-card-value: 0 0% 100%; /* #FFFFFF */
 }
 
@@ -146,7 +146,7 @@
   --usage-card-bg-from: 220 30% 8%; /* #0d1117 */
   --usage-card-bg-to: 220 30% 5%; /* #080b0f */
   --usage-card-border: 220 20% 15%; /* #1f252e */
-  --usage-card-label: 220 10% 55%; /* #7d8491 */
+  --usage-card-label: 218 100% 65%; /* #52A3FF - Soft blue accent */
   --usage-card-value: 0 0% 95%; /* #F2F2F2 */
 }
 
