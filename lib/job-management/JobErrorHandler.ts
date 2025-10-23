@@ -90,12 +90,12 @@ export class JobErrorHandler {
           severity: ErrorSeverity.HIGH,
           userId: context.userId,
           endpoint: `background-job-${context.jobType}`,
-          method: 'processJob',
           statusCode: 500,
           metadata: {
             jobId: context.jobId,
             jobType: context.jobType,
             jobName: context.jobName,
+            operation: 'processJob',
             ...context.metadata
           }
         }
@@ -194,12 +194,12 @@ export class JobErrorHandler {
         severity: ErrorSeverity.CRITICAL,
         userId: context.userId,
         endpoint: `background-job-${context.jobType}`,
-        method: 'criticalFailure',
         statusCode: 500,
         metadata: {
           jobId: context.jobId,
           jobType: context.jobType,
           jobName: context.jobName,
+          operation: 'criticalFailure',
           reason,
           ...context.metadata
         }

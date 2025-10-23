@@ -9140,3 +9140,86 @@ async checkAndReactivateAccounts(): Promise<void> {
 - **Peak Window**: 4 additional checks during midnight transition for Google quota reset
 
 **Status**: ✅ **QUOTA-RESET WORKER BUG FIXED** - Server now starts successfully with all BullMQ workers initialized correctly. Quota reset monitoring operational.
+
+
+### October 23, 2025 - Critical Database Constraint Bug Fix in Job Error Logging ✅
+
+🐛 **CRITICAL BUG FIX**: Fixed database constraint violation when logging background job errors to `indb_system_error_logs` table
+
+**✅ PROBLEM IDENTIFIED**:
+- **Error Message**: `"new row for relation \"indb_system_error_logs\" violates check constraint \"indb_system_error_logs_http_method_check\""`
+- **Root Cause**: Background job errors were passing `method: 'processJob'` to the error logging system, which tried to save it to the `http_method` column
+- **Database Constraint**: `http_method` column only allows: GET, POST, PUT, PATCH, DELETE
+- **Impact**: Background job errors couldn't be logged to database, causing cascade logging failures
+- **Location**: `lib/job-management/JobErrorHandler.ts` lines 93 & 197
+
+**✅ ANALYSIS OF FLOW**:
+When background jobs fail (like BullMQ worker initialization):
+1. **JobErrorHandler catches error** → Calls `ErrorHandlingService.createError()`
+2. **Passes `method: 'processJob'`** → This is NOT an HTTP method ❌
+3. **ErrorHandlingService saves to DB** → `http_method: error.method` (line 267)
+4. **Database rejects INSERT** → "processJob" violates `indb_system_error_logs_http_method_check` constraint
+5. **Error logging fails** → Original error can't be tracked in database
+
+**✅ FIX IMPLEMENTED**:
+
+**Background jobs don't have HTTP methods** - removed `method` parameter and moved to metadata:
+
+```typescript
+// BEFORE (Line 93):
+{
+  method: 'processJob',  // ❌ Not a valid HTTP method
+  metadata: { ... }
+}
+
+// AFTER:
+{
+  // No method parameter - will be NULL in database ✅
+  metadata: {
+    operation: 'processJob',  // ✅ Tracked in metadata instead
+    ...
+  }
+}
+```
+
+**🔧 TECHNICAL CHANGES**:
+
+**Modified File**: `lib/job-management/JobErrorHandler.ts`
+
+1. **Line 89-105** - Regular job error handling:
+   - Removed: `method: 'processJob'`
+   - Added: `operation: 'processJob'` in metadata
+   - Result: `http_method` will be NULL (which is allowed by database)
+
+2. **Line 193-210** - Critical job failure handling:
+   - Removed: `method: 'criticalFailure'`
+   - Added: `operation: 'criticalFailure'` in metadata
+   - Result: `http_method` will be NULL for critical failures too
+
+**✅ BEHAVIOR CHANGES**:
+- **Before**: Background job errors failed to save to database, causing secondary logging errors
+- **After**: Background job errors save successfully with `http_method = NULL`, operation type tracked in metadata
+
+**✅ DATABASE SCHEMA COMPATIBILITY**:
+The `http_method` column is nullable:
+```sql
+http_method text null,  -- ✅ NULL is allowed
+```
+
+So background jobs (which don't have HTTP methods) can now correctly save with:
+- `http_method = NULL` ✅
+- `metadata.operation = 'processJob'` ✅ (preserves context)
+
+**✅ VERIFICATION**:
+- ✅ LSP diagnostics: No errors in modified file
+- ✅ Database constraint: NULL values allowed for `http_method`
+- ✅ Context preserved: Operation type moved to metadata field
+- ✅ No data loss: All error information still captured
+
+**📊 AFFECTED SCENARIOS**:
+- Background job failures (BullMQ workers, cron jobs)
+- Worker startup initialization errors
+- Critical job failures
+- All non-HTTP error scenarios
+
+**Status**: ✅ **JOB ERROR LOGGING BUG FIXED** - Background job errors now log successfully to database without constraint violations. Operation context preserved in metadata field.
