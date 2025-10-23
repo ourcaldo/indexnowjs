@@ -42,6 +42,7 @@ export class WorkerStartup {
     const jobId = `worker-startup-${Date.now()}`
     const result = await JobErrorHandler.withJobErrorHandling(
       async () => {
+        await this.initializeBullMQWorkers()
         await this.initializeRankCheckScheduler()
         await this.initializeAutoCancelService()
         await this.initializeTrialMonitoring()
@@ -61,6 +62,31 @@ export class WorkerStartup {
 
     if (!result.success) {
       throw new Error(result.error)
+    }
+  }
+
+  /**
+   * Initialize BullMQ workers if enabled
+   */
+  private async initializeBullMQWorkers(): Promise<void> {
+    if (process.env.ENABLE_BULLMQ !== 'true') {
+      logger.info({}, 'BullMQ disabled via feature flag - using legacy cron jobs')
+      return
+    }
+
+    try {
+      logger.info({}, 'Initializing BullMQ workers')
+      
+      const { initializeAllWorkers } = await import('@/lib/queues/workers')
+      await initializeAllWorkers()
+      
+      logger.info({}, 'BullMQ workers initialized successfully')
+    } catch (error) {
+      logger.error(
+        { error: error instanceof Error ? error.message : 'Unknown error' },
+        'Failed to initialize BullMQ workers'
+      )
+      throw error
     }
   }
 
@@ -197,6 +223,24 @@ export class WorkerStartup {
   async shutdown(): Promise<void> {
     try {
       logger.info({}, 'Shutting down background workers')
+      
+      // Shutdown BullMQ workers and queues if enabled
+      if (process.env.ENABLE_BULLMQ === 'true') {
+        try {
+          const { queueManager } = await import('@/lib/queues/QueueManager')
+          const { queueMetricsCollector } = await import('@/lib/monitoring/queue-events')
+          
+          await queueMetricsCollector.shutdown()
+          await queueManager.shutdown()
+          
+          logger.info({}, 'BullMQ workers and queues shut down successfully')
+        } catch (error) {
+          logger.error(
+            { error: error instanceof Error ? error.message : 'Unknown error' },
+            'Failed to shutdown BullMQ components'
+          )
+        }
+      }
       
       // Stop daily rank check job
       dailyRankCheckJob.stop()

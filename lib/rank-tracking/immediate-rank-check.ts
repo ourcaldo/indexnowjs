@@ -1,10 +1,13 @@
 /**
  * Immediate Rank Check Service
  * Triggers immediate rank checking for newly added keywords (instead of waiting for daily cron)
+ * Now uses BullMQ for better reliability and monitoring
  */
 
 import { RankTracker } from './rank-tracker'
 import { logger } from '@/lib/monitoring/error-handling'
+import { enqueueJob } from '@/lib/queues/QueueManager'
+import { queueConfig } from '@/lib/queues/config'
 
 interface ImmediateCheckResult {
   keywordId: string
@@ -14,7 +17,7 @@ interface ImmediateCheckResult {
 
 /**
  * Trigger immediate rank check for newly added keywords
- * Runs asynchronously in background - does not block API response
+ * Uses BullMQ for reliable background processing when enabled
  * 
  * @param keywordIds - Array of keyword IDs to check immediately
  * @param userId - User ID who owns these keywords
@@ -23,7 +26,20 @@ export async function triggerImmediateRankCheck(
   keywordIds: string[],
   userId: string
 ): Promise<void> {
-  // Validate input parameters
+  if (process.env.ENABLE_BULLMQ === 'true') {
+    return triggerImmediateRankCheckWithBullMQ(keywordIds, userId)
+  }
+  
+  return triggerImmediateRankCheckLegacy(keywordIds, userId)
+}
+
+/**
+ * BullMQ implementation - queues jobs for reliable processing
+ */
+async function triggerImmediateRankCheckWithBullMQ(
+  keywordIds: string[],
+  userId: string
+): Promise<void> {
   if (!keywordIds || keywordIds.length === 0) {
     logger.info({}, 'No keywords to check - skipping immediate rank check')
     return
@@ -34,7 +50,6 @@ export async function triggerImmediateRankCheck(
     return
   }
 
-  // Deduplicate keyword IDs to prevent duplicate checks
   const uniqueKeywordIds = Array.from(new Set(keywordIds))
   
   if (uniqueKeywordIds.length !== keywordIds.length) {
@@ -47,16 +62,81 @@ export async function triggerImmediateRankCheck(
   logger.info({ 
     keywordCount: uniqueKeywordIds.length, 
     userId 
-  }, 'Starting immediate rank check for newly added keywords')
+  }, 'Enqueuing immediate rank checks to BullMQ')
+
+  const rankTracker = new RankTracker()
+
+  for (const keywordId of uniqueKeywordIds) {
+    try {
+      const keywordData = await rankTracker.getKeywordWithDetails(keywordId, userId)
+      
+      if (!keywordData) {
+        logger.warn({ keywordId }, 'Keyword not found - skipping')
+        continue
+      }
+
+      await enqueueJob(
+        queueConfig.rankCheck.name,
+        'immediate-rank-check',
+        {
+          keywordId: keywordData.id,
+          userId: keywordData.user_id,
+          domainId: keywordData.domain_id,
+          keyword: keywordData.keyword,
+          countryCode: keywordData.country_code,
+          device: keywordData.device,
+        },
+        {
+          priority: 1,
+        }
+      )
+
+      logger.info({ keywordId }, 'Rank check job enqueued')
+    } catch (error) {
+      logger.error(
+        { keywordId, error: error instanceof Error ? error.message : 'Unknown error' },
+        'Failed to enqueue rank check job'
+      )
+    }
+  }
+}
+
+/**
+ * Legacy implementation (fallback when BullMQ disabled)
+ */
+async function triggerImmediateRankCheckLegacy(
+  keywordIds: string[],
+  userId: string
+): Promise<void> {
+  if (!keywordIds || keywordIds.length === 0) {
+    logger.info({}, 'No keywords to check - skipping immediate rank check')
+    return
+  }
+
+  if (!userId) {
+    logger.error({}, 'Missing userId - cannot proceed with immediate rank check')
+    return
+  }
+
+  const uniqueKeywordIds = Array.from(new Set(keywordIds))
+  
+  if (uniqueKeywordIds.length !== keywordIds.length) {
+    logger.warn({ 
+      original: keywordIds.length, 
+      deduplicated: uniqueKeywordIds.length 
+    }, 'Duplicate keyword IDs detected - deduplication applied')
+  }
+
+  logger.info({ 
+    keywordCount: uniqueKeywordIds.length, 
+    userId 
+  }, 'Starting immediate rank check for newly added keywords (legacy mode)')
 
   const rankTracker = new RankTracker()
   const results: ImmediateCheckResult[] = []
 
-  // Process keywords sequentially to avoid overwhelming the API
-  // (rate limiting is already handled in RankTrackerService)
   for (const keywordId of uniqueKeywordIds) {
     try {
-      // Get keyword details (domain, country, etc.)
       const keywordData = await rankTracker.getKeywordWithDetails(keywordId, userId)
       
       if (!keywordData) {
@@ -69,7 +149,6 @@ export async function triggerImmediateRankCheck(
         continue
       }
 
-      // Track the keyword (this will store result in database)
       await rankTracker.trackKeyword(keywordData)
       
       results.push({
@@ -98,8 +177,6 @@ export async function triggerImmediateRankCheck(
       }, 'Immediate rank check failed for keyword')
     }
 
-    // Small delay between keywords to be respectful to API
-    // (rate limiter already handles this, but extra safety)
     if (uniqueKeywordIds.indexOf(keywordId) < uniqueKeywordIds.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
