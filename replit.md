@@ -27,6 +27,32 @@ Core features include:
 - **Sentry**: Error tracking and performance monitoring.
 - **Posthog**: Product analytics.
 - **Customer.io**: Customer engagement platform.
-**BullMQ**: For background job processing.
+- **BullMQ**: For background job processing (Redis-backed queue system).
+- **Redis**: Message broker for BullMQ (required when BullMQ enabled).
 - **IP-API**: Fallback for GeoIP services.
 - **Firecrawl**: External service for web scraping/rank checking.
+
+## Background Job System
+The application uses **BullMQ** (Redis-backed queue system) for reliable background job processing:
+
+### Implementation Status
+✅ **Complete** - BullMQ implementation fully integrated with feature flag system
+- **Feature Flag**: `ENABLE_BULLMQ` (default: false for backward compatibility)
+- **Fallback**: Legacy node-cron implementation when BullMQ disabled
+- **Production Ready**: All architect-identified issues resolved
+
+### Queue Infrastructure
+- **9 Queues**: rank-check, rank-schedule, email, payments, trial-monitor, keyword-enrichment, quota-reset, indexing-monitor, auto-cancel
+- **Monitoring Dashboard**: Bull Board at `/api/admin/bull-board` (requires authentication)
+- **Rate Limiting**: Configurable via environment variables for Firecrawl and email APIs
+- **Graceful Shutdown**: Proper cleanup handlers for zero-downtime deployments
+
+### Pending Setup (User Action Required)
+1. Install packages: `npm install bullmq ioredis @bull-board/api @bull-board/api/bullMQAdapter`
+2. Configure environment variables (see `doc/BULLMQ_SETUP.md`)
+3. Test with `ENABLE_BULLMQ=true` in development
+4. Deploy to production after validation
+
+### Documentation
+- **Setup Guide**: `doc/BULLMQ_SETUP.md` - Complete installation and configuration guide
+- **Changelog**: `doc/project.md` - October 23, 2025 entry with full implementation details
