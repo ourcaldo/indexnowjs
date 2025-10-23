@@ -48,6 +48,10 @@ export class QuotaResetMonitor {
     console.log('🕐 Quota reset monitor started - checking for quota resets and resuming paused jobs')
   }
 
+  async checkAndReactivateAccounts(): Promise<void> {
+    await this.checkAndResumeJobs()
+  }
+
   private async checkAndResumeJobs() {
     try {
       console.log('🔄 Checking for quota resets and paused jobs to resume...')

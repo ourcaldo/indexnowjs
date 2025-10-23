@@ -66,7 +66,7 @@ export async function initializeQuotaResetWorker(): Promise<void> {
       {
         jobId: jobId2,
         repeat: {
-          pattern: '*/15 23-0 * * *',
+          pattern: '*/15 23,0 * * *',
         },
       }
     )
@@ -74,5 +74,5 @@ export async function initializeQuotaResetWorker(): Promise<void> {
     logger.info({ queue: queueName, jobId: jobId2 }, 'Repeatable job already exists, skipping creation')
   }
 
-  logger.info({ queue: queueName, schedules: ['5 * * * *', '*/15 23-0 * * *'] }, 'Quota reset worker initialized')
+  logger.info({ queue: queueName, schedules: ['5 * * * *', '*/15 23,0 * * *'] }, 'Quota reset worker initialized')
 }

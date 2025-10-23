@@ -9066,3 +9066,77 @@ ON public.indb_cms_posts(category, status);
 
 **Status**: ✅ **BULLMQ MIGRATION COMPLETE** - All 11 background services successfully migrated with comprehensive monitoring, graceful fallback, and production-ready infrastructure. Feature flag system enables safe gradual rollout with zero-downtime rollback capability.
 
+
+
+### October 23, 2025 - Critical BullMQ Quota-Reset Worker Bug Fix ✅
+
+🐛 **CRITICAL BUG FIX**: Fixed two critical bugs in BullMQ quota-reset worker that prevented server startup and caused initialization failures
+
+**✅ PROBLEM IDENTIFIED**:
+- **Bug #1 - Invalid Cron Syntax**: Worker used invalid cron pattern `'*/15 23-0 * * *'` for midnight checks
+  - **Error Message**: `"Invalid range: 23-0"` from BullMQ cron parser
+  - **Root Cause**: Cron ranges must be ascending (0-23), cannot wrap around midnight (23-0)
+  - **Impact**: BullMQ workers failed to initialize, causing complete server startup failure
+  - **Location**: `lib/queues/workers/quota-reset.worker.ts` lines 69 & 77
+
+- **Bug #2 - Missing Public Method**: Worker called non-existent method `checkAndReactivateAccounts()`
+  - **Error Behavior**: Method not found when quota-reset jobs executed
+  - **Root Cause**: QuotaResetMonitor class only had private method `checkAndResumeJobs()`
+  - **Impact**: Jobs would fail if they managed to be queued (but initialization already failed from Bug #1)
+  - **Location**: `lib/queues/workers/quota-reset.worker.ts` line 17
+
+**✅ ANALYSIS OF FLOW**:
+The quota-reset worker attempted to schedule two jobs:
+1. **Hourly Check**: `'5 * * * *'` - Run at 5 minutes past every hour ✅ (Valid)
+2. **Midnight Check**: `'*/15 23-0 * * *'` - Run every 15 min during hours 23 & 0 ❌ (Invalid)
+
+The intent was to run frequent checks around Google's midnight Pacific Time quota reset, but the cron syntax was incorrect.
+
+**✅ FIX IMPLEMENTED**:
+
+**Fix #1 - Corrected Cron Pattern**:
+```typescript
+// BEFORE (Lines 69, 77):
+pattern: '*/15 23-0 * * *',  // ❌ Invalid range
+
+// AFTER:
+pattern: '*/15 23,0 * * *',  // ✅ Comma-separated hours (23 AND 0)
+```
+
+**Fix #2 - Added Public Method Wrapper**:
+```typescript
+// Added to lib/monitoring/quota-reset-monitor.ts (Line 54-56):
+async checkAndReactivateAccounts(): Promise<void> {
+  await this.checkAndResumeJobs()
+}
+```
+
+**🔧 TECHNICAL CHANGES**:
+
+**Modified Files**:
+1. `lib/queues/workers/quota-reset.worker.ts`:
+   - Line 69: Changed `'*/15 23-0 * * *'` → `'*/15 23,0 * * *'`
+   - Line 77: Updated log message to reflect corrected schedule
+
+2. `lib/monitoring/quota-reset-monitor.ts`:
+   - Line 54-56: Added public wrapper method `checkAndReactivateAccounts()`
+   - Maintains backward compatibility with existing private implementation
+   - Provides clean public API for BullMQ worker
+
+**✅ BEHAVIOR CHANGES**:
+- **Before**: Server failed to start with "Invalid range: 23-0" error from BullMQ initialization
+- **After**: All BullMQ workers initialize successfully, quota-reset jobs schedule correctly
+
+**✅ VERIFICATION**:
+- ✅ LSP diagnostics: No errors in both modified files
+- ✅ Cron pattern validation: `'*/15 23,0 * * *'` is valid (runs every 15 min at hour 23 and hour 0)
+- ✅ Method signature: Public method properly delegates to existing private implementation
+- ✅ No breaking changes: Legacy node-cron implementation unaffected
+
+**📊 EXPECTED SCHEDULE BEHAVIOR**:
+- **Hourly Checks**: Every hour at :05 (e.g., 00:05, 01:05, 02:05, ..., 23:05)
+- **Midnight Checks**: Every 15 minutes during hours 23 and 0 (23:00, 23:15, 23:30, 23:45, 00:00, 00:15, 00:30, 00:45)
+- **Total Executions**: 24 hourly + 8 midnight checks = 32 checks per day
+- **Peak Window**: 4 additional checks during midnight transition for Google quota reset
+
+**Status**: ✅ **QUOTA-RESET WORKER BUG FIXED** - Server now starts successfully with all BullMQ workers initialized correctly. Quota reset monitoring operational.
