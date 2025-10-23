@@ -13,7 +13,7 @@ async function processIndexingMonitor(job: Job<IndexingMonitorJob>): Promise<{
     const validatedData = IndexingMonitorJobSchema.parse(job.data)
 
     const monitor = JobMonitor.getInstance()
-    await monitor.processPendingJobs()
+    await monitor.triggerNow()
 
     logger.info({ jobId: job.id }, 'Indexing monitor job completed')
 
