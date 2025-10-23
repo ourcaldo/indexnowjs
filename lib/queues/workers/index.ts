@@ -8,6 +8,7 @@ import { initializeTrialMonitorWorker } from './trial-monitor.worker'
 import { initializeKeywordEnrichmentWorker } from './keyword-enrichment.worker'
 import { initializeQuotaResetWorker } from './quota-reset.worker'
 import { initializeIndexingMonitorWorker } from './indexing-monitor.worker'
+import { initializeHourlyRankRetryWorker } from './hourly-rank-retry.worker'
 
 export async function initializeAllWorkers(): Promise<void> {
   if (process.env.ENABLE_BULLMQ !== 'true') {
@@ -23,6 +24,7 @@ export async function initializeAllWorkers(): Promise<void> {
     initializePaymentWorker()
     
     await initializeDailyRankCheckWorker()
+    await initializeHourlyRankRetryWorker()
     await initializeAutoCancelWorker()
     await initializeTrialMonitorWorker()
     await initializeKeywordEnrichmentWorker()

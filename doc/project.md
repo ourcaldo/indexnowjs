@@ -9289,3 +9289,158 @@ The indexing-monitor worker will now:
 5. Complete successfully without errors
 
 **Status**: ✅ **INDEXING MONITOR WORKER BUG FIXED** - Worker now calls correct public method, indexing jobs processing successfully.
+
+### October 23, 2025 - Rank Tracker Failed Result Storage Cleanup ✅
+
+🧹 **DATA CLEANLINESS IMPROVEMENT**: Removed failed rank check result storage from keyword history table to maintain clean, accurate ranking data
+
+**✅ PROBLEM IDENTIFIED**:
+- **Issue**: When rank checks failed (API errors, rate limits), system was storing null results in `indb_keyword_rank_history`
+- **Impact**: Keyword history table polluted with failed check entries (`position = null`, `url = null`)
+- **User Experience**: Rank history charts and data contaminated with non-data entries
+- **Audit Trail**: Error logs already captured in `indb_system_error_logs` - duplicate tracking was unnecessary
+
+**✅ ROOT CAUSE**:
+The `rank-tracker.ts` service had two problematic calls to `storeFailedResult()`:
+1. Line 93: When API returned error response
+2. Line 107: When exception occurred during rank check
+
+Both inserted null records into rank history table "for audit trail" purposes.
+
+**✅ FIX IMPLEMENTED**:
+
+**Modified File**: `lib/rank-tracking/rank-tracker.ts`
+
+1. **Line 86-98** - API failure path:
+   - ✅ Kept: Error logging to `indb_system_error_logs` via `logRankCheckError()`
+   - ❌ Removed: `storeFailedResult()` call that inserted null into rank history
+   - ✅ Kept: Error throw to prevent `last_check_date` update (ensures retry)
+   
+2. **Line 100-110** - Exception handler path:
+   - ✅ Kept: Error logging to `indb_system_error_logs` via `logRankCheckError()`
+   - ❌ Removed: `storeFailedResult()` call that inserted null into rank history
+   - ✅ Kept: Error re-throw for caller handling
+
+3. **Line 207-268** - Complete removal:
+   - ❌ Deleted entire `storeFailedResult()` private method (62 lines)
+   - Method was inserting null records into `indb_keyword_rank_history`
+
+**✅ BEHAVIOR CHANGES**:
+
+**Before:**
+- Failed rank check → Logs error to `indb_system_error_logs` ✅
+- Failed rank check → Inserts null record into `indb_keyword_rank_history` ❌
+- `last_check_date` not updated ✅
+- Keyword retried on next run ✅
+
+**After:**
+- Failed rank check → Logs error to `indb_system_error_logs` ✅
+- Failed rank check → Does NOT touch `indb_keyword_rank_history` ✅ (clean data)
+- `last_check_date` not updated ✅
+- Keyword retried on next run ✅
+
+**✅ DATA QUALITY IMPROVEMENTS**:
+- `indb_keyword_rank_history`: Contains ONLY successful rank check results with actual position data
+- `indb_system_error_logs`: Contains comprehensive error tracking with full context (keyword, domain, error message, classification)
+- Charts/Analytics: No more null data points contaminating visualizations
+- Audit Trail: Maintained through proper error logging system
+
+**✅ RETRY MECHANISM UNCHANGED**:
+The automatic retry logic remains intact:
+- Failed keywords keep old `last_check_date` (or NULL)
+- Query `WHERE last_check_date IS NULL OR last_check_date != today` includes them
+- Daily 2 AM cron and hourly retry worker both pick them up
+- Retries continue until success
+
+**Status**: ✅ **RANK HISTORY DATA CLEANUP COMPLETE** - Failed checks no longer pollute keyword history table. All rank data is now clean and accurate.
+
+
+### October 23, 2025 - Hourly Rank Retry Worker Implementation ✅
+
+⏱️ **ENHANCED RETRY SYSTEM**: Added hourly rank check retry worker to process failed/unchecked keywords more frequently than daily 2 AM schedule
+
+**✅ MOTIVATION**:
+- **Previous Limitation**: Failed rank checks only retried once per day at 2 AM UTC
+- **User Impact**: If a keyword failed at 2:30 AM due to rate limit, it waited ~23.5 hours for next retry
+- **Solution**: Hourly retry worker checks for unchecked keywords every hour (except 2 AM)
+
+**✅ IMPLEMENTATION**:
+
+**New Files Created**:
+1. `lib/queues/workers/hourly-rank-retry.worker.ts` - BullMQ worker for hourly retries
+2. Added `HourlyRankRetryJob` type to `lib/queues/types.ts`
+3. Added `hourlyRankRetry` queue config to `lib/queues/config.ts`
+
+**Worker Configuration**:
+- **Queue Name**: `hourly-rank-retry`
+- **Cron Schedule**: `0 0,1,3-23 * * *` (every hour except 2 AM UTC)
+- **Concurrency**: 1 (sequential processing)
+- **Job ID**: `hourly-rank-retry` (repeatable job)
+
+**Worker Behavior**:
+```typescript
+// Runs every hour EXCEPT 2 AM (reserved for daily check)
+if (currentHour === 2) {
+  logger.info('Skipping hourly retry - reserved for daily check')
+  return
+}
+
+// Check for unchecked keywords
+const stats = await batchProcessor.getProcessingStats()
+if (stats.pendingChecks > 0) {
+  // Process unchecked keywords using same BatchProcessor
+  await batchProcessor.processDailyRankChecks()
+}
+```
+
+**Modified Files**:
+- `lib/queues/types.ts` - Added `HourlyRankRetryJobSchema` and type
+- `lib/queues/config.ts` - Added `hourlyRankRetry` queue configuration
+- `lib/queues/workers/index.ts` - Added import and initialization call
+
+**✅ SCHEDULING LOGIC**:
+
+**Excluded Hour (2 AM UTC)**:
+- Reserved for main daily rank check worker (`rank-schedule.worker.ts`)
+- Prevents overlap and resource contention
+- Double-check guard in worker code itself
+
+**Active Hours (0,1,3-23)**:
+- 0 AM (midnight), 1 AM, 3 AM through 11 PM UTC
+- 23 hourly check opportunities per day
+- Maximum retry delay reduced from 24 hours to 1 hour
+
+**✅ RETRY EFFICIENCY**:
+
+**Scenario Example**:
+- **2:30 AM**: Keyword check fails due to Firecrawl rate limit (429)
+- **Previous System**: Wait until tomorrow 2 AM (~23.5 hours)
+- **New System**: Retry at 3 AM (30 minutes), then 4 AM, 5 AM, etc.
+
+**Maximum Wait Times**:
+- **Before**: Up to 24 hours between retry attempts
+- **After**: Maximum 1 hour between retry attempts (excluding 2 AM hour)
+
+**✅ INTEGRATION WITH EXISTING SYSTEM**:
+- Uses same `BatchProcessor` class as daily worker
+- Same quota management and rate limiting
+- Same error handling and logging
+- Complements (doesn't replace) daily 2 AM worker
+
+**✅ FEATURE FLAG SUPPORT**:
+- Controlled by `ENABLE_BULLMQ` environment variable
+- When disabled: Falls back to legacy node-cron (daily checks only)
+- When enabled: Full hourly retry system active
+
+**✅ RESOURCE EFFICIENCY**:
+- Worker checks `pendingChecks` count before processing
+- If no unchecked keywords exist, worker completes immediately without API calls
+- Logs: "No unchecked keywords found - skipping"
+
+**✅ MONITORING & LOGGING**:
+- Logs hourly run status with UTC hour
+- Reports number of keywords checked in each run
+- Tracks completion rate progress
+- Available in Bull Board dashboard at `/api/admin/bull-board`
+
+**Status**: ✅ **HOURLY RANK RETRY WORKER ACTIVE** - Failed keywords now retry every hour instead of waiting 24 hours, dramatically improving rank tracking reliability.

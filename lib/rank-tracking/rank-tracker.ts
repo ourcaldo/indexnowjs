@@ -86,13 +86,11 @@ export class RankTracker {
         // FAILURE: API returned an error
         logger.warn({ error: rankResult.errorMessage }, 'API request failed - keyword will be retried next run')
         
-        // Log API-level errors to error tracking system
+        // Log API-level errors to error tracking system (indb_system_error_logs)
         await this.logRankCheckError(keywordData, rankResult.errorMessage, this.classifyError(rankResult.errorMessage))
         
-        // Store failed result in database (for audit trail)
-        await this.storeFailedResult(keywordData.id, rankResult.errorMessage)
-        
         // Throw error to mark check as failed - last_check_date will NOT be updated
+        // Failed keywords will automatically be retried on next scheduled run
         throw new Error(rankResult.errorMessage)
       }
 
@@ -100,11 +98,11 @@ export class RankTracker {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       logger.error({ keywordId: keywordData.id, error: errorMessage }, 'Firecrawl rank tracking failed')
       
-      // Log error to error tracking system with proper classification
+      // Log error to error tracking system with proper classification (indb_system_error_logs)
       await this.logRankCheckError(keywordData, errorMessage, this.classifyError(errorMessage))
       
-      // Store failed result in database
-      await this.storeFailedResult(keywordData.id, errorMessage)
+      // Do NOT store anything in keyword_rank_history - keep it clean with actual rank data only
+      // Failed keywords retain old last_check_date and will be automatically retried
       throw error // Re-throw to let caller handle
     }
   }
@@ -204,68 +202,6 @@ export class RankTracker {
     }
   }
 
-  /**
-   * Store failed rank check result
-   */
-  private async storeFailedResult(keywordId: string, errorMessage: string): Promise<void> {
-    try {
-      await SecureServiceRoleWrapper.executeSecureOperation(
-        {
-          userId: 'system',
-          operation: 'store_failed_rank_result',
-          reason: 'System rank tracking - storing failed rank check result for audit and troubleshooting',
-          source: 'RankTracker.storeFailedResult',
-          metadata: {
-            keywordId,
-            errorMessage,
-            operation_type: 'failed_rank_storage'
-          }
-        },
-        {
-          table: 'indb_keyword_keywords',
-          operationType: 'select'
-        },
-        async () => {
-          // Get keyword details
-          const { data: keyword, error: keywordError } = await supabaseAdmin
-            .from('indb_keyword_keywords')
-            .select('device_type, country_id')
-            .eq('id', keywordId)
-            .single()
-
-          if (keywordError || !keyword) {
-            logger.error({ error: keywordError?.message }, 'Failed to get keyword details for failed result')
-            throw keywordError
-          }
-
-          // Store failed result in history with null position
-          const { error } = await supabaseAdmin
-            .from('indb_keyword_rank_history')
-            .insert({
-              keyword_id: keywordId,
-              position: null,
-              url: null,
-              search_volume: null,
-              difficulty_score: null,
-              check_date: new Date().toISOString().split('T')[0],
-              device_type: keyword.device_type,
-              country_id: keyword.country_id,
-              created_at: new Date().toISOString()
-            })
-
-          if (error) {
-            logger.error({ error: error.message || String(error) }, 'Error storing failed result')
-            throw error
-          } else {
-            logger.info(`Stored failed result for keyword ${keywordId}: ${errorMessage}`)
-          }
-        }
-      );
-
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Error storing failed result')
-    }
-  }
 
   /**
    * Update last check date for keyword

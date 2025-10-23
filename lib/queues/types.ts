@@ -74,3 +74,9 @@ export const IndexingMonitorJobSchema = z.object({
 })
 
 export type IndexingMonitorJob = z.infer<typeof IndexingMonitorJobSchema>
+
+export const HourlyRankRetryJobSchema = z.object({
+  scheduledAt: z.string().datetime(),
+})
+
+export type HourlyRankRetryJob = z.infer<typeof HourlyRankRetryJobSchema>

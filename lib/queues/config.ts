@@ -69,4 +69,8 @@ export const queueConfig = {
     name: 'auto-cancel',
     concurrency: 1,
   },
+  hourlyRankRetry: {
+    name: 'hourly-rank-retry',
+    concurrency: 1,
+  },
 }
