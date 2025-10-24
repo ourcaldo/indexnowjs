@@ -43,7 +43,7 @@ export const KeywordTable = ({
   if (keywordsLoading && keywords.length === 0) {
     return (
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="px-4 pt-4 pb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-semibold text-foreground">Position Tracking</CardTitle>
             <TooltipProvider>
@@ -72,7 +72,7 @@ export const KeywordTable = ({
   if (filteredKeywords.length === 0) {
     return (
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="px-4 pt-4 pb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-semibold text-foreground">Position Tracking</CardTitle>
             <TooltipProvider>
@@ -106,7 +106,7 @@ export const KeywordTable = ({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-3">
+      <CardHeader className="px-4 pt-4 pb-3">
         <div className="flex items-center gap-2">
           <CardTitle className="text-base font-semibold text-foreground">Position Tracking</CardTitle>
           <TooltipProvider>
