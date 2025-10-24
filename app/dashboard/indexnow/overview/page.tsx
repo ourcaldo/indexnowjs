@@ -21,6 +21,8 @@ import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
 import { PositionDistribution, TopKeywords, WeeklyTrendsAnalytics } from '@/components/dashboard/enhanced'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Info } from 'lucide-react'
 
 export default function IndexNowOverview() {
   const router = useRouter()
@@ -394,15 +396,30 @@ export default function IndexNowOverview() {
           )}
 
           {/* Keywords Table */}
-          <KeywordTable
-            keywords={keywords}
-            filteredKeywords={filteredKeywords}
-            selectedKeywords={selectedKeywords}
-            handleKeywordSelect={handleKeywordSelect}
-            handleSelectAll={handleSelectAll}
-            searchTerm={searchTerm}
-            keywordsLoading={keywordsLoading}
-          />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-foreground">Position Tracking</h2>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-position-tracking" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Position Tracking allows you to monitor the rankings of any domain, subdomain, subfolder or URL for any keyword across different devices and locations on a daily basis.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <KeywordTable
+              keywords={keywords}
+              filteredKeywords={filteredKeywords}
+              selectedKeywords={selectedKeywords}
+              handleKeywordSelect={handleKeywordSelect}
+              handleSelectAll={handleSelectAll}
+              searchTerm={searchTerm}
+              keywordsLoading={keywordsLoading}
+            />
+          </div>
 
           {/* Pagination */}
           <Pagination

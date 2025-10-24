@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { TrendingUp, TrendingDown, Info } from 'lucide-react'
 
 export interface KeywordSummary {
   keyword: string
@@ -46,7 +47,19 @@ export const TopKeywords = ({
   return (
     <Card className={className} data-testid="card-top-keywords">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-top-keywords" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>Top Keywords displays your best-performing keywords sorted by their current search position, with the highest ranking keywords shown first.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardHeader>
       <CardContent>
         {allKeywords.length > 0 ? (

@@ -1,7 +1,8 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Target, Award, TrendingUp } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Target, Award, TrendingUp, Info } from 'lucide-react'
 
 export interface RankingData {
   total: number
@@ -73,7 +74,19 @@ export const PositionDistribution = ({
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
-            <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-position-distribution" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Position Distribution shows how your keywords are distributed across different ranking tiers. The Performance Score indicates the percentage of keywords ranking within the top 100 positions.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">

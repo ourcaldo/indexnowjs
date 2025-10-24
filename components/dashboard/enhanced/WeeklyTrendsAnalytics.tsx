@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { TrendingUp, TrendingDown, Minus, BarChart } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { TrendingUp, TrendingDown, Minus, BarChart, Info } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
 import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
@@ -133,7 +134,19 @@ export const WeeklyTrendsAnalytics = ({
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
-            <CardTitle className="text-lg font-semibold text-foreground">Weekly Trends</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg font-semibold text-foreground">Weekly Trends</CardTitle>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-weekly-trends" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Weekly Trends tracks how your keyword rankings change week-by-week, showing improvements, declines, and position distribution patterns over the current month.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <p className="text-sm text-muted-foreground mt-1">Performance tracking across weeks in current month</p>
           </div>
         </div>

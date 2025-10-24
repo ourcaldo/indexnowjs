@@ -34,8 +34,8 @@ export const FilterPanel = ({
   return (
     <div className="space-y-4">
       {/* Search and Filter Row */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
+      <div className="flex gap-2 sm:gap-4">
+        <div className="flex-1 min-w-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -43,12 +43,12 @@ export const FilterPanel = ({
               value={searchTerm}
               onChange={(e: any) => setSearchTerm(e.target.value)}
               className="pl-10"
+              data-testid="input-search-keywords"
             />
           </div>
         </div>
-        <div className="flex gap-2 sm:gap-3">
-
-          <Button variant="outline" size="icon">
+        <div className="flex-shrink-0">
+          <Button variant="outline" size="icon" data-testid="button-filter">
             <Filter className="w-4 h-4" />
           </Button>
         </div>
