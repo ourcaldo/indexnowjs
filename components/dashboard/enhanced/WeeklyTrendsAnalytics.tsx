@@ -45,7 +45,7 @@ const POSITION_RANGE_OPTIONS = [
 
 const WeeklyTrendsHeader = () => (
   <div className="flex items-center gap-2">
-    <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
+    <CardTitle className="text-base font-semibold text-foreground">Weekly Trends</CardTitle>
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -117,7 +117,7 @@ export const WeeklyTrendsAnalytics = ({
   if (isLoading) {
     return (
       <Card className={className}>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <WeeklyTrendsHeader />
         </CardHeader>
         <CardContent>
@@ -132,7 +132,7 @@ export const WeeklyTrendsAnalytics = ({
   if (!weeklyTrends.length) {
     return (
       <Card className={className}>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <WeeklyTrendsHeader />
         </CardHeader>
         <CardContent>
@@ -147,7 +147,7 @@ export const WeeklyTrendsAnalytics = ({
 
   return (
     <Card className={className}>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
             <WeeklyTrendsHeader />
