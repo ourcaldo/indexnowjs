@@ -506,170 +506,162 @@ export default function RankHistoryPage() {
                 />
               )}
 
-              {/* Filters Section - Reordered: Search (60-70%) → Date → Tags */}
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    {/* Search Bar - 60-70% width */}
-                    <div className="flex-1 min-w-[250px] max-w-[60%]">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Search keywords..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-10 text-sm"
-                          data-testid="input-search"
-                        />
-                      </div>
+              {/* Filters Section - Reordered: Search → Tags → Date */}
+              <div className="flex flex-wrap items-center gap-3 py-4">
+                {/* Search Bar - flexible width */}
+                <div className="flex-1 min-w-[250px]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search keywords..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 text-sm"
+                      data-testid="input-search"
+                    />
+                  </div>
+                </div>
+
+                {/* Tags Filter Icon */}
+                <div className="relative">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowTagsDropdown(!showTagsDropdown)}
+                    className="flex items-center gap-1 min-w-[100px] justify-between hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white transition-colors duration-150"
+                    data-testid="filter-tags-dropdown"
+                  >
+                    <div className="flex items-center gap-1">
+                      <Tag className="w-3 h-3" />
+                      <span>Tags {selectedTags.length > 0 && `(${selectedTags.length})`}</span>
                     </div>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </Button>
 
-                    {/* Date Range Filter */}
-                    <div className="flex items-center gap-2">
-                      {/* Custom Date Range Picker - Semrush Style */}
-                      <div className="relative">
-                        <Button
-                          size="sm"
-                          variant={dateRange === 'custom' ? 'default' : 'outline'}
-                          onClick={() => {
-                            setDateRange('custom')
-                            // Initialize custom dates with current preset values when opening picker
-                            if (!showDatePicker && startDate && endDate) {
-                              setCustomStartDate(startDate)
-                              setCustomEndDate(endDate)
-                            }
-                            setShowDatePicker(!showDatePicker)
-                          }}
-                          className="flex items-center gap-1 hover:bg-slate-50 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-foreground transition-colors duration-150"
-                          data-testid="filter-date-custom"
-                        >
-                          <Calendar className="w-3 h-3" />
-                          {dateRange === 'custom' && appliedCustomDates 
-                            ? `${new Date(appliedCustomDates.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(appliedCustomDates.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-                            : dateRange !== 'custom'
-                            ? `${new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-                            : 'Custom'
-                          }
-                        </Button>
-
-                        {showDatePicker && (
-                          <div className="absolute top-full right-0 mt-1 bg-background border rounded-lg shadow-xl z-50 overflow-hidden">
-                            <div className="flex">
-                              {/* Calendar Section */}
-                              <div className="p-4 border-r border-border">
-                                <DateRangeCalendar
-                                  selectedRange={{ start: customStartDate, end: customEndDate }}
-                                  onRangeChange={(start, end) => {
-                                    setCustomStartDate(start)
-                                    setCustomEndDate(end)
-                                  }}
-                                />
-                              </div>
-
-                              
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex justify-end gap-2 p-4 border-t border-border bg-background">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => {
-                                  setShowDatePicker(false)
-                                  setCustomStartDate('')
-                                  setCustomEndDate('')
-                                }}
-                                data-testid="button-date-reset"
-                              >
-                                Reset
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                onClick={() => {
-                                  if (customStartDate && customEndDate) {
-                                    setAppliedCustomDates({ start: customStartDate, end: customEndDate })
+                  {showTagsDropdown && (
+                    <div className="absolute top-full right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 min-w-[200px] max-h-[200px] overflow-y-auto">
+                      <div className="p-2">
+                        {availableTags.length === 0 ? (
+                          <div className="text-xs text-muted-foreground py-2">No tags available</div>
+                        ) : (
+                          availableTags.map((tag: string) => (
+                            <label 
+                              key={tag} 
+                              className="flex items-center gap-2 py-1 px-2 text-xs hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white cursor-pointer rounded"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedTags.includes(tag)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedTags([...selectedTags, tag])
+                                  } else {
+                                    setSelectedTags(selectedTags.filter(t => t !== tag))
                                   }
-                                  setShowDatePicker(false)
                                 }}
-                                disabled={!customStartDate || !customEndDate}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                data-testid="button-date-apply"
-                              >
-                                Apply
-                              </Button>
-                            </div>
+                                className="rounded border-input"
+                                data-testid={`tag-${tag}`}
+                              />
+                              <span>{tag}</span>
+                            </label>
+                          ))
+                        )}
+
+                        {selectedTags.length > 0 && (
+                          <div className="border-t pt-2 mt-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedTags([])}
+                              className="text-xs w-full"
+                              data-testid="button-clear-tags"
+                            >
+                              Clear All
+                            </Button>
                           </div>
                         )}
                       </div>
                     </div>
+                  )}
+                </div>
 
-                    {/* Tags Filter Icon */}
-                    <div className="relative">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setShowTagsDropdown(!showTagsDropdown)}
-                        className="flex items-center gap-1 min-w-[100px] justify-between"
-                        data-testid="filter-tags-dropdown"
-                      >
-                        <div className="flex items-center gap-1">
-                          <Tag className="w-3 h-3" />
-                          <span>Tags {selectedTags.length > 0 && `(${selectedTags.length})`}</span>
+                {/* Date Range Filter */}
+                <div className="relative">
+                  <Button
+                    size="sm"
+                    variant={dateRange === 'custom' ? 'default' : 'outline'}
+                    onClick={() => {
+                      setDateRange('custom')
+                      // Initialize custom dates with current preset values when opening picker
+                      if (!showDatePicker && startDate && endDate) {
+                        setCustomStartDate(startDate)
+                        setCustomEndDate(endDate)
+                      }
+                      setShowDatePicker(!showDatePicker)
+                    }}
+                    className="flex items-center gap-1 hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white transition-colors duration-150"
+                    data-testid="filter-date-custom"
+                  >
+                    <Calendar className="w-3 h-3" />
+                    {dateRange === 'custom' && appliedCustomDates 
+                      ? `${new Date(appliedCustomDates.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(appliedCustomDates.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                      : dateRange !== 'custom'
+                      ? `${new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                      : 'Custom'
+                    }
+                  </Button>
+
+                  {showDatePicker && (
+                    <div className="absolute top-full right-0 mt-1 bg-background border rounded-lg shadow-xl z-50 overflow-hidden max-w-[95vw] sm:max-w-none">
+                      <div className="flex flex-col sm:flex-row">
+                        {/* Calendar Section */}
+                        <div className="p-4 border-b sm:border-b-0 sm:border-r border-border">
+                          <DateRangeCalendar
+                            selectedRange={{ start: customStartDate, end: customEndDate }}
+                            onRangeChange={(start, end) => {
+                              setCustomStartDate(start)
+                              setCustomEndDate(end)
+                            }}
+                          />
                         </div>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </Button>
+                      </div>
 
-                      {showTagsDropdown && (
-                        <div className="absolute top-full right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 min-w-[200px] max-h-[200px] overflow-y-auto">
-                          <div className="p-2">
-                            {availableTags.length === 0 ? (
-                              <div className="text-xs text-muted-foreground py-2">No tags available</div>
-                            ) : (
-                              availableTags.map((tag: string) => (
-                                <label 
-                                  key={tag} 
-                                  className="flex items-center gap-2 py-1 px-2 text-xs hover:bg-accent cursor-pointer rounded"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedTags.includes(tag)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedTags([...selectedTags, tag])
-                                      } else {
-                                        setSelectedTags(selectedTags.filter(t => t !== tag))
-                                      }
-                                    }}
-                                    className="rounded border-input"
-                                    data-testid={`tag-${tag}`}
-                                  />
-                                  <span className="text-foreground">{tag}</span>
-                                </label>
-                              ))
-                            )}
-
-                            {selectedTags.length > 0 && (
-                              <div className="border-t pt-2 mt-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setSelectedTags([])}
-                                  className="text-xs w-full"
-                                  data-testid="button-clear-tags"
-                                >
-                                  Clear All
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      {/* Action Buttons */}
+                      <div className="flex justify-end gap-2 p-4 border-t border-border bg-background">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => {
+                            setShowDatePicker(false)
+                            setCustomStartDate('')
+                            setCustomEndDate('')
+                          }}
+                          className="hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white transition-colors duration-150"
+                          data-testid="button-date-reset"
+                        >
+                          Reset
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            if (customStartDate && customEndDate) {
+                              setAppliedCustomDates({ start: customStartDate, end: customEndDate })
+                            }
+                            setShowDatePicker(false)
+                          }}
+                          disabled={!customStartDate || !customEndDate}
+                          className="bg-[#1c2331] hover:bg-[#1c2331]/90 text-white"
+                          data-testid="button-date-apply"
+                        >
+                          Apply
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  )}
+                </div>
+              </div>
 
 
 
