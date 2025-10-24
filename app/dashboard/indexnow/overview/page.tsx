@@ -181,24 +181,42 @@ export default function IndexNowOverview() {
   // Calculate position distribution for RankingDistribution chart
   // New ranges: 1-3 (Top 3), 4-10 (Top 10), 11-20 (Top 20), 21-100 (Top 100), Out of 100
   // Note: position === 0 means "not ranked" and is counted as "Out of 100"
-  const rankingDistribution = useMemo(() => {
+  const { rankingDistribution, keywordsByRange } = useMemo(() => {
     if (keywordsWithPosition.length === 0) {
-      return { total: 0, topThree: 0, topTen: 0, topTwenty: 0, topHundred: 0, outOfHundred: 0 }
+      return { 
+        rankingDistribution: { total: 0, topThree: 0, topTen: 0, topTwenty: 0, topHundred: 0, outOfHundred: 0 },
+        keywordsByRange: {
+          topThree: [],
+          topTen: [],
+          topTwenty: [],
+          topHundred: [],
+          outOfHundred: []
+        }
+      }
     }
 
-    const topThree = keywordsWithPosition.filter((k: any) => k.current_position >= 1 && k.current_position <= 3).length
-    const topTen = keywordsWithPosition.filter((k: any) => k.current_position >= 4 && k.current_position <= 10).length
-    const topTwenty = keywordsWithPosition.filter((k: any) => k.current_position >= 11 && k.current_position <= 20).length
-    const topHundred = keywordsWithPosition.filter((k: any) => k.current_position >= 21 && k.current_position <= 100).length
-    const outOfHundred = keywordsWithPosition.filter((k: any) => k.current_position === 0 || k.current_position > 100).length
+    const topThreeKws = keywordsWithPosition.filter((k: any) => k.current_position >= 1 && k.current_position <= 3)
+    const topTenKws = keywordsWithPosition.filter((k: any) => k.current_position >= 4 && k.current_position <= 10)
+    const topTwentyKws = keywordsWithPosition.filter((k: any) => k.current_position >= 11 && k.current_position <= 20)
+    const topHundredKws = keywordsWithPosition.filter((k: any) => k.current_position >= 21 && k.current_position <= 100)
+    const outOfHundredKws = keywordsWithPosition.filter((k: any) => k.current_position === 0 || k.current_position > 100)
 
     return {
-      total: keywordsWithPosition.length,
-      topThree,
-      topTen,
-      topTwenty,
-      topHundred,
-      outOfHundred
+      rankingDistribution: {
+        total: keywordsWithPosition.length,
+        topThree: topThreeKws.length,
+        topTen: topTenKws.length,
+        topTwenty: topTwentyKws.length,
+        topHundred: topHundredKws.length,
+        outOfHundred: outOfHundredKws.length
+      },
+      keywordsByRange: {
+        topThree: topThreeKws.sort((a: any, b: any) => a.current_position - b.current_position),
+        topTen: topTenKws.sort((a: any, b: any) => a.current_position - b.current_position),
+        topTwenty: topTwentyKws.sort((a: any, b: any) => a.current_position - b.current_position),
+        topHundred: topHundredKws.sort((a: any, b: any) => a.current_position - b.current_position),
+        outOfHundred: outOfHundredKws.sort((a: any, b: any) => (a.current_position || 999) - (b.current_position || 999))
+      }
     }
   }, [keywordsWithPosition])
 
@@ -327,6 +345,7 @@ export default function IndexNowOverview() {
           {/* Ranking Distribution Chart */}
           <RankingDistribution 
             data={rankingDistribution}
+            keywordsByRange={keywordsByRange}
             title="Position Distribution"
             description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
           />
