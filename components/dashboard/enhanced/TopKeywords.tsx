@@ -61,39 +61,62 @@ export const TopKeywords = ({
           </TooltipProvider>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {allKeywords.length > 0 ? (
-          <div className="space-y-2.5">
-            {allKeywords.map((keyword, index) => (
-              <div key={index} className="flex items-center justify-between" data-testid={`keyword-row-${index}`}>
-                <div className="flex-1 truncate">
-                  <span className="text-sm font-medium text-foreground" data-testid={`keyword-text-${index}`}>
-                    {keyword.keyword}
-                  </span>
-                  <span className="text-xs text-muted-foreground ml-2">
-                    (#{keyword.current_position})
-                  </span>
-                </div>
-                {keyword.position_1d && keyword.position_1d !== 0 && (
-                  <div className="flex items-center ml-2">
-                    {keyword.position_1d > 0 ? (
-                      <>
-                        <TrendingUp className="w-3 h-3 text-green-500" />
-                        <span className="text-xs text-green-500 ml-1">+{keyword.position_1d}</span>
-                      </>
-                    ) : (
-                      <>
-                        <TrendingDown className="w-3 h-3 text-red-500" />
-                        <span className="text-xs text-red-500 ml-1">{keyword.position_1d}</span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-muted/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Keyword
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Pos.
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Change
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {allKeywords.map((keyword, index) => (
+                  <tr key={index} className="border-b last:border-b-0 hover:bg-muted/10 transition-colors" data-testid={`keyword-row-${index}`}>
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-medium text-foreground truncate block" data-testid={`keyword-text-${index}`}>
+                        {keyword.keyword}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-sm font-semibold text-foreground">
+                        {keyword.current_position}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {keyword.position_1d && keyword.position_1d !== 0 ? (
+                        <div className="flex items-center justify-end gap-1">
+                          {keyword.position_1d > 0 ? (
+                            <>
+                              <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                              <span className="text-sm font-medium text-green-500">+{keyword.position_1d}</span>
+                            </>
+                          ) : (
+                            <>
+                              <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+                              <span className="text-sm font-medium text-red-500">{keyword.position_1d}</span>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
-          <div className="text-center py-8">
+          <div className="text-center py-8 px-6">
             <p className="text-sm text-muted-foreground">No ranked keywords yet</p>
           </div>
         )}

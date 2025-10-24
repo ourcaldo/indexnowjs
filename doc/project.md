@@ -9729,3 +9729,38 @@ Updated imports in `app/dashboard/indexnow/overview/components/KeywordTable.tsx`
 
 **Visual Consistency**:
 The Position Tracking component now matches the exact HTML structure and spacing of Weekly Trends, Position Distribution, and Top Keywords components, creating a cohesive user interface on the IndexNow Overview page.
+
+---
+
+## October 24, 2025 - Top Keywords Component Table Header Enhancement
+
+**Enhancement**:
+Added structured table headers to the Top Keywords component to improve data readability and visual organization, following professional SEO tool design patterns (similar to Semrush).
+
+**Changes Made**:
+Converted the Top Keywords component from a simple list to a structured table format in `components/dashboard/enhanced/TopKeywords.tsx`:
+
+**Table Structure**:
+- **Column 1 - Keyword**: Left-aligned, displays keyword text
+- **Column 2 - Pos.**: Center-aligned, shows current position ranking
+- **Column 3 - Change**: Right-aligned, displays 1-day position change with visual indicators
+
+**Visual Features**:
+1. **Table Header**: Light background (`bg-muted/30`) with uppercase labels
+2. **Row Styling**: 
+   - Hover effect for better interaction (`hover:bg-muted/10`)
+   - Border between rows for clear separation
+   - Last row has no bottom border for cleaner appearance
+3. **Change Indicators**:
+   - Green trending up icon (↗) with positive value for improvements
+   - Red trending down icon (↘) with negative value for declines
+   - Dash ("-") displayed when no change data available
+
+**Impact**:
+- Enhanced data scanability with clear column headers
+- Professional table-based layout matching industry standards
+- Improved visual hierarchy and readability
+- Consistent spacing and alignment across all columns
+
+**Files Modified**:
+- `components/dashboard/enhanced/TopKeywords.tsx` - Converted CardContent to table structure with headers
