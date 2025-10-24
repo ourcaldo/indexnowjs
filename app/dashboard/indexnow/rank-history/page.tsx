@@ -507,9 +507,9 @@ export default function RankHistoryPage() {
               )}
 
               {/* Filters Section - Reordered: Search → Tags → Date */}
-              <div className="flex flex-wrap items-center gap-3 py-4">
+              <div className="flex flex-wrap items-center gap-2 py-4">
                 {/* Search Bar - flexible width */}
-                <div className="flex-1 min-w-[250px]">
+                <div className="flex-1 min-w-[140px] sm:min-w-[200px]">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
