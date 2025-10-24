@@ -9847,3 +9847,74 @@ Comprehensive UI/UX improvements to the rank-history page, focusing on professio
 - `app/dashboard/indexnow/rank-history/components/DateRangeCalendar.tsx` - Mobile responsiveness, color scheme fixes
 
 **Architect Review**: ✅ Passed - All UX requirements met, no regressions, color scheme compliant
+
+
+---
+
+## October 24, 2025 - Rank History Page Mobile Responsiveness & Date Range Fixes
+
+**Overview**:
+Enhanced mobile/tablet responsiveness and fixed date range logic on the rank-history page to improve user experience across all device sizes and ensure accurate date filtering.
+
+**Changes Made**:
+
+### 1. Filter Bar Mobile Optimization
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+- **Reduced search input minimum width** from `min-w-[250px]` to `min-w-[140px]` on mobile, `min-w-[200px]` on small screens
+- **Reduced gap spacing** from `gap-3` to `gap-2` for more compact layout
+- Allows all filters (Search, Tags, Date) to display inline on a single row on mobile/tablet devices
+- Improves space utilization on smaller screens without sacrificing functionality
+
+### 2. DateRangeCalendar Component - 2 Column Layout Restoration
+**File**: `app/dashboard/indexnow/rank-history/components/DateRangeCalendar.tsx`
+- **Restored 2-column layout** on all devices (Quick Select on left, Date Picker on right)
+- Changed main container from `flex-col sm:flex-row` to persistent `flex-row`
+- Reduced Quick Select min-width from `150px` to `120px` for better mobile fit
+- Added `whitespace-nowrap` to Quick Select buttons to prevent text wrapping
+- Second month calendar now hidden on medium screens and below (`hidden md:block`) instead of small screens
+- Maintains professional desktop-like experience even on mobile devices
+
+### 3. DateRangeCalendar - Smart Positioning Implementation
+**Files**: `app/dashboard/indexnow/rank-history/page.tsx`, `app/dashboard/indexnow/rank-history/components/DateRangeCalendar.tsx`
+
+**Smart Positioning Logic**:
+- Added `useRef` hook for date picker button reference
+- Implemented `calculateDatePickerPosition()` function to detect available screen space
+- Popup measures button position and window width to determine optimal placement
+- Automatically positions popup on right when space available, left when constrained
+- Position state (`datePickerPosition`) updates when picker opens
+
+**Implementation Details**:
+- Date picker button wrapper now has `ref={datePickerButtonRef}`
+- Popup positioning dynamically switches: `${datePickerPosition === 'right' ? 'right-0' : 'left-0'}`
+- `useEffect` hook triggers position calculation when `showDatePicker` changes
+- Prevents popup cutoff on narrow screens or when date picker is near screen edge
+
+### 4. Rank History Table - Date Range Logic Fix
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+
+**Problem Fixed**:
+- Table was using `getComparisonPeriods(dateRange)` which always calculated "today" vs "X days ago"
+- When user selected specific custom dates (e.g., Oct 23-24), table still showed Oct 24 vs Oct 17 (weekly approach)
+- Table headers and data were not respecting user's actual date selection
+
+**Solution Implemented**:
+- Replaced `getComparisonPeriods()` with direct usage of `startDate` and `endDate` from selected range
+- Table columns now show: `POS. {formatDateDisplay(endDate)}` and `POS. {formatDateDisplay(startDate)}`
+- Updated table data binding: `currentDateStr = endDate`, `prevDateStr = startDate`
+- Updated tooltip text to reflect actual selected date range: `({periodLabel})`
+- `periodLabel` now displays: `{formatDateDisplay(startDate)} to {formatDateDisplay(endDate)}`
+
+**Impact**:
+- ✅ **Mobile Responsiveness**: Filter bar now fits inline on all mobile/tablet devices
+- ✅ **Better UX**: 2-column date picker layout maintained across all screen sizes
+- ✅ **Smart Positioning**: Date picker popup intelligently positions itself to avoid screen cutoff
+- ✅ **Accurate Date Filtering**: Table now shows positions from exact user-selected dates
+- ✅ **No Regressions**: All existing functionality preserved, no breaking changes
+
+**Files Modified**:
+- `app/dashboard/indexnow/rank-history/page.tsx` - Filter bar optimization, smart positioning logic, date range fix
+- `app/dashboard/indexnow/rank-history/components/DateRangeCalendar.tsx` - 2-column layout restoration
+
+**Architect Review**: ✅ Passed - All enhancements correctly implemented, responsive design works across devices, no regressions
+
