@@ -30,7 +30,14 @@ interface WeeklyTrendsData {
   }
 }
 
-export const GET = authenticatedApiWrapper(async (request, auth) => {
+export const GET = authenticatedApiWrapper<{
+  data: WeeklyTrendsData[]
+  meta: {
+    month: number
+    year: number
+    totalWeeks?: number
+  }
+}>(async (request, auth) => {
   try {
     const url = new URL(request.url)
     const queryParams = {
@@ -80,8 +87,8 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
         source: 'rank-tracking/weekly-trends',
         reason: 'User retrieving weekly trends data for analytics',
         metadata: { endpoint: '/api/v1/rank-tracking/weekly-trends', method: 'GET', filters: { domain_id, device_type, country_id } },
-        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
-        userAgent: request.headers.get('user-agent')
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
       },
       { table: 'indb_keyword_rank_history', operationType: 'select' },
       async (db) => {
