@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
@@ -171,6 +171,10 @@ export default function RankHistoryPage() {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const itemsPerPage = 20
 
+  // Ref for date picker button to implement smart positioning
+  const datePickerButtonRef = useRef<HTMLDivElement>(null)
+  const [datePickerPosition, setDatePickerPosition] = useState<'right' | 'left'>('right')
+
   // Calculate actual date range based on selection
   const getDateRange = () => {
     const today = new Date()
@@ -206,6 +210,31 @@ export default function RankHistoryPage() {
   }
 
   const { startDate, endDate } = getDateRange()
+
+  // Smart positioning for date picker popup
+  const calculateDatePickerPosition = () => {
+    if (!datePickerButtonRef.current) return
+    
+    const buttonRect = datePickerButtonRef.current.getBoundingClientRect()
+    const windowWidth = window.innerWidth
+    const popupWidth = 600 // Approximate width of the date picker popup
+    
+    // Check if there's enough space on the right
+    const spaceOnRight = windowWidth - buttonRect.right
+    
+    if (spaceOnRight < popupWidth && buttonRect.left > popupWidth) {
+      setDatePickerPosition('left')
+    } else {
+      setDatePickerPosition('right')
+    }
+  }
+
+  // Update position when date picker is opened
+  useEffect(() => {
+    if (showDatePicker) {
+      calculateDatePickerPosition()
+    }
+  }, [showDatePicker])
 
   const handleKeywordSelect = (keywordId: string) => {
     setSelectedKeywords(prev => 
@@ -588,7 +617,7 @@ export default function RankHistoryPage() {
                 </div>
 
                 {/* Date Range Filter */}
-                <div className="relative">
+                <div className="relative" ref={datePickerButtonRef}>
                   <Button
                     size="sm"
                     variant={dateRange === 'custom' ? 'default' : 'outline'}
@@ -614,7 +643,7 @@ export default function RankHistoryPage() {
                   </Button>
 
                   {showDatePicker && (
-                    <div className="absolute top-full right-0 mt-1 bg-background border rounded-lg shadow-xl z-50 overflow-hidden max-w-[95vw] sm:max-w-none">
+                    <div className={`absolute top-full ${datePickerPosition === 'right' ? 'right-0' : 'left-0'} mt-1 bg-background border rounded-lg shadow-xl z-50 overflow-hidden max-w-[95vw] sm:max-w-none`}>
                       <div className="flex flex-col sm:flex-row">
                         {/* Calendar Section */}
                         <div className="p-4 border-b sm:border-b-0 sm:border-r border-border">

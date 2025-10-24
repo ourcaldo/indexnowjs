@@ -174,9 +174,9 @@ export const DateRangeCalendar = ({ selectedRange, onRangeChange }: CalendarProp
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className="flex flex-row gap-3">
       {/* Quick Select Buttons */}
-      <div className="flex flex-col gap-2 min-w-[150px]">
+      <div className="flex flex-col gap-2 min-w-[120px]">
         <span className="text-sm font-medium">Quick Select</span>
         {[
           { label: 'Past 2 days', value: 2 },
@@ -226,7 +226,7 @@ export const DateRangeCalendar = ({ selectedRange, onRangeChange }: CalendarProp
                 setCustomEndDate(todayStr)
                 onRangeChange(calculatedStartDateStr, todayStr)
               }}
-              className={`text-left text-sm px-2 py-1 rounded transition-colors duration-150 ${
+              className={`text-left text-sm px-2 py-1 rounded transition-colors duration-150 whitespace-nowrap ${
                 isActive
                 ? 'bg-[#1c2331] text-white font-medium' 
                 : 'hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white'
@@ -262,8 +262,8 @@ export const DateRangeCalendar = ({ selectedRange, onRangeChange }: CalendarProp
           {renderCalendar(currentMonthStart)}
         </div>
 
-        {/* Next Month - Hide on mobile */}
-        <div className="hidden sm:block min-w-[230px]">
+        {/* Next Month - Show on larger screens */}
+        <div className="hidden md:block min-w-[230px]">
           <div className="flex items-center justify-center mb-4">
             <span className="text-sm font-medium">
               {monthNames[nextMonthStart.getMonth()]} {nextMonthStart.getFullYear()}
