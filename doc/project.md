@@ -9918,3 +9918,73 @@ Enhanced mobile/tablet responsiveness and fixed date range logic on the rank-his
 
 **Architect Review**: ✅ Passed - All enhancements correctly implemented, responsive design works across devices, no regressions
 
+
+
+---
+
+## October 24, 2025 - Date Picker Smart Positioning Fix
+
+**Overview**:
+Fixed the smart positioning logic for the date picker popup that was causing it to appear in the wrong position (extending to the right when left side had empty space).
+
+**Problem Identified**:
+- The `calculateDatePickerPosition()` function had flawed logic that checked for available space but was overly complex
+- The CSS class assignment was backwards: when position was 'right', it used `right-0` class, which is incorrect
+- Result: Popup appeared on the right side even when the button was on the right and left side had empty space
+
+**Solution Implemented**:
+
+### 1. Simplified Position Calculation Logic
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+
+**Old Logic** (complex and incorrect):
+```javascript
+const spaceOnRight = windowWidth - buttonRect.right
+if (spaceOnRight < popupWidth && buttonRect.left > popupWidth) {
+  setDatePickerPosition('left')
+} else {
+  setDatePickerPosition('right')
+}
+```
+
+**New Logic** (simple and correct):
+```javascript
+// If button is on the right half of screen, popup should extend to the left
+// If button is on the left half of screen, popup should extend to the right
+const buttonCenter = buttonRect.left + (buttonRect.width / 2)
+const screenCenter = windowWidth / 2
+
+if (buttonCenter > screenCenter) {
+  setDatePickerPosition('left')  // Button on right → popup extends left
+} else {
+  setDatePickerPosition('right') // Button on left → popup extends right
+}
+```
+
+### 2. Corrected CSS Class Logic
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+
+**Old (Backwards)**:
+```javascript
+${datePickerPosition === 'right' ? 'right-0' : 'left-0'}
+```
+
+**New (Correct)**:
+```javascript
+${datePickerPosition === 'left' ? 'right-0' : 'left-0'}
+```
+
+**How It Works**:
+- When `datePickerPosition === 'left'` (button on right side):
+  - Use `right-0` class → Anchors popup's right edge to button → Popup extends LEFT ✅
+- When `datePickerPosition === 'right'` (button on left side):
+  - Use `left-0` class → Anchors popup's left edge to button → Popup extends RIGHT ✅
+
+**Impact**:
+- ✅ **Correct Positioning**: Popup now extends into empty space instead of crowded area
+- ✅ **Simplified Logic**: Much simpler calculation based on screen center
+- ✅ **Better UX**: Date picker popup fills available space intelligently
+
+**Files Modified**:
+- `app/dashboard/indexnow/rank-history/page.tsx` - Fixed calculation logic and CSS class assignment
+

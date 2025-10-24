@@ -217,14 +217,17 @@ export default function RankHistoryPage() {
     
     const buttonRect = datePickerButtonRef.current.getBoundingClientRect()
     const windowWidth = window.innerWidth
-    const popupWidth = 600 // Approximate width of the date picker popup
     
-    // Check if there's enough space on the right
-    const spaceOnRight = windowWidth - buttonRect.right
+    // If button is on the right half of screen, popup should extend to the left
+    // If button is on the left half of screen, popup should extend to the right
+    const buttonCenter = buttonRect.left + (buttonRect.width / 2)
+    const screenCenter = windowWidth / 2
     
-    if (spaceOnRight < popupWidth && buttonRect.left > popupWidth) {
+    if (buttonCenter > screenCenter) {
+      // Button is on right side of screen, so popup extends left
       setDatePickerPosition('left')
     } else {
+      // Button is on left side of screen, so popup extends right
       setDatePickerPosition('right')
     }
   }
@@ -646,7 +649,7 @@ export default function RankHistoryPage() {
                   </Button>
 
                   {showDatePicker && (
-                    <div className={`absolute top-full ${datePickerPosition === 'right' ? 'right-0' : 'left-0'} mt-1 bg-background border rounded-lg shadow-xl z-50 overflow-hidden max-w-[95vw] sm:max-w-none`}>
+                    <div className={`absolute top-full ${datePickerPosition === 'left' ? 'right-0' : 'left-0'} mt-1 bg-background border rounded-lg shadow-xl z-50 overflow-hidden max-w-[95vw] sm:max-w-none`}>
                       <div className="flex flex-col sm:flex-row">
                         {/* Calendar Section */}
                         <div className="p-4 border-b sm:border-b-0 sm:border-r border-border">
