@@ -1,7 +1,9 @@
 import React from 'react'
-import { Smartphone, Monitor, Globe, ExternalLink, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Smartphone, Monitor, Globe, ExternalLink, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react'
 import { Card, Badge } from '@/components/dashboard/ui'
 import { PositionChange } from '@/components/dashboard/enhanced'
+import { CardHeader, CardContent } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface Keyword {
   id: string
@@ -41,11 +43,28 @@ export const KeywordTable = ({
   if (keywordsLoading && keywords.length === 0) {
     return (
       <Card>
-        <div className="flex items-center justify-center py-12">
-          <div
-            className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
-          ></div>
-        </div>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground">Position Tracking</h2>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-position-tracking" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>Position Tracking allows you to monitor the rankings of any domain, subdomain, subfolder or URL for any keyword across different devices and locations on a daily basis.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-12">
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
+            ></div>
+          </div>
+        </CardContent>
       </Card>
     )
   }
@@ -53,25 +72,58 @@ export const KeywordTable = ({
   if (filteredKeywords.length === 0) {
     return (
       <Card>
-        <div className="text-center py-12">
-          <Globe className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2 text-foreground">
-            {searchTerm ? 'No keywords found' : 'No keywords added'}
-          </h3>
-          <p className="text-muted-foreground">
-            {searchTerm
-              ? `No keywords match "${searchTerm}" in this domain.`
-              : 'Add keywords to start tracking their search positions.'}
-          </p>
-        </div>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground">Position Tracking</h2>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-position-tracking" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>Position Tracking allows you to monitor the rankings of any domain, subdomain, subfolder or URL for any keyword across different devices and locations on a daily basis.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Globe className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2 text-foreground">
+              {searchTerm ? 'No keywords found' : 'No keywords added'}
+            </h3>
+            <p className="text-muted-foreground">
+              {searchTerm
+                ? `No keywords match "${searchTerm}" in this domain.`
+                : 'Add keywords to start tracking their search positions.'}
+            </p>
+          </div>
+        </CardContent>
       </Card>
     )
   }
 
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Position Tracking</h2>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-position-tracking" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>Position Tracking allows you to monitor the rankings of any domain, subdomain, subfolder or URL for any keyword across different devices and locations on a daily basis.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full">
           <thead>
             <tr className="bg-muted/50 border-b">
               <th className="px-4 py-3 text-center w-10">
@@ -219,6 +271,7 @@ export const KeywordTable = ({
           </tbody>
         </table>
       </div>
+      </CardContent>
     </Card>
   )
 }

@@ -7517,6 +7517,49 @@ ON public.indb_cms_posts(category, status);
 
 ## Recent Changes
 
+### October 24, 2025 - UI Consistency Enhancement: Weekly Trends & Position Tracking Component Updates ✅
+
+🎨 **UI COMPONENT CONSISTENCY IMPROVEMENTS**: Enhanced Weekly Trends and Position Tracking components to maintain consistent design patterns across all analytics components in the overview page
+
+**✅ WEEKLY TRENDS INFO TOOLTIP COMPLETION**:
+- **Issue**: WeeklyTrendsAnalytics component had Info tooltip in main data state but was missing in loading and empty states
+- **Solution**: Added Info icon and tooltip to both loading and empty states for consistent user experience
+- **Implementation**:
+  - Added Info icon with tooltip to loading state (when fetching weekly trends data)
+  - Added Info icon with tooltip to empty state (when no weekly data available)
+  - Maintains same tooltip text across all states: "Weekly Trends tracks how your keyword rankings change week-by-week, showing improvements, declines, and position distribution patterns over the current month."
+  - Ensures users can access help information regardless of data availability
+
+**✅ POSITION TRACKING TITLE REPOSITIONING**:
+- **Issue**: Position Tracking title with Info tooltip was positioned outside the KeywordTable card component
+- **Solution**: Moved the title inside the KeywordTable component's CardHeader for proper card structure
+- **Implementation**:
+  - Added CardHeader and CardContent imports to KeywordTable component
+  - Restructured all three states (loading, empty, main) to include CardHeader with title and Info tooltip
+  - Applied `p-0` padding to CardContent to maintain table styling without extra spacing
+  - Removed standalone title from page.tsx (lines 399-412) and integrated into component
+  - Removed unused Tooltip and Info imports from page.tsx
+  - Maintains consistent title positioning matching other analytics components (PositionDistribution, TopKeywords, WeeklyTrendsAnalytics)
+
+**Files Modified**:
+- `components/dashboard/enhanced/WeeklyTrendsAnalytics.tsx` - Added Info icon and tooltip to loading and empty states
+- `app/dashboard/indexnow/overview/components/KeywordTable.tsx` - Moved Position Tracking title into CardHeader, added CardHeader/CardContent structure to all states
+- `app/dashboard/indexnow/overview/page.tsx` - Removed standalone Position Tracking title section and unused imports
+
+**Technical Implementation**:
+- **Consistent Component Structure**: All analytics components now follow CardHeader + CardContent pattern
+- **Proper Card Hierarchy**: Title with Info tooltip positioned inside card component instead of external wrapper
+- **Tooltip Consistency**: Same tooltip content and styling across all component states
+- **Clean Imports**: Removed unused UI components from page.tsx after refactoring
+
+**User Benefits**:
+- **Visual Consistency**: All analytics components have consistent card layout with titles inside cards
+- **Improved UX**: Info tooltips available in all component states, not just when data is present
+- **Professional Design**: Matches industry-standard dashboard component patterns
+- **Better Layout**: Proper card structure eliminates visual gap between title and content
+
+**Status**: ✅ **COMPLETE** - Weekly Trends and Position Tracking components now have consistent UI structure with proper Info tooltip placement
+
 ### October 24, 2025 - Position Distribution Component Split & API Endpoint Fix ✅
 
 🔧 **COMPONENT ARCHITECTURE REFACTOR**: Successfully split Position Distribution into two separate, more compact components and fixed Weekly Trends API endpoint to use correct subdomain approach

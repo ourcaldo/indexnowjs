@@ -43,6 +43,22 @@ const POSITION_RANGE_OPTIONS = [
   { value: 'outOfHundred' as PositionRangeFilter, label: '100+', sublabel: 'Out of 100', color: '#6C757D' }
 ]
 
+const WeeklyTrendsHeader = () => (
+  <div className="flex items-center gap-2">
+    <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-weekly-trends" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          <p>Weekly Trends tracks how your keyword rankings change week-by-week, showing improvements, declines, and position distribution patterns over the current month.</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </div>
+)
+
 export const WeeklyTrendsAnalytics = ({ 
   domainId,
   deviceType,
@@ -102,7 +118,7 @@ export const WeeklyTrendsAnalytics = ({
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
+          <WeeklyTrendsHeader />
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-12">
@@ -117,7 +133,7 @@ export const WeeklyTrendsAnalytics = ({
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Weekly Trends</CardTitle>
+          <WeeklyTrendsHeader />
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12">
@@ -134,19 +150,7 @@ export const WeeklyTrendsAnalytics = ({
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-lg font-semibold text-foreground">Weekly Trends</CardTitle>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 text-muted-foreground cursor-help" data-testid="info-weekly-trends" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p>Weekly Trends tracks how your keyword rankings change week-by-week, showing improvements, declines, and position distribution patterns over the current month.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            <WeeklyTrendsHeader />
             <p className="text-sm text-muted-foreground mt-1">Performance tracking across weeks in current month</p>
           </div>
         </div>
