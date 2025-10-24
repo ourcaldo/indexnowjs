@@ -6,10 +6,11 @@ import { Target, TrendingUp, Award, Search } from 'lucide-react'
 
 export interface RankingData {
   total: number
+  topThree: number
   topTen: number
   topTwenty: number
-  topFifty: number
-  beyond: number
+  topHundred: number
+  outOfHundred: number
 }
 
 interface RankingDistributionProps {
@@ -30,38 +31,50 @@ export const RankingDistribution = ({
   const distributionData = useMemo(() => {
     if (!data || data.total === 0) {
       return [
-        { label: 'Top 10', count: 0, percentage: 0, color: 'hsl(var(--success))' },
-        { label: 'Top 20', count: 0, percentage: 0, color: 'hsl(var(--info))' },
-        { label: 'Top 50', count: 0, percentage: 0, color: 'hsl(var(--warning))' },
-        { label: '50+', count: 0, percentage: 0, color: 'hsl(var(--muted-foreground))' }
+        { label: '1-3', sublabel: 'Top 3', count: 0, percentage: 0, color: '#4BB543' },
+        { label: '4-10', sublabel: 'Top 10', count: 0, percentage: 0, color: '#3D8BFF' },
+        { label: '11-20', sublabel: 'Top 20', count: 0, percentage: 0, color: '#F0A202' },
+        { label: '21-100', sublabel: 'Top 100', count: 0, percentage: 0, color: '#E63946' },
+        { label: '100+', sublabel: 'Out of 100', count: 0, percentage: 0, color: '#6C757D' }
       ]
     }
 
     const total = data.total
     return [
       { 
-        label: 'Top 10', 
+        label: '1-3', 
+        sublabel: 'Top 3',
+        count: data.topThree, 
+        percentage: Math.round((data.topThree / total) * 100),
+        color: '#4BB543'
+      },
+      { 
+        label: '4-10', 
+        sublabel: 'Top 10',
         count: data.topTen, 
         percentage: Math.round((data.topTen / total) * 100),
-        color: 'hsl(var(--success))'
+        color: '#3D8BFF'
       },
       { 
-        label: 'Top 20', 
-        count: data.topTwenty - data.topTen, 
-        percentage: Math.round(((data.topTwenty - data.topTen) / total) * 100),
-        color: 'hsl(var(--info))'
+        label: '11-20', 
+        sublabel: 'Top 20',
+        count: data.topTwenty, 
+        percentage: Math.round((data.topTwenty / total) * 100),
+        color: '#F0A202'
       },
       { 
-        label: 'Top 50', 
-        count: data.topFifty - data.topTwenty, 
-        percentage: Math.round(((data.topFifty - data.topTwenty) / total) * 100),
-        color: 'hsl(var(--warning))'
+        label: '21-100', 
+        sublabel: 'Top 100',
+        count: data.topHundred, 
+        percentage: Math.round((data.topHundred / total) * 100),
+        color: '#E63946'
       },
       { 
-        label: '50+', 
-        count: data.beyond, 
-        percentage: Math.round((data.beyond / total) * 100),
-        color: 'hsl(var(--muted-foreground))'
+        label: '100+', 
+        sublabel: 'Out of 100',
+        count: data.outOfHundred, 
+        percentage: Math.round((data.outOfHundred / total) * 100),
+        color: '#6C757D'
       }
     ]
   }, [data])
@@ -69,12 +82,13 @@ export const RankingDistribution = ({
   const performanceScore = useMemo(() => {
     if (!data || data.total === 0) return 0
     
-    // Calculate weighted score: Top 10 = 100%, Top 20 = 75%, Top 50 = 50%, 50+ = 25%
+    // Calculate weighted score: Top 3 = 100%, 4-10 = 80%, 11-20 = 60%, 21-100 = 30%, 100+ = 10%
     const score = (
-      (data.topTen * 100) + 
-      ((data.topTwenty - data.topTen) * 75) + 
-      ((data.topFifty - data.topTwenty) * 50) + 
-      (data.beyond * 25)
+      (data.topThree * 100) + 
+      (data.topTen * 80) + 
+      (data.topTwenty * 60) + 
+      (data.topHundred * 30) + 
+      (data.outOfHundred * 10)
     ) / data.total
     
     return Math.round(score)
@@ -141,7 +155,7 @@ export const RankingDistribution = ({
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <div 
-                          className={`w-3 h-3 rounded-sm transition-all duration-200 ${
+                          className={`w-3 h-3 rounded-full transition-all duration-200 ${
                             hoveredIndex === index ? 'scale-125 shadow-md' : ''
                           }`}
                           style={{ backgroundColor: item.color }}
@@ -165,12 +179,10 @@ export const RankingDistribution = ({
                     {/* Tooltip */}
                     {hoveredIndex === index && (
                       <div className="absolute left-0 top-full mt-2 bg-popover border border-border rounded-md px-3 py-2 shadow-md z-20 whitespace-nowrap">
-                        <div className="text-sm font-medium text-popover-foreground">{item.label} Rankings</div>
+                        <div className="text-sm font-medium text-popover-foreground">{item.sublabel} Rankings</div>
+                        <div className="text-xs text-muted-foreground">Position: {item.label}</div>
                         <div className="text-xs text-muted-foreground">Keywords: {item.count}</div>
                         <div className="text-xs text-muted-foreground">Percentage: {item.percentage}%</div>
-                        <div className="text-xs text-muted-foreground">
-                          Performance: {item.label === 'Top 10' ? 'Excellent' : item.label === 'Top 20' ? 'Good' : item.label === 'Top 50' ? 'Fair' : 'Needs Improvement'}
-                        </div>
                         <div className="absolute bottom-full left-4 border-4 border-transparent border-b-popover"></div>
                       </div>
                     )}
@@ -186,14 +198,14 @@ export const RankingDistribution = ({
               <h5 className="text-sm font-medium text-foreground">Quick Insights</h5>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-success">
-                    {data.topTen}
+                  <div className="text-lg font-bold" style={{ color: '#4BB543' }}>
+                    {data.topThree + data.topTen}
                   </div>
                   <div className="text-xs text-muted-foreground">Top 10 Keywords</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-foreground">
-                    {Math.round((data.topTwenty / data.total) * 100)}%
+                    {Math.round(((data.topThree + data.topTen + data.topTwenty) / data.total) * 100)}%
                   </div>
                   <div className="text-xs text-muted-foreground">In Top 20</div>
                 </div>

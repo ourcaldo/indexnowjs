@@ -20,7 +20,7 @@ import {
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
-import { RankingDistribution } from '@/components/dashboard/enhanced'
+import { RankingDistribution, WeeklyTrendsAnalytics } from '@/components/dashboard/enhanced'
 
 export default function IndexNowOverview() {
   const router = useRouter()
@@ -179,22 +179,26 @@ export default function IndexNowOverview() {
   const improvingCount = keywordsWithPosition.filter((k: any) => k.position_1d && k.position_1d > 0).length
 
   // Calculate position distribution for RankingDistribution chart
+  // New ranges: 1-3 (Top 3), 4-10 (Top 10), 11-20 (Top 20), 21-100 (Top 100), Out of 100
+  // Note: position === 0 means "not ranked" and is counted as "Out of 100"
   const rankingDistribution = useMemo(() => {
     if (keywordsWithPosition.length === 0) {
-      return { total: 0, topTen: 0, topTwenty: 0, topFifty: 0, beyond: 0 }
+      return { total: 0, topThree: 0, topTen: 0, topTwenty: 0, topHundred: 0, outOfHundred: 0 }
     }
 
-    const topTen = keywordsWithPosition.filter((k: any) => k.current_position <= 10).length
-    const topTwenty = keywordsWithPosition.filter((k: any) => k.current_position <= 20).length
-    const topFifty = keywordsWithPosition.filter((k: any) => k.current_position <= 50).length
-    const beyond = keywordsWithPosition.filter((k: any) => k.current_position > 50).length
+    const topThree = keywordsWithPosition.filter((k: any) => k.current_position >= 1 && k.current_position <= 3).length
+    const topTen = keywordsWithPosition.filter((k: any) => k.current_position >= 4 && k.current_position <= 10).length
+    const topTwenty = keywordsWithPosition.filter((k: any) => k.current_position >= 11 && k.current_position <= 20).length
+    const topHundred = keywordsWithPosition.filter((k: any) => k.current_position >= 21 && k.current_position <= 100).length
+    const outOfHundred = keywordsWithPosition.filter((k: any) => k.current_position === 0 || k.current_position > 100).length
 
     return {
       total: keywordsWithPosition.length,
+      topThree,
       topTen,
       topTwenty,
-      topFifty,
-      beyond
+      topHundred,
+      outOfHundred
     }
   }, [keywordsWithPosition])
 
@@ -326,6 +330,15 @@ export default function IndexNowOverview() {
             title="Position Distribution"
             description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
           />
+
+          {/* Weekly Trends Analytics */}
+          {selectedDomainId && (
+            <WeeklyTrendsAnalytics
+              domainId={selectedDomainId}
+              deviceType={selectedDevice}
+              countryId={selectedCountry}
+            />
+          )}
 
           {/* Filter Panel */}
           <FilterPanel

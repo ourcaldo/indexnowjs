@@ -7517,6 +7517,79 @@ ON public.indb_cms_posts(category, status);
 
 ## Recent Changes
 
+### October 24, 2025 - Enhanced Position Distribution & Weekly Trends Analytics Implementation ✅
+
+📊 **MAJOR ANALYTICS ENHANCEMENT**: Successfully implemented comprehensive position distribution range updates and new weekly trends analytics component for improved SEO rank tracking insights
+
+**✅ POSITION DISTRIBUTION RANGE UPDATES**:
+- **New Position Ranges**: Updated from old ranges (Top 10, Top 20, Top 50, 50+) to more granular Semrush-style ranges:
+  - **1-3** (Top 3) - Premium positions with highest visibility
+  - **4-10** (Top 10) - First page rankings
+  - **11-20** (Top 20) - Page one lower positions
+  - **21-100** (Top 100) - Indexed but lower visibility
+  - **100+** (Out of 100) - Beyond first 10 pages
+
+- **Data Model Updates**:
+  - Updated `RankingData` interface with new fields: `topThree`, `topTen`, `topTwenty`, `topHundred`, `outOfHundred`
+  - Modified position distribution calculations to use inclusive range filters
+  - Updated performance score algorithm with weighted scoring: Top 3 = 100%, 4-10 = 80%, 11-20 = 60%, 21-100 = 30%, 100+ = 10%
+
+- **Component Enhancements**:
+  - Enhanced `RankingDistribution` component with color-coded badges using project color scheme
+  - Changed indicator shapes from square to rounded for better visual distinction
+  - Improved tooltips to show both numeric range and semantic label
+  - Updated Quick Insights calculations to reflect new ranges (Top 10 = topThree + topTen)
+
+**✅ NEW WEEKLY TRENDS ANALYTICS COMPONENT**:
+- **Component**: Created `WeeklyTrendsAnalytics` component showing week-by-week performance trends for current month
+- **Dual Chart Layout**:
+  - **Left Chart - Improvement Trends**: Shows weekly improvement vs decline with green/red color-coded horizontal bars
+  - **Right Chart - Position Distribution**: Shows keyword count per position range with toggleable filters
+- **Interactive Features**:
+  - Position range filter buttons (1-3, 4-10, 11-20, 21-100, 100+) for dynamic chart updates
+  - Week labels with date ranges for clear temporal context
+  - Responsive design with grid layout adapting to mobile/desktop
+- **Monthly Summary Stats**: Displays total improved, declined, and unchanged keywords for the month
+
+**✅ API ENDPOINT IMPLEMENTATION**:
+- **Endpoint**: `/api/v1/rank-tracking/weekly-trends`
+- **Functionality**:
+  - Fetches rank history data from `indb_keyword_rank_history` table grouped by week
+  - Calculates weekly metrics: improvement count, decline count, unchanged, position distribution
+  - Supports filtering by domain_id, device_type, country_id, month, and year
+  - Implements week number calculation and date range generation
+  - Returns structured weekly trends data with position distribution breakdown
+- **Security**: Uses `SecureServiceRoleWrapper` with user session validation and RLS enforcement
+
+**✅ INTEGRATION & UX IMPROVEMENTS**:
+- **Page Layout**: Inserted `WeeklyTrendsAnalytics` component between Position Distribution and Filter Panel on overview page
+- **Conditional Rendering**: Component only renders when domain is selected
+- **Context Integration**: Automatically respects selected domain, device type, and country filters
+- **Loading States**: Implemented loading and empty state handling with appropriate messaging
+
+**Files Modified**:
+- `app/dashboard/indexnow/overview/page.tsx` - Updated position distribution calculation logic and integrated WeeklyTrendsAnalytics
+- `components/dashboard/enhanced/RankingDistribution.tsx` - Complete refactor with new ranges, colors, and enhanced UI
+- `components/dashboard/enhanced/WeeklyTrendsAnalytics.tsx` - **NEW COMPONENT** - Weekly trends with dual charts
+- `components/dashboard/enhanced/index.ts` - Added WeeklyTrendsAnalytics export
+- `app/api/v1/rank-tracking/weekly-trends/route.ts` - **NEW API ENDPOINT** - Weekly trends data aggregation
+
+**Technical Implementation**:
+- **Color Scheme Consistency**: Used project color palette (#4BB543, #3D8BFF, #F0A202, #E63946, #6C757D)
+- **Responsive Design**: Grid layout with `grid-cols-1 lg:grid-cols-2` for optimal mobile/desktop experience
+- **Data Aggregation**: Efficient week-based grouping with position change tracking
+- **Type Safety**: Full TypeScript interfaces for `WeeklyTrendsData` and `PositionRangeFilter`
+- **Query Optimization**: React Query integration with proper cache keys and session-based auth
+
+**User Benefits**:
+- **Granular Insights**: More precise understanding of keyword performance across position tiers
+- **Temporal Analysis**: Week-by-week trend visualization for identifying patterns and opportunities
+- **Actionable Data**: Clear distinction between high-value positions (1-3) and improvement targets
+- **Professional Design**: Semrush-inspired layout matching industry-standard SEO tools
+
+**Status**: ✅ **COMPLETE** - Enhanced position distribution system and weekly trends analytics fully implemented with comprehensive API support
+
+
 ### September 16, 2025 - Hover Effects Standardization: Comprehensive UI Consistency ✅
 
 🎯 **HOVER EFFECTS STANDARDIZATION COMPLETE**: Successfully implemented consistent gray hover pattern across all dashboard components to match the rank history table design standard
