@@ -7523,23 +7523,24 @@ ON public.indb_cms_posts(category, status);
 
 **✅ POSITION DISTRIBUTION COMPONENT SPLIT**:
 - **New Architecture**: Split single wide `RankingDistribution` component into two focused components:
-  - **PositionDistribution** (Left): Shows performance score bar and position breakdown with horizontal bars
-  - **TopKeywords** (Right): Displays actual keywords in each position range with ranking positions
+  - **PositionDistribution** (Left): Shows performance score bar, position breakdown with horizontal bars, and performance insights
+  - **TopKeywords** (Right): Displays top 10 keywords sorted by rank (from rank 1 onwards)
   
 - **Component Features**:
   - **PositionDistribution.tsx**:
     - Performance score bar showing overall ranking percentage
     - Position breakdown with color-coded horizontal bars for each range
     - Displays count and percentage for each position tier
+    - Performance Insight section at bottom showing top 3 and top 10 keyword counts
     - More compact design with reduced spacing
     - Uses project color scheme (green, blue, orange, red, gray)
   
   - **TopKeywords.tsx**:
-    - Shows top keyword for each position range
+    - Shows top 10 keywords sorted by current position (best rank first)
     - Displays keyword name with current position number
-    - Shows trending indicators if position improved (position_1d > 0)
-    - Performance insights section with actionable feedback
-    - Gracefully handles empty states with "No keywords" message
+    - Shows trending indicators: green up arrow for improved, red down arrow for declined
+    - No "No keywords" messages for empty ranges - only shows actual ranked keywords
+    - Clean empty state when no keywords exist
 
 - **Layout Implementation**:
   - Components displayed side-by-side using grid layout: `grid-cols-1 lg:grid-cols-2 gap-6`

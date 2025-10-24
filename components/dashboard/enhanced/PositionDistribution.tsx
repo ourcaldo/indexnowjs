@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Target, Award } from 'lucide-react'
+import { Target, Award, TrendingUp } from 'lucide-react'
 
 export interface RankingData {
   total: number
@@ -133,6 +133,26 @@ export const PositionDistribution = ({
             </div>
           ))}
         </div>
+
+        {/* Performance Insights */}
+        {(data.topThree > 0 || data.topTen > 0) && (
+          <div className="mt-4 p-3 bg-muted/30 rounded-lg" data-testid="section-insights">
+            <div className="flex items-start space-x-2">
+              <TrendingUp className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-foreground">Performance Insight</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {data.topThree > 0 && (
+                    <>You have <span className="font-medium text-green-500">{data.topThree} keywords</span> in top 3 positions! </>
+                  )}
+                  {(data.topThree + data.topTen) > 0 && (
+                    <>Great job with <span className="font-medium text-blue-500">{data.topThree + data.topTen} keywords</span> in top 10.</>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
