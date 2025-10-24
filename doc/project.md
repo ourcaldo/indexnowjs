@@ -9704,21 +9704,28 @@ if (stats.pendingChecks > 0) {
 ## October 24, 2025 - Position Tracking Component UI Spacing Fix
 
 **Issue Addressed**:
-Fixed visual spacing inconsistency in the Position Tracking component where the CardHeader appeared to have excessive top and left padding compared to other components like Weekly Trends, Position Distribution, and Top Keywords on the overview page.
+Fixed visual spacing inconsistency in the Position Tracking component where an extra wrapper div with padding created excessive spacing compared to other components like Weekly Trends, Position Distribution, and Top Keywords on the overview page.
+
+**Root Cause**:
+The component was incorrectly using `Card` from `@/components/dashboard/ui` which has built-in `p-6` (24px) padding, while other components use `Card` from `@/components/ui/card` which has no padding. This created a double-padding effect with CardHeader.
 
 **Changes Made**:
-Updated CardHeader padding in `app/dashboard/indexnow/overview/components/KeywordTable.tsx` across all three rendering states (loading, empty, and with data):
-- **Before**: `className="pb-3"` (using default `p-6` with bottom override = 24px top/left padding)
-- **After**: `className="px-4 pt-4 pb-3"` (16px top/left padding, 12px bottom padding)
+Updated imports in `app/dashboard/indexnow/overview/components/KeywordTable.tsx`:
+- **Before**: Mixed imports - `Card` from `@/components/dashboard/ui` and `CardHeader, CardContent, CardTitle` from `@/components/ui/card`
+- **After**: Consistent imports - All card components from `@/components/ui/card`
+
+**Technical Details**:
+- `@/components/dashboard/ui/Card.tsx` has: `className="p-6 rounded-lg bg-background border border-border"`
+- `@/components/ui/card/Card` has: `className="rounded-lg border bg-card text-card-foreground shadow-sm"`
+- The extra `p-6` wrapper was causing the visual inconsistency
 
 **Impact**:
-- Reduced top padding from 24px to 16px
-- Reduced left padding from 24px to 16px
-- Maintained bottom padding at 12px for consistency
-- Position Tracking header now visually aligns with other card components on the page
+- Removed extra 24px padding wrapper
+- Position Tracking header now has identical HTML structure to other components
+- Consistent visual spacing across all card components on the page
 
 **Files Modified**:
-- `app/dashboard/indexnow/overview/components/KeywordTable.tsx` - Updated CardHeader className in three locations (lines 49, 78, 112)
+- `app/dashboard/indexnow/overview/components/KeywordTable.tsx` - Fixed import statement (line 4)
 
 **Visual Consistency**:
-The Position Tracking component now has balanced spacing that matches the visual rhythm of Weekly Trends, Position Distribution, and Top Keywords components, creating a more cohesive user interface on the IndexNow Overview page.
+The Position Tracking component now matches the exact HTML structure and spacing of Weekly Trends, Position Distribution, and Top Keywords components, creating a cohesive user interface on the IndexNow Overview page.
