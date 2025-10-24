@@ -408,8 +408,11 @@ export default function RankHistoryPage() {
     }))
   }, [keywordsData, rankHistoryData])
 
-  // Get comparison date strings for calculations (needed before sorting)
-  const { todayStr: currentDateStr, comparisonDate: prevDateStr, periodLabel } = getComparisonPeriods(dateRange)
+  // Use actual selected date range for table columns instead of weekly comparison
+  // This ensures the table shows positions from the actual selected dates
+  const currentDateStr = endDate
+  const prevDateStr = startDate
+  const periodLabel = `${formatDateDisplay(startDate)} to ${formatDateDisplay(endDate)}`
 
   // Filter and search logic
   const filteredData = rankHistory.filter((item: RankHistoryData) => {
@@ -725,7 +728,7 @@ export default function RankHistoryPage() {
                             align="start"
                             className="max-w-sm p-3 text-sm bg-card border border-border text-foreground shadow-lg"
                           >
-                            <p>This report shows keyword position comparison between today and {getComparisonPeriods(dateRange).periodLabel}, including position changes and trends for better performance tracking.</p>
+                            <p>This report shows keyword position comparison for the selected date range ({periodLabel}), including position changes and trends for better performance tracking.</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -799,10 +802,10 @@ export default function RankHistoryPage() {
                               KEYWORD
                             </th>
                             <th className="text-center py-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground min-w-[80px] bg-slate-50 hover:bg-slate-100 transition-colors duration-150">
-                              POS. {formatDateDisplay(getComparisonPeriods(dateRange).todayStr)}
+                              POS. {formatDateDisplay(endDate)}
                             </th>
                             <th className="text-center py-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground min-w-[80px] bg-slate-50 hover:bg-slate-100 transition-colors duration-150">
-                              POS. {formatDateDisplay(getComparisonPeriods(dateRange).comparisonDate)}
+                              POS. {formatDateDisplay(startDate)}
                             </th>
                             <th className="text-center py-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground min-w-[80px] bg-slate-50 hover:bg-slate-100 transition-colors duration-150">
                               DIFF
