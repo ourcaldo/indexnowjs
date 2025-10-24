@@ -20,7 +20,7 @@ import {
 import { SharedDomainSelector } from '@/components/shared/DomainSelector'
 import { NoDomainState } from '@/components/shared/NoDomainState'
 import { DeviceCountryFilter } from '@/components/shared/DeviceCountryFilter'
-import { RankingDistribution, WeeklyTrendsAnalytics } from '@/components/dashboard/enhanced'
+import { PositionDistribution, TopKeywords, WeeklyTrendsAnalytics } from '@/components/dashboard/enhanced'
 
 export default function IndexNowOverview() {
   const router = useRouter()
@@ -342,13 +342,17 @@ export default function IndexNowOverview() {
             improvingCount={improvingCount}
           />
 
-          {/* Ranking Distribution Chart */}
-          <RankingDistribution 
-            data={rankingDistribution}
-            keywordsByRange={keywordsByRange}
-            title="Position Distribution"
-            description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
-          />
+          {/* Position Distribution & Top Keywords */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PositionDistribution 
+              data={rankingDistribution}
+              title="Position Distribution"
+              description={`Ranking breakdown for ${selectedDomainInfo?.display_name || selectedDomainInfo?.domain_name || 'domain'}`}
+            />
+            <TopKeywords 
+              keywordsByRange={keywordsByRange}
+            />
+          </div>
 
           {/* Weekly Trends Analytics */}
           {selectedDomainId && (

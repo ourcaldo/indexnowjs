@@ -153,6 +153,7 @@ export const RANK_TRACKING_ENDPOINTS = {
   EXPORT: `${API_BASE.V1}/rank-tracking/export`,
   DOMAINS: `${API_BASE.V1}/rank-tracking/domains`,
   COUNTRIES: `${API_BASE.V1}/rank-tracking/countries`,
+  WEEKLY_TRENDS: `${API_BASE.V1}/rank-tracking/weekly-trends`,
 } as const;
 
 // Billing endpoints

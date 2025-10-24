@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { TrendingUp, TrendingDown, Minus, BarChart } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/database'
+import { RANK_TRACKING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 
 interface WeeklyTrendsData {
   weekNumber: number
@@ -50,7 +51,7 @@ export const WeeklyTrendsAnalytics = ({
   const [selectedRange, setSelectedRange] = useState<PositionRangeFilter>('topTen')
 
   const { data: weeklyTrendsData, isLoading } = useQuery({
-    queryKey: ['/api/v1/rank-tracking/weekly-trends', { domain_id: domainId, device_type: deviceType, country_id: countryId }],
+    queryKey: [RANK_TRACKING_ENDPOINTS.WEEKLY_TRENDS, { domain_id: domainId, device_type: deviceType, country_id: countryId }],
     queryFn: async () => {
       const params = new URLSearchParams()
       params.append('domain_id', domainId)
@@ -58,7 +59,7 @@ export const WeeklyTrendsAnalytics = ({
       if (countryId && countryId !== '__placeholder__') params.append('country_id', countryId)
 
       const { data: { session } } = await supabase.auth.getSession()
-      const response = await fetch(`/api/v1/rank-tracking/weekly-trends?${params}`, {
+      const response = await fetch(`${RANK_TRACKING_ENDPOINTS.WEEKLY_TRENDS}?${params}`, {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
           'Content-Type': 'application/json'

@@ -7517,6 +7517,71 @@ ON public.indb_cms_posts(category, status);
 
 ## Recent Changes
 
+### October 24, 2025 - Position Distribution Component Split & API Endpoint Fix ✅
+
+🔧 **COMPONENT ARCHITECTURE REFACTOR**: Successfully split Position Distribution into two separate, more compact components and fixed Weekly Trends API endpoint to use correct subdomain approach
+
+**✅ POSITION DISTRIBUTION COMPONENT SPLIT**:
+- **New Architecture**: Split single wide `RankingDistribution` component into two focused components:
+  - **PositionDistribution** (Left): Shows performance score bar and position breakdown with horizontal bars
+  - **TopKeywords** (Right): Displays actual keywords in each position range with ranking positions
+  
+- **Component Features**:
+  - **PositionDistribution.tsx**:
+    - Performance score bar showing overall ranking percentage
+    - Position breakdown with color-coded horizontal bars for each range
+    - Displays count and percentage for each position tier
+    - More compact design with reduced spacing
+    - Uses project color scheme (green, blue, orange, red, gray)
+  
+  - **TopKeywords.tsx**:
+    - Shows top keyword for each position range
+    - Displays keyword name with current position number
+    - Shows trending indicators if position improved (position_1d > 0)
+    - Performance insights section with actionable feedback
+    - Gracefully handles empty states with "No keywords" message
+
+- **Layout Implementation**:
+  - Components displayed side-by-side using grid layout: `grid-cols-1 lg:grid-cols-2 gap-6`
+  - Responsive design: stacks vertically on mobile, side-by-side on desktop
+  - Maintains consistent card styling with proper spacing
+
+**✅ WEEKLY TRENDS API ENDPOINT FIX**:
+- **Problem**: WeeklyTrendsAnalytics was using hardcoded relative URL `/api/v1/rank-tracking/weekly-trends` which resolved to wrong subdomain (dashboard.indexnow.studio instead of api.indexnow.studio)
+- **Solution**: 
+  - Added `WEEKLY_TRENDS: ${API_BASE.V1}/rank-tracking/weekly-trends` to `RANK_TRACKING_ENDPOINTS` in `lib/core/constants/ApiEndpoints.ts`
+  - Updated WeeklyTrendsAnalytics component to import and use `RANK_TRACKING_ENDPOINTS.WEEKLY_TRENDS`
+  - Now correctly uses API_BASE_URL from environment variable (NEXT_PUBLIC_API_BASE_URL=https://api.indexnow.studio)
+
+- **Subdomain Architecture Compliance**:
+  - Fixed to properly use subdomain approach: `api.indexnow.studio` for API calls
+  - Follows project standard of using centralized ApiEndpoints.ts for all API endpoints
+  - Prevents future hardcoded endpoint issues
+
+**Files Modified**:
+- `components/dashboard/enhanced/PositionDistribution.tsx` - **NEW COMPONENT** - Left side position distribution with bars
+- `components/dashboard/enhanced/TopKeywords.tsx` - **NEW COMPONENT** - Right side top keywords display
+- `components/dashboard/enhanced/RankingDistribution.tsx` - **PRESERVED** - Original component kept for backward compatibility
+- `components/dashboard/enhanced/index.ts` - Added exports for new components
+- `app/dashboard/indexnow/overview/page.tsx` - Updated to use new component pair in grid layout
+- `lib/core/constants/ApiEndpoints.ts` - Added WEEKLY_TRENDS endpoint constant
+- `components/dashboard/enhanced/WeeklyTrendsAnalytics.tsx` - Updated to use RANK_TRACKING_ENDPOINTS.WEEKLY_TRENDS
+
+**Technical Implementation**:
+- **Separation of Concerns**: Each component now has single, focused responsibility
+- **Data Flow**: Parent page groups keywords by range and passes to TopKeywords component
+- **Type Safety**: Proper TypeScript interfaces for RankingData and KeywordsByRange
+- **Responsive Grid**: Uses Tailwind grid system for adaptive layout
+- **API Centralization**: All endpoints now defined in single constants file
+
+**User Benefits**:
+- **Better Layout**: More compact, professional design matching Semrush-style UX
+- **Clearer Information**: Separate components make data easier to scan and understand
+- **Correct API Calls**: Fixed subdomain issue ensures reliable data fetching
+- **Maintainability**: Smaller, focused components easier to modify and test
+
+**Status**: ✅ **COMPLETE** - Position Distribution split into two components and Weekly Trends API endpoint fixed to use correct subdomain
+
 ### October 24, 2025 - Enhanced Position Distribution & Weekly Trends Analytics Implementation ✅
 
 📊 **MAJOR ANALYTICS ENHANCEMENT**: Successfully implemented comprehensive position distribution range updates and new weekly trends analytics component for improved SEO rank tracking insights
