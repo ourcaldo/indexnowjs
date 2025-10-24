@@ -710,22 +710,30 @@ export default function RankHistoryPage() {
                     {/* Filter buttons inline with title */}
                     <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-lg">
                       <Button
-                        variant={activeFilter === 'positions' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setActiveFilter('positions')}
-                        data-testid="filter-positions"
-                        className="text-xs h-8 px-3 hover:bg-slate-50 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-foreground transition-colors duration-150"
-                      >
-                        Positions
-                      </Button>
-                      <Button
                         variant={activeFilter === 'all' ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setActiveFilter('all')}
                         data-testid="filter-all"
-                        className="text-xs h-8 px-3 hover:bg-slate-50 hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-foreground transition-colors duration-150"
+                        className={`text-xs h-8 px-3 transition-colors duration-150 ${
+                          activeFilter === 'all'
+                            ? 'bg-[#1c2331] text-white hover:bg-[#1c2331]'
+                            : 'hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white'
+                        }`}
                       >
                         All for {selectedDomainInfo?.domain_name}
+                      </Button>
+                      <Button
+                        variant={activeFilter === 'positions' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setActiveFilter('positions')}
+                        data-testid="filter-positions"
+                        className={`text-xs h-8 px-3 transition-colors duration-150 ${
+                          activeFilter === 'positions'
+                            ? 'bg-[#1c2331] text-white hover:bg-[#1c2331]'
+                            : 'hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white'
+                        }`}
+                      >
+                        Positions
                       </Button>
                     </div>
                   </div>
