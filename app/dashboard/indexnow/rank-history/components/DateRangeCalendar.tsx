@@ -138,12 +138,12 @@ export const DateRangeCalendar = ({ selectedRange, onRangeChange }: CalendarProp
                 ? 'text-muted-foreground/40 cursor-not-allowed opacity-50'
                 : 'text-foreground cursor-pointer'
               }
-              ${isToday && isCurrentMonth && !isFuture ? 'ring-2 ring-primary ring-inset z-10' : ''}
-              ${isSelected && !isFuture ? 'bg-primary text-primary-foreground hover:bg-primary/80 hover:text-white font-bold z-10' : ''}
-              ${isMiddle && !isFuture ? 'bg-primary/20 dark:bg-primary/30 font-semibold hover:bg-primary/30 dark:hover:bg-primary/40' : ''}
+              ${isToday && isCurrentMonth && !isFuture ? 'ring-2 ring-[#1c2331] ring-inset z-10' : ''}
+              ${isSelected && !isFuture ? 'bg-[#1c2331] text-white hover:bg-[#1c2331]/90 font-bold z-10' : ''}
+              ${isMiddle && !isFuture ? 'bg-[#1c2331]/20 dark:bg-[#1c2331]/30 font-semibold hover:bg-[#1c2331]/30 dark:hover:bg-[#1c2331]/40' : ''}
               ${isStart ? 'rounded-l-md' : ''}
               ${isEnd ? 'rounded-r-md' : ''}
-              ${!isFuture && isCurrentMonth && !isInRange && !isSelected ? 'hover:bg-slate-50 dark:hover:bg-slate-800' : ''}
+              ${!isFuture && isCurrentMonth && !isInRange && !isSelected ? 'hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white' : ''}
             `}
           >
             {currentIterDate.getDate()}
@@ -174,7 +174,7 @@ export const DateRangeCalendar = ({ selectedRange, onRangeChange }: CalendarProp
   }
 
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-col sm:flex-row gap-3">
       {/* Quick Select Buttons */}
       <div className="flex flex-col gap-2 min-w-[150px]">
         <span className="text-sm font-medium">Quick Select</span>
@@ -226,10 +226,10 @@ export const DateRangeCalendar = ({ selectedRange, onRangeChange }: CalendarProp
                 setCustomEndDate(todayStr)
                 onRangeChange(calculatedStartDateStr, todayStr)
               }}
-              className={`text-left text-sm px-2 py-1 rounded ${
+              className={`text-left text-sm px-2 py-1 rounded transition-colors duration-150 ${
                 isActive
-                ? 'bg-primary text-primary-foreground font-medium' 
-                : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                ? 'bg-[#1c2331] text-white font-medium' 
+                : 'hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white'
               }`}
             >
               {label}
@@ -238,36 +238,39 @@ export const DateRangeCalendar = ({ selectedRange, onRangeChange }: CalendarProp
         })}
       </div>
 
-      {/* Navigation and Current Month */}
-      <div className="min-w-[230px]">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigateMonth('prev')}
-            className="p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded transition-colors duration-150"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="text-sm font-medium">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </span>
-          <button
-            onClick={() => navigateMonth('next')}
-            className="p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded transition-colors duration-150"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+      {/* Calendars Container */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Navigation and Current Month */}
+        <div className="min-w-[230px]">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navigateMonth('prev')}
+              className="p-1 hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white rounded transition-colors duration-150"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-medium">
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </span>
+            <button
+              onClick={() => navigateMonth('next')}
+              className="p-1 hover:bg-[#1c2331] hover:text-white dark:hover:bg-[#1c2331] dark:hover:text-white rounded transition-colors duration-150"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          {renderCalendar(currentMonthStart)}
         </div>
-        {renderCalendar(currentMonthStart)}
-      </div>
 
-      {/* Next Month */}
-      <div className="min-w-[230px]">
-        <div className="flex items-center justify-center mb-4">
-          <span className="text-sm font-medium">
-            {monthNames[nextMonthStart.getMonth()]} {nextMonthStart.getFullYear()}
-          </span>
+        {/* Next Month - Hide on mobile */}
+        <div className="hidden sm:block min-w-[230px]">
+          <div className="flex items-center justify-center mb-4">
+            <span className="text-sm font-medium">
+              {monthNames[nextMonthStart.getMonth()]} {nextMonthStart.getFullYear()}
+            </span>
+          </div>
+          {renderCalendar(nextMonthStart)}
         </div>
-        {renderCalendar(nextMonthStart)}
       </div>
     </div>
   )
