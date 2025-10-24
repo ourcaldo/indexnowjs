@@ -9764,3 +9764,86 @@ Converted the Top Keywords component from a simple list to a structured table fo
 
 **Files Modified**:
 - `components/dashboard/enhanced/TopKeywords.tsx` - Converted CardContent to table structure with headers
+
+---
+
+## October 24, 2025 - Rank History Page UI/UX Enhancement
+
+**Overview**:
+Comprehensive UI/UX improvements to the rank-history page, focusing on professional design standards, strict color scheme compliance (#1c2331), mobile responsiveness, and improved user experience.
+
+**Changes Made**:
+
+### 1. Filter Component Restructuring
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+- **Removed background Card wrapper** from filter section for cleaner, more professional appearance matching design reference
+- Changed from Card-based layout to simple flex container with padding
+- Filters now have more breathing room and cleaner visual hierarchy
+
+### 2. Filter Reordering
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+- **New filter order**: Search → Tags → Date (date picker moved to last position)
+- Search bar remains flexible width for better space utilization
+- Tags filter positioned before date for better UX flow
+- All filters maintain consistent spacing and alignment
+
+### 3. Color Scheme Compliance - Tags Filter
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+- **Fixed Tags filter hover color** from blue to dark black (#1c2331)
+- Tags button: `hover:bg-[#1c2331] hover:text-white`
+- Tags dropdown items: `hover:bg-[#1c2331] hover:text-white`
+- Consistent dark theme across all hover states
+- Both light and dark mode support maintained
+
+### 4. Color Scheme Compliance - Date Picker
+**Files**: `app/dashboard/indexnow/rank-history/page.tsx`, `app/dashboard/indexnow/rank-history/components/DateRangeCalendar.tsx`
+
+**Main Date Button**:
+- Hover state: `hover:bg-[#1c2331] hover:text-white`
+
+**Action Buttons**:
+- Reset button: `hover:bg-[#1c2331] hover:text-white`
+- Apply button: `bg-[#1c2331] hover:bg-[#1c2331]/90 text-white` (removed blue-600)
+
+**Calendar Component**:
+- Quick select buttons: `bg-[#1c2331]` for active state, `hover:bg-[#1c2331] hover:text-white` for inactive
+- Navigation buttons: `hover:bg-[#1c2331] hover:text-white`
+- Calendar cells: 
+  - Selected dates: `bg-[#1c2331] text-white`
+  - Range dates: `bg-[#1c2331]/20` with hover states
+  - Today indicator: `ring-[#1c2331]`
+  - Regular cells: `hover:bg-[#1c2331] hover:text-white`
+
+### 5. Mobile Responsiveness - Date Picker
+**File**: `app/dashboard/indexnow/rank-history/components/DateRangeCalendar.tsx`
+- **Responsive layout**: Flex column on mobile, row on desktop (`flex-col sm:flex-row`)
+- **Second month calendar hidden on mobile** (`hidden sm:block`) to save space
+- **Modal container**: Added `max-w-[95vw] sm:max-w-none` for mobile viewport constraints
+- **Calendar sections**: Stack vertically on mobile with proper borders (`border-b sm:border-b-0 sm:border-r`)
+- Improved compact view for small screens while maintaining full functionality
+
+### 6. Rank History Table Button Reordering
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+- **New button order**: "All for {domain}" → "Positions" (previously reversed)
+- Buttons now follow logical hierarchy with domain-wide view first
+- Maintained consistent spacing and styling
+
+### 7. Active Button Hover State Fix
+**File**: `app/dashboard/indexnow/rank-history/page.tsx`
+- **Fixed active button hover behavior** - active buttons now maintain their background color on hover
+- Active state: `bg-[#1c2331] text-white hover:bg-[#1c2331]` (prevents color change)
+- Inactive state: `hover:bg-[#1c2331] hover:text-white` (shows hover feedback)
+- Prevents confusing UX where active buttons appeared to "deactivate" on hover
+
+**Impact**:
+- ✅ **Professional Design**: Filter section now matches industry-standard SEO tools
+- ✅ **Color Consistency**: All interactive elements use #1c2331, no blue violations
+- ✅ **Mobile-Friendly**: Date picker works seamlessly on mobile devices
+- ✅ **Better UX**: Logical filter order, clear button hierarchy, consistent hover states
+- ✅ **Accessibility**: Maintained dark mode support across all changes
+
+**Files Modified**:
+- `app/dashboard/indexnow/rank-history/page.tsx` - Filter restructuring, reordering, button fixes, color compliance
+- `app/dashboard/indexnow/rank-history/components/DateRangeCalendar.tsx` - Mobile responsiveness, color scheme fixes
+
+**Architect Review**: ✅ Passed - All UX requirements met, no regressions, color scheme compliant
