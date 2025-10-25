@@ -154,6 +154,10 @@ export default function BillingPage() {
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<string>('monthly')
   const [subscribing, setSubscribing] = useState<string | null>(null)
   const [startingTrial, setStartingTrial] = useState<string | null>(null)
+  
+  // Billing history pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   // Hooks
   const router = useRouter()
@@ -321,7 +325,7 @@ export default function BillingPage() {
     }
   }
 
-  const loadBillingHistory = async () => {
+  const loadBillingHistory = async (page: number = 1) => {
     try {
       const user = await authService.getCurrentUser()
       if (!user) throw new Error('User not authenticated')
@@ -330,8 +334,8 @@ export default function BillingPage() {
       if (!token) throw new Error('No authentication token')
 
       const params = new URLSearchParams({
-        page: '1',
-        limit: '10'
+        page: page.toString(),
+        limit: itemsPerPage.toString()
       })
 
       const response = await fetch(`${BILLING_ENDPOINTS.HISTORY}?${params}`, {
@@ -347,10 +351,15 @@ export default function BillingPage() {
       const result = await response.json()
       const data = result?.success === true && result.data ? result.data : result
       setHistoryData(data)
+      setCurrentPage(page)
     } catch (error) {
       handleApiError(error)
       setError(error instanceof Error ? error.message : 'Failed to load billing history')
     }
+  }
+  
+  const handlePageChange = async (page: number) => {
+    await loadBillingHistory(page)
   }
 
   // Helper functions
@@ -535,7 +544,6 @@ export default function BillingPage() {
                   )}
                 </CardDescription>
               </div>
-              <Button variant="outline" className="bg-background" data-testid="button-manage-plan">Manage</Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -739,70 +747,137 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Billing Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Billing History - Left Side */}
-        <div className="lg:col-span-2">
-          <Card data-testid="card-billing-history">
-            <CardHeader>
-              <CardTitle>Billing History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {historyData?.transactions && historyData.transactions.length > 0 ? (
-                <div className="space-y-3">
-                  {historyData.transactions.slice(0, 5).map((transaction) => (
-                    <div 
-                      key={transaction.id} 
-                      className="flex items-center justify-between py-3 border-b border-border last:border-0"
-                      data-testid={`billing-row-${transaction.id}`}
-                    >
-                      <div>
-                        <p className="text-sm text-foreground font-medium" data-testid={`text-invoice-id-${transaction.id}`}>
-                          {transaction.id}
-                        </p>
-                        <p className="text-xs text-muted-foreground" data-testid={`text-invoice-date-${transaction.id}`}>
-                          {formatDate(transaction.created_at)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge 
-                          variant="secondary" 
-                          className={`${
-                            transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
-                              ? 'bg-secondary text-foreground border border-border'
-                              : transaction.transaction_status === 'pending'
-                              ? 'bg-secondary/80 text-foreground border border-border'
-                              : 'bg-secondary/60 text-foreground border border-border'
-                          }`}
-                          data-testid={`badge-status-${transaction.id}`}
-                        >
-                          {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
-                        </Badge>
-                        <span className="text-sm text-foreground min-w-[80px] text-right" data-testid={`text-amount-${transaction.id}`}>
-                          {formatCurrency(transaction.amount, transaction.currency)}
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
-                          data-testid={`button-download-${transaction.id}`}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
+      {/* Billing History - Full Width */}
+      <Card data-testid="card-billing-history">
+        <CardHeader>
+          <CardTitle>Billing History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {historyData?.transactions && historyData.transactions.length > 0 ? (
+            <div className="space-y-4">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 pb-3 border-b border-border text-sm font-medium text-muted-foreground">
+                <div className="col-span-5" data-testid="header-order-id">Order ID</div>
+                <div className="col-span-2" data-testid="header-status">Status</div>
+                <div className="col-span-2 text-right" data-testid="header-total">Total</div>
+                <div className="col-span-3"></div>
+              </div>
+              
+              {/* Table Rows */}
+              <div className="space-y-0">
+                {historyData.transactions.map((transaction) => (
+                  <div 
+                    key={transaction.id} 
+                    className="grid grid-cols-12 gap-4 py-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors rounded-sm px-2 -mx-2"
+                    data-testid={`billing-row-${transaction.id}`}
+                  >
+                    <div className="col-span-5">
+                      <p className="text-sm text-foreground font-medium mb-1" data-testid={`text-invoice-id-${transaction.id}`}>
+                        {transaction.id}
+                      </p>
+                      <p className="text-xs text-muted-foreground" data-testid={`text-invoice-date-${transaction.id}`}>
+                        {formatDate(transaction.created_at)}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">No transactions found</p>
+                    <div className="col-span-2 flex items-center">
+                      <Badge 
+                        variant="secondary" 
+                        className={`${
+                          transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
+                            ? 'bg-success/10 text-success border-success/20'
+                            : transaction.transaction_status === 'pending'
+                            ? 'bg-warning/10 text-warning border-warning/20'
+                            : 'bg-destructive/10 text-destructive border-destructive/20'
+                        }`}
+                        data-testid={`badge-status-${transaction.id}`}
+                      >
+                        {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
+                      </Badge>
+                    </div>
+                    <div className="col-span-2 flex items-center justify-end">
+                      <span className="text-sm text-foreground font-medium" data-testid={`text-amount-${transaction.id}`}>
+                        {formatCurrency(transaction.amount, transaction.currency)}
+                      </span>
+                    </div>
+                    <div className="col-span-3 flex items-center justify-end">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8"
+                        onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
+                        data-testid={`button-view-details-${transaction.id}`}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              {historyData.pagination && historyData.pagination.total_pages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                  <div className="text-sm text-muted-foreground" data-testid="text-pagination-info">
+                    Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, historyData.pagination.total_items)} of {historyData.pagination.total_items} transactions
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={!historyData.pagination.has_prev}
+                      data-testid="button-prev-page"
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, historyData.pagination.total_pages) }, (_, i) => {
+                        let pageNum
+                        if (historyData.pagination.total_pages <= 5) {
+                          pageNum = i + 1
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1
+                        } else if (currentPage >= historyData.pagination.total_pages - 2) {
+                          pageNum = historyData.pagination.total_pages - 4 + i
+                        } else {
+                          pageNum = currentPage - 2 + i
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(pageNum)}
+                            className="w-9 h-9"
+                            data-testid={`button-page-${pageNum}`}
+                          >
+                            {pageNum}
+                          </Button>
+                        )
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={!historyData.pagination.has_next}
+                      data-testid="button-next-page"
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-muted-foreground">No transactions found</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
