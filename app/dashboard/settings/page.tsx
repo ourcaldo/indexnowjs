@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { usePageViewLogger } from '@/hooks/useActivityLogger'
 import { 
@@ -8,12 +8,38 @@ import {
   Key,
   CreditCard,
   Search,
-  Bell
+  Bell,
+  X
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import GeneralSettingsPage from './general/page'
 import ServiceAccountsSettingsPage from './service-accounts/page'
 import PlansBillingSettingsPage from './plans-billing/page'
+
+const tabs = [
+    {
+      id: 'general',
+      label: 'Account',
+      icon: User,
+      description: 'Profile, password and preferences',
+      keywords: ['account', 'profile', 'password', 'security', 'name', 'email', 'phone', 'notifications', 'preferences', 'personal', 'information']
+    },
+    {
+      id: 'service-accounts',
+      label: 'Service Accounts',
+      icon: Key,
+      description: 'Google service accounts',
+      keywords: ['service', 'accounts', 'google', 'api', 'credentials', 'integration', 'indexing']
+    },
+    {
+      id: 'plans-billing',
+      label: 'Plans & Billing',
+      icon: CreditCard,
+      description: 'Subscription and payments',
+      keywords: ['plans', 'billing', 'subscription', 'payment', 'invoice', 'pricing', 'upgrade', 'package', 'history', 'transactions']
+    }
+  ]
 
 export default function SettingsPage() {
   const searchParams = useSearchParams()
@@ -35,26 +61,26 @@ export default function SettingsPage() {
     router.push(`/dashboard/settings?tab=${tabId}`, { scroll: false })
   }
 
-  const tabs = [
-    {
-      id: 'general',
-      label: 'Account',
-      icon: User,
-      description: 'Profile, password and preferences'
-    },
-    {
-      id: 'service-accounts',
-      label: 'Service Accounts',
-      icon: Key,
-      description: 'Google service accounts'
-    },
-    {
-      id: 'plans-billing',
-      label: 'Plans & Billing',
-      icon: CreditCard,
-      description: 'Subscription and payments'
+  const filteredTabs = useMemo(() => {
+    if (!searchQuery.trim()) return tabs
+
+    const query = searchQuery.toLowerCase()
+    return tabs.filter(tab => {
+      const matchesLabel = tab.label.toLowerCase().includes(query)
+      const matchesDescription = tab.description.toLowerCase().includes(query)
+      const matchesKeywords = tab.keywords.some(keyword => keyword.toLowerCase().includes(query))
+      
+      return matchesLabel || matchesDescription || matchesKeywords
+    })
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (filteredTabs.length > 0 && !filteredTabs.find(tab => tab.id === activeTab)) {
+      const firstTabId = filteredTabs[0].id
+      setActiveTab(firstTabId)
+      router.push(`/dashboard/settings?tab=${firstTabId}`, { scroll: false })
     }
-  ]
+  }, [filteredTabs, activeTab, router])
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -67,6 +93,10 @@ export default function SettingsPage() {
       default:
         return <GeneralSettingsPage />
     }
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery('')
   }
 
   return (
@@ -87,15 +117,30 @@ export default function SettingsPage() {
                 placeholder="Search settings..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-muted/50 border-border focus:bg-background transition-colors"
+                className="pl-9 pr-9 bg-muted/50 border-border focus:bg-background transition-colors"
+                aria-label="Search settings"
                 data-testid="input-search-settings"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClearSearch}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                  data-testid="button-clear-search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
+            {searchQuery && filteredTabs.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-2">No settings found</p>
+            )}
           </div>
 
           {/* Navigation */}
           <nav className="space-y-1 flex-1">
-            {tabs.map((tab) => {
+            {filteredTabs.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
               return (
@@ -137,8 +182,34 @@ export default function SettingsPage() {
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-card border-b border-border z-10">
         <div className="p-4">
           <h1 className="text-lg font-semibold text-foreground mb-3">Settings</h1>
+          
+          {/* Mobile Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search settings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9 bg-muted/50 border-border focus:bg-background"
+              aria-label="Search settings"
+              data-testid="input-search-settings-mobile"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleClearSearch}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                data-testid="button-clear-search-mobile"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+          
+          {/* Mobile Tabs */}
           <div className="grid grid-cols-3 gap-2">
-            {tabs.map((tab) => {
+            {filteredTabs.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
               return (
@@ -162,12 +233,16 @@ export default function SettingsPage() {
               )
             })}
           </div>
+          
+          {searchQuery && filteredTabs.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center mt-2">No settings found</p>
+          )}
         </div>
       </div>
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
-        <div className="lg:pt-0 pt-32 pb-8">
+        <div className="lg:pt-0 pt-44 pb-8">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             {renderTabContent()}
           </div>
