@@ -13,10 +13,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import { 
   RefreshCw,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload,
+  Shield,
+  Bell,
+  Trash2
 } from 'lucide-react'
 import { AUTH_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 
@@ -26,6 +31,7 @@ export default function GeneralSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
+  const [savingNotifications, setSavingNotifications] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   usePageViewLogger('/dashboard/settings/general', 'Account Settings', { section: 'account_settings' })
@@ -240,7 +246,7 @@ export default function GeneralSettingsPage() {
 
   const handleSaveNotifications = async () => {
     try {
-      setSavingProfile(true)
+      setSavingNotifications(true)
       const token = (await supabase.auth.getSession()).data.session?.access_token
       if (!token) return
 
@@ -285,7 +291,7 @@ export default function GeneralSettingsPage() {
         type: 'error'
       })
     } finally {
-      setSavingProfile(false)
+      setSavingNotifications(false)
     }
   }
 
@@ -297,315 +303,311 @@ export default function GeneralSettingsPage() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="h-5 w-32 bg-muted rounded animate-pulse" />
-                <div className="h-4 w-48 bg-muted rounded animate-pulse mt-2" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="h-10 w-full bg-muted rounded animate-pulse" />
-                  <div className="h-10 w-full bg-muted rounded animate-pulse" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="border-border">
+            <CardHeader className="pb-3">
+              <div className="h-5 w-32 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-48 bg-muted rounded animate-pulse mt-1.5" />
             </CardHeader>
-            <CardContent>
-              <div className="h-20 bg-muted rounded animate-pulse" />
+            <CardContent className="space-y-3">
+              <div className="h-10 w-full bg-muted rounded animate-pulse" />
+              <div className="h-10 w-full bg-muted rounded animate-pulse" />
             </CardContent>
           </Card>
-        </div>
+        ))}
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Main Column */}
-      <div className="lg:col-span-2 space-y-6">
-        {/* Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Update your personal information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-6 mb-6">
-              <Avatar className="w-16 h-16">
-                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-lg font-medium">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <Button variant="outline" size="sm">Change photo</Button>
-                <p className="text-xs text-gray-500 mt-2">JPG, PNG. Max 2MB</p>
+    <div className="space-y-4">
+      {/* Profile Section */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-lg">Profile Information</CardTitle>
+              <CardDescription className="text-sm">
+                Update your personal details and contact information
+              </CardDescription>
+            </div>
+            <Badge variant="secondary" className="text-xs">
+              <div className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: 'hsl(var(--success))' }} />
+              Active
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 pb-4 border-b border-border">
+            <Avatar className="w-16 h-16">
+              <AvatarFallback className="bg-gradient-to-br from-accent/90 to-accent text-accent-foreground text-lg font-semibold">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Upload className="w-3.5 h-3.5" />
+                Upload photo
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1.5">JPG or PNG, max 2MB</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-sm">Full name</Label>
+              <Input 
+                id="name" 
+                value={profileForm.full_name} 
+                onChange={(e) => setProfileForm(prev => ({...prev, full_name: e.target.value}))}
+                className="h-9"
+                data-testid="input-full-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm">Email address</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={user?.email || ''} 
+                readOnly
+                className="h-9 bg-muted/50"
+                data-testid="input-email"
+              />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="phone" className="text-sm">Phone number</Label>
+              <Input 
+                id="phone" 
+                type="tel"
+                placeholder="Optional" 
+                value={profileForm.phone_number}
+                onChange={(e) => setProfileForm(prev => ({...prev, phone_number: e.target.value}))}
+                className="h-9"
+                data-testid="input-phone"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSaveProfile}
+              disabled={savingProfile}
+              size="sm"
+              data-testid="button-save-profile"
+            >
+              {savingProfile ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save changes'
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Security Section */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-accent" />
+            <div>
+              <CardTitle className="text-lg">Security</CardTitle>
+              <CardDescription className="text-sm">
+                Manage your password and security settings
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="current" className="text-sm">Current password</Label>
+              <div className="relative">
+                <Input 
+                  id="current" 
+                  type={showPassword ? "text" : "password"}
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
+                  className="h-9 pr-9"
+                  data-testid="input-current-password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5 text-muted-foreground" /> : <Eye className="w-3.5 h-3.5 text-muted-foreground" />}
+                </Button>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full name</Label>
-                <Input 
-                  id="name" 
-                  value={profileForm.full_name} 
-                  onChange={(e) => setProfileForm(prev => ({...prev, full_name: e.target.value}))}
-                  data-testid="input-full-name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  value={user?.email || ''} 
-                  readOnly
-                  className="bg-muted"
-                  data-testid="input-email"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="phone">Phone number</Label>
-                <Input 
-                  id="phone" 
-                  placeholder="Optional" 
-                  value={profileForm.phone_number}
-                  onChange={(e) => setProfileForm(prev => ({...prev, phone_number: e.target.value}))}
-                  data-testid="input-phone"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6">
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={handleSaveProfile}
-                disabled={savingProfile}
-                data-testid="button-save-profile"
-              >
-                {savingProfile ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save changes'
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Password */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Password</CardTitle>
-            <CardDescription>Change your password</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="current">Current password</Label>
-                <div className="relative">
-                  <Input 
-                    id="current" 
-                    type={showPassword ? "text" : "password"}
-                    value={passwordForm.currentPassword}
-                    onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
-                    className="pr-10"
-                    data-testid="input-current-password"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new">New password</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="new" className="text-sm">New password</Label>
                 <Input 
                   id="new" 
                   type="password"
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm(prev => ({...prev, newPassword: e.target.value}))}
+                  className="h-9"
                   data-testid="input-new-password"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm">Confirm password</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm" className="text-sm">Confirm password</Label>
                 <Input 
                   id="confirm" 
                   type="password"
                   value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm(prev => ({...prev, confirmPassword: e.target.value}))}
+                  className="h-9"
                   data-testid="input-confirm-password"
                 />
               </div>
             </div>
-            
-            <div className="flex justify-end mt-6">
-              <Button 
-                variant="outline"
-                onClick={handleChangePassword}
-                disabled={savingPassword}
-                data-testid="button-update-password"
-              >
-                {savingPassword ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  'Update password'
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Manage email preferences</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div className="space-y-0.5">
-                  <Label>Indexing updates</Label>
-                  <p className="text-xs text-gray-500">Job completion notifications</p>
-                </div>
-                <Switch 
-                  checked={notifications.jobCompletion}
-                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, jobCompletion: checked}))}
-                  data-testid="switch-job-completion"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div className="space-y-0.5">
-                  <Label>Failure notifications</Label>
-                  <p className="text-xs text-gray-500">Get notified when jobs fail</p>
-                </div>
-                <Switch 
-                  checked={notifications.failures}
-                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, failures: checked}))}
-                  data-testid="switch-failures"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div className="space-y-0.5">
-                  <Label>Daily reports</Label>
-                  <p className="text-xs text-gray-500">Summary of account activity</p>
-                </div>
-                <Switch 
-                  checked={notifications.dailyReports}
-                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, dailyReports: checked}))}
-                  data-testid="switch-daily-reports"
-                />
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <div className="space-y-0.5">
-                  <Label>Critical alerts</Label>
-                  <p className="text-xs text-gray-500">Quota limit warnings</p>
-                </div>
-                <Switch 
-                  checked={notifications.criticalAlerts}
-                  onCheckedChange={(checked) => setNotifications(prev => ({...prev, criticalAlerts: checked}))}
-                  data-testid="switch-critical-alerts"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end mt-6">
-              <Button 
-                onClick={handleSaveNotifications}
-                disabled={savingProfile}
-                data-testid="button-save-notifications"
-              >
-                {savingProfile ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save preferences'
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Sidebar - Hidden on mobile, shown on desktop */}
-      <div className="hidden lg:block space-y-6">
-        {/* Account Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs text-gray-500">Status</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-900">Active</span>
-              </div>
-            </div>
-            <Separator />
-            <div>
-              <p className="text-xs text-gray-500">Member since</p>
-              <p className="text-sm text-gray-900 mt-1">Recently</p>
-            </div>
-            <Separator />
-            <div>
-              <p className="text-xs text-gray-500">Email</p>
-              <p className="text-sm text-gray-900 mt-1">{user?.email || 'N/A'}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Security */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Security</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-900">Two-factor auth</p>
-                <p className="text-xs text-gray-500">Coming soon</p>
-              </div>
-              <Button variant="outline" size="sm" disabled>Manage</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Danger Zone */}
-        <Card className="border-red-200">
-          <CardHeader>
-            <CardTitle className="text-red-600">Danger Zone</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-gray-600 mb-3">Permanently delete your account and data</p>
-            <Button variant="outline" size="sm" className="w-full text-red-600 border-red-200 hover:bg-red-50">
-              Delete account
+          </div>
+          
+          <Separator />
+          
+          <div className="flex justify-end">
+            <Button 
+              variant="outline"
+              onClick={handleChangePassword}
+              disabled={savingPassword}
+              size="sm"
+              data-testid="button-update-password"
+            >
+              {savingPassword ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update password'
+              )}
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications Section */}
+      <Card className="border-border">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Bell className="w-4 h-4 text-accent" />
+            <div>
+              <CardTitle className="text-lg">Email Notifications</CardTitle>
+              <CardDescription className="text-sm">
+                Choose what updates you want to receive
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <div className="flex items-center justify-between py-3 border-b border-border/50">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Indexing updates</Label>
+              <p className="text-xs text-muted-foreground">Receive notifications when jobs complete</p>
+            </div>
+            <Switch 
+              checked={notifications.jobCompletion}
+              onCheckedChange={(checked) => setNotifications(prev => ({...prev, jobCompletion: checked}))}
+              data-testid="switch-job-completion"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between py-3 border-b border-border/50">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Failure alerts</Label>
+              <p className="text-xs text-muted-foreground">Get notified when operations fail</p>
+            </div>
+            <Switch 
+              checked={notifications.failures}
+              onCheckedChange={(checked) => setNotifications(prev => ({...prev, failures: checked}))}
+              data-testid="switch-failures"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between py-3 border-b border-border/50">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Daily reports</Label>
+              <p className="text-xs text-muted-foreground">Summary of daily activity and metrics</p>
+            </div>
+            <Switch 
+              checked={notifications.dailyReports}
+              onCheckedChange={(checked) => setNotifications(prev => ({...prev, dailyReports: checked}))}
+              data-testid="switch-daily-reports"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between py-3">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Critical alerts</Label>
+              <p className="text-xs text-muted-foreground">Quota limits and security warnings</p>
+            </div>
+            <Switch 
+              checked={notifications.criticalAlerts}
+              onCheckedChange={(checked) => setNotifications(prev => ({...prev, criticalAlerts: checked}))}
+              data-testid="switch-critical-alerts"
+            />
+          </div>
+          
+          <Separator className="my-3" />
+          
+          <div className="flex justify-end pt-2">
+            <Button 
+              onClick={handleSaveNotifications}
+              disabled={savingNotifications}
+              size="sm"
+              data-testid="button-save-notifications"
+            >
+              {savingNotifications ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save preferences'
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg text-destructive">Danger Zone</CardTitle>
+          <CardDescription className="text-sm">
+            Irreversible actions that affect your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+            <div>
+              <p className="text-sm font-medium text-foreground">Delete Account</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Permanently delete your account and all data</p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-destructive border-destructive/30 hover:bg-destructive hover:text-destructive-foreground gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
