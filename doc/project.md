@@ -777,6 +777,90 @@ JWT_SECRET=[jwt-secret-key]
 
 ### October 22, 2025: Critical Bug Fix - Prevent last_check_date Update on Failed Rank Checks ✅
 
+### October 25, 2025: Settings Page UI/UX Redesign - Modern SaaS Interface ✅
+
+🎨 **MAJOR UI/UX REDESIGN**: Completely redesigned the settings page following modern SaaS best practices with improved navigation, visual hierarchy, and professional compact design
+
+**✅ DESIGN IMPROVEMENTS**:
+- **Modern Navigation**: New sidebar navigation with search functionality and improved visual feedback
+- **Card-Based Layout**: Organized settings into logical, scannable card sections with icon indicators
+- **Professional Visual Hierarchy**: Better use of whitespace, typography, and semantic colors
+- **Compact Design**: More information density without feeling cluttered
+- **Enhanced Mobile Experience**: Improved responsive design with better touch targets
+
+**✅ KEY FEATURES IMPLEMENTED**:
+- **Search Functionality**: Quick settings search in sidebar navigation
+- **Icon-Based Sections**: Visual indicators for different setting categories (User, Shield, Mail icons)
+- **Status Badges**: Clear account status indicators with semantic colors
+- **Improved Forms**: Better input styling with icons and visual feedback
+- **Gradient Accents**: Subtle gradients for visual interest without brightness
+- **Better Separators**: Clear visual separation between sections
+
+**🔧 TECHNICAL CHANGES**:
+
+**Main Settings Page** (`app/dashboard/settings/page.tsx`):
+- Redesigned sidebar with search input and descriptive navigation items
+- Added visual feedback with hover states and active indicators
+- Improved mobile navigation with better spacing and touch targets
+- Added help/support section at bottom of sidebar
+- Full-height layout with proper overflow handling
+
+**General/Account Settings** (`app/dashboard/settings/general/page.tsx`):
+- New profile header card with gradient background and avatar
+- Status badges showing account verification status
+- Icon-based section headers for visual categorization
+- Better form layout with inline icons (Phone, Mail, etc.)
+- Enhanced password section with security warning callout
+- Improved notification settings with clear descriptions
+- Consistent save button styling with loading states
+
+**Color System Additions** (`app/globals.css`):
+```css
+/* Settings page specific colors */
+--settings-section-icon-bg: 220 27% 15%;
+--settings-section-icon-text: 218 100% 62%;
+--settings-gradient-from: 0 0% 100%;
+--settings-gradient-to: 210 40% 98%;
+
+/* Dark mode variants */
+--settings-section-icon-bg: 0 0% 100%;
+--settings-section-icon-text: 218 100% 62%;
+--settings-gradient-from: 0 0% 0%;
+--settings-gradient-to: 0 0% 5%;
+```
+
+**✅ DESIGN PRINCIPLES FOLLOWED**:
+1. **Simplicity & Clarity**: Minimalist approach with high contrast for readability
+2. **Smart Organization**: Logical grouping of related settings
+3. **Progressive Disclosure**: Show essential settings first, details within
+4. **Consistent Patterns**: Familiar icons and UI patterns
+5. **Semantic Colors**: Used existing color system without bright hardcoded colors
+6. **Mobile-First**: Responsive design with optimized mobile experience
+
+**✅ VISUAL ENHANCEMENTS**:
+- **Sidebar Navigation**: Dark primary background for active items, subtle hover states
+- **Profile Header**: Gradient background with large avatar and status badges
+- **Section Icons**: Small colored icon backgrounds for visual categorization
+- **Form Inputs**: Better focus states with border color transitions
+- **Cards**: Subtle shadows and borders for depth
+- **Badges**: Success/warning/info colors for account status
+- **Buttons**: Consistent styling with icon + text patterns
+
+**✅ UX IMPROVEMENTS**:
+- **Faster Navigation**: Search functionality reduces clicks to find settings
+- **Clear Hierarchy**: Visual weight guides users to important actions
+- **Better Feedback**: Loading states, success confirmations, error messages
+- **Scannable Content**: Icons and spacing make settings easy to scan
+- **Contextual Help**: Inline descriptions and warning callouts where needed
+
+**Files Modified**:
+- `app/dashboard/settings/page.tsx` - Complete redesign of main settings layout
+- `app/dashboard/settings/general/page.tsx` - Redesigned account settings page
+- `app/globals.css` - Added settings-specific semantic color variables
+
+**Status**: ✅ **REDESIGN COMPLETE** - Settings page now follows modern SaaS UI/UX best practices with professional, compact, and accessible design
+
+
 🐛 **CRITICAL BUG FIX**: Fixed issue where keywords were marked as "checked" even when rank check failed, preventing retries on subsequent cron runs
 
 **✅ PROBLEM IDENTIFIED**:

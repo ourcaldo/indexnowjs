@@ -109,6 +109,12 @@
   --usage-card-border: 0 0% 15%; /* #262626 - Dark border */
   --usage-card-label: 0 0% 65%; /* #A6A6A6 - Medium grey for readability */
   --usage-card-value: 0 0% 100%; /* #FFFFFF - Pure white */
+  
+  /* Settings page specific colors */
+  --settings-section-icon-bg: 220 27% 15%; /* Primary color with low opacity for icon backgrounds */
+  --settings-section-icon-text: 218 100% 62%; /* Accent color for icons */
+  --settings-gradient-from: 0 0% 100%; /* Card gradient start - white */
+  --settings-gradient-to: 210 40% 98%; /* Card gradient end - muted */
 }
 
 .dark {
@@ -146,6 +152,12 @@
   --usage-card-border: 220 30% 10%; /* #121619 */
   --usage-card-label: 0 0% 80%; /* #CCCCCC - Light grey */
   --usage-card-value: 0 0% 98%; /* #FAFAFA */
+  
+  /* Settings page specific colors - dark mode */
+  --settings-section-icon-bg: 0 0% 100%; /* White for dark mode */
+  --settings-section-icon-text: 218 100% 62%; /* Keep accent consistent */
+  --settings-gradient-from: 0 0% 0%; /* Card gradient start - black */
+  --settings-gradient-to: 0 0% 5%; /* Card gradient end - very dark */
 }
 
 @layer base {
