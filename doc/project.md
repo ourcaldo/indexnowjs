@@ -775,6 +775,49 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### October 25, 2025: Plans & Billing Page Enhancements - Improved UI/UX ✅
+
+🎨 **UI/UX ENHANCEMENTS**: Enhanced the Plans & Billing page with cleaner design and better functionality for managing subscriptions and viewing billing history
+
+**✅ IMPROVEMENTS IMPLEMENTED**:
+- **Cleaner Current Plan Card**: Removed unnecessary "Manage" button for streamlined appearance
+- **Full-Width Billing History**: Redesigned billing history table to match the width of cards above it
+- **Proper Table Headers**: Added clear column headers for Order ID, Status, and Total
+- **Pagination Functionality**: Implemented complete pagination system to navigate through all billing history
+
+**🔧 TECHNICAL CHANGES** (`app/dashboard/settings/plans-billing/page.tsx`):
+
+**Current Plan Card**:
+- Removed "Manage" button from header for cleaner design
+- Maintained all usage statistics and quota displays
+
+**Billing History Section**:
+- **Full-Width Layout**: Removed grid constraints (lg:col-span-2) for full-width display
+- **Table Headers**: Added proper grid-based headers for Order ID, Status, Total, and Actions
+- **Improved Row Design**: 
+  - 12-column grid layout for better alignment
+  - Hover effects for better interactivity
+  - Semantic colors for status badges (success/warning/destructive)
+  - "View Details" button replacing simple download icon
+- **Pagination System**:
+  - Added `currentPage` and `itemsPerPage` state management
+  - Modified `loadBillingHistory()` to accept page parameter
+  - Implemented `handlePageChange()` for page navigation
+  - Smart pagination controls with Previous/Next buttons
+  - Page number buttons (max 5 visible, centered on current page)
+  - Pagination info showing transaction range (e.g., "Showing 1 to 10 of 45 transactions")
+
+**Visual Improvements**:
+- Consistent spacing and alignment across all columns
+- Better status badge colors using semantic color system
+- Improved hover states for better user feedback
+- Clean separation between rows with borders
+
+**Files Modified**:
+- `app/dashboard/settings/plans-billing/page.tsx` - Enhanced current plan card, redesigned billing history with pagination
+
+**Status**: ✅ **ENHANCEMENTS COMPLETE** - Plans & Billing page now has cleaner UI with functional pagination for billing history
+
 ### October 22, 2025: Critical Bug Fix - Prevent last_check_date Update on Failed Rank Checks ✅
 
 ### October 25, 2025: Settings Page UI/UX Redesign - Modern SaaS Interface ✅
