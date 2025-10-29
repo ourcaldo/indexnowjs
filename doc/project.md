@@ -10115,3 +10115,44 @@ ${datePickerPosition === 'left' ? 'right-0' : 'left-0'}
 **Files Modified**:
 - `app/dashboard/indexnow/rank-history/page.tsx` - Fixed calculation logic and CSS class assignment
 
+
+---
+
+## October 29, 2025 - Fixed Terms of Service Page Text Contrast Issue
+
+**Overview**:
+Fixed critical text contrast issue on CMS static pages (Terms of Service, Privacy Policy, etc.) where dark text on dark background made content unreadable.
+
+**Problem**:
+- Page used dark black background (`bg-black` from Background component)
+- Text was using light mode color scheme (`text-foreground` = #1A1A1A, `text-muted-foreground` = #6C757D)
+- Created extremely poor contrast making text nearly invisible
+- `prose-invert` class was being overridden by explicit text color classes
+
+**Solution**:
+Updated text colors in `DefaultPageContent.tsx` to use light colors for proper contrast on dark background:
+- Page title: Changed from `text-foreground` to `text-white`
+- Last updated text: Changed from `text-muted-foreground` to `text-gray-400`
+- Content body text: Changed from `text-muted-foreground` to `text-gray-300`
+- All headings (h1-h4): Changed from `text-foreground` to `text-white`
+- Paragraphs and list items: Added explicit `text-gray-300`
+- Strong/bold text: Changed to `text-white` with `font-semibold`
+- Emphasized text: Changed to `text-gray-400`
+- Blockquote text: Changed to `text-gray-400`
+
+**Technical Details**:
+- Maintained `prose-invert` class for proper Tailwind Typography styling
+- Used explicit color classes to ensure proper contrast on dark background
+- Applied consistent light color scheme across all text elements
+- Kept accent color (`text-accent`) for links to maintain brand consistency
+
+**Impact**:
+- ✅ **Readable Content**: Text now has proper contrast ratio for accessibility
+- ✅ **Professional Appearance**: Clean, readable text on dark background
+- ✅ **Consistent UX**: Matches dark theme used across the application
+- ✅ **Accessibility**: Meets WCAG contrast requirements
+
+**Files Modified**:
+- `app/(public)/[slug]/components/DefaultPageContent.tsx` - Updated all text color classes for proper contrast
+
+**Architect Review**: Pending
