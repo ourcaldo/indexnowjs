@@ -3,13 +3,10 @@
 import { useState } from 'react'
 import { Check, Star, Shield, Clock, ArrowRight, MessageCircle, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { usePricingData } from '@/hooks/business/usePricingData'
-import { staticPricingData, formatPrice, getSavings } from './StaticPricingData'
 
-// Landing Page Components - Reusing for consistent design
 import NeonContainer from '@/components/landing/NeonContainer'
 import AdvancedNeonCard from '@/components/landing/AdvancedNeonCard'
 
-// Shared components
 import Header from '@/components/shared/Header'
 import Footer from '@/components/shared/Footer'
 import Background from '@/components/shared/Background'
@@ -19,23 +16,18 @@ export default function PricingPageContent() {
   const { user, siteSettings, handleAuthAction, handleGetStarted } = usePageData()
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
 
-  // Use shared pricing hook with fallback to static data
   const {
-    packages: dynamicPackages,
+    packages,
     selectedPeriod,
     currency,
     isLoading,
+    error,
     setSelectedPeriod,
-    formatPrice: dynamicFormatPrice,
+    formatPrice,
     getPricing,
     getFeaturesList,
     getSavingsPercentage
   } = usePricingData()
-
-  // Use static data for SEO and fallback when dynamic data isn't loaded
-  const packages = !isLoading && dynamicPackages.length > 0 ? dynamicPackages : staticPricingData.packages
-  const formatPriceFunc = !isLoading && dynamicPackages.length > 0 ? dynamicFormatPrice : 
-    (amount: number) => formatPrice(amount, currency)
 
   const periodOptions = [
     { key: 'monthly' as const, label: 'Monthly' },
@@ -65,16 +57,13 @@ export default function PricingPageContent() {
     }
   ]
 
-  // Generate structured data for SEO
-  const structuredData = {
+  const structuredData = packages.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "Product", 
     "name": "IndexNow Rank Tracker",
     "description": "Professional rank tracking tool for SEO professionals and digital marketers",
     "offers": packages.map((pkg) => {
-      const pricing = !isLoading && dynamicPackages.length > 0 ? getPricing(pkg) : {
-        price: pkg.pricing_tiers.monthly[currency].promo_price
-      }
+      const pricing = getPricing(pkg)
       return {
         "@type": "Offer",
         "name": pkg.name,
@@ -84,9 +73,8 @@ export default function PricingPageContent() {
         "availability": "https://schema.org/InStock"
       }
     })
-  }
+  } : null
 
-  // Navigation configuration for the header
   const navigation = [
     {
       label: 'Features',
@@ -113,11 +101,12 @@ export default function PricingPageContent() {
 
   return (
     <>
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      )}
 
       <div className="min-h-screen text-white relative overflow-hidden bg-[hsl(var(--primary))]">
         <Background />
@@ -129,9 +118,7 @@ export default function PricingPageContent() {
           variant="landing"
         />
 
-      {/* Main Content */}
       <main className="relative z-10 pt-24">
-        {/* 1) Hero Section */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
@@ -145,6 +132,7 @@ export default function PricingPageContent() {
             </p>
             <button
               onClick={handleGetStarted}
+              data-testid="button-get-started"
               className="bg-white text-black px-8 py-4 rounded-full font-semibold text-lg hover:bg-accent/10 transition-all duration-300 transform hover:scale-105 shadow-lg inline-flex items-center space-x-2"
             >
               <span>Start free</span>
@@ -156,10 +144,8 @@ export default function PricingPageContent() {
           </div>
         </section>
 
-        {/* 2) Pricing Table */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            {/* Period Toggle */}
             <div className="flex justify-center mb-12">
               <div className="flex items-center space-x-6 rounded-2xl p-4">
                 <span className={`text-base font-medium ${selectedPeriod === 'monthly' ? 'text-white' : 'text-muted-foreground'}`}>
@@ -167,6 +153,7 @@ export default function PricingPageContent() {
                 </span>
                 <button
                   onClick={() => setSelectedPeriod(selectedPeriod === 'monthly' ? 'annual' : 'monthly')}
+                  data-testid="button-toggle-period"
                   className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
                     selectedPeriod === 'annual' ? 'bg-white' : 'bg-white/20'
                   }`}
@@ -184,7 +171,7 @@ export default function PricingPageContent() {
                     Annual
                   </span>
                   {getSavingsPercentage('annual') && (
-                    <span className="text-xs text-success font-semibold bg-success/10 px-2 py-1 rounded-full">
+                    <span className="text-xs text-success font-semibold bg-success/10 px-2 py-1 rounded-full" data-testid="text-savings">
                       Save {getSavingsPercentage('annual')}%
                     </span>
                   )}
@@ -192,103 +179,119 @@ export default function PricingPageContent() {
               </div>
             </div>
 
-            {/* Pricing Cards - Always render with static fallback for SEO */}
-            <div className="grid md:grid-cols-3 gap-8">
-              <NeonContainer className="contents">
-                {(mousePosition, isTracking) => 
-                  packages.slice(0, 3).map((pkg) => {
-                    // Get pricing from dynamic data if available, otherwise use static
-                    const pricing = !isLoading && dynamicPackages.length > 0 ? getPricing(pkg) : {
-                      price: pkg.pricing_tiers[selectedPeriod][currency].promo_price,
-                      originalPrice: pkg.pricing_tiers[selectedPeriod][currency].regular_price !== pkg.pricing_tiers[selectedPeriod][currency].promo_price ? 
-                        pkg.pricing_tiers[selectedPeriod][currency].regular_price : undefined
-                    }
-                    const isPopular = pkg.is_popular
-                    const features = !isLoading && dynamicPackages.length > 0 ? getFeaturesList(pkg) : pkg.features
+            {isLoading && (
+              <div className="text-center py-20">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading pricing information...</p>
+              </div>
+            )}
 
-                    return (
-                      <AdvancedNeonCard 
-                        key={pkg.id} 
-                        intensity={isPopular ? "high" : "medium"} 
-                        className="p-8 flex flex-col h-full min-h-[500px]"
-                        mousePosition={mousePosition}
-                        isTracking={isTracking}
-                      >
-                        {/* Popular Badge */}
-                        {isPopular && (
-                          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                            <div className="bg-gradient-to-r from-info to-accent text-white px-4 py-2 rounded-full text-sm font-semibold">
-                              MOST POPULAR
-                            </div>
-                          </div>
-                        )}
+            {error && !isLoading && (
+              <div className="text-center py-20">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-8 max-w-md mx-auto">
+                  <p className="text-destructive text-lg font-semibold mb-2">Unable to load pricing</p>
+                  <p className="text-muted-foreground">Please try refreshing the page or contact support if the issue persists.</p>
+                </div>
+              </div>
+            )}
 
-                        {/* Plan Name */}
-                        <div className="mb-6">
-                          <h3 className="text-2xl font-bold text-white mb-2">
-                            {pkg.name}
-                          </h3>
-                          <p className="text-muted-foreground text-sm">
-                            {pkg.description}
-                          </p>
-                        </div>
+            {!isLoading && !error && packages.length === 0 && (
+              <div className="text-center py-20">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-8 max-w-md mx-auto">
+                  <p className="text-white text-lg font-semibold mb-2">No pricing plans available</p>
+                  <p className="text-muted-foreground">Please contact support for more information.</p>
+                </div>
+              </div>
+            )}
 
-                        {/* Price */}
-                        <div className="mb-8">
-                          {pricing.originalPrice && (
-                            <div className="mb-2">
-                              <span className="text-lg text-muted-foreground/70 line-through">
-                                {formatPriceFunc(pricing.originalPrice)}
-                              </span>
+            {!isLoading && !error && packages.length > 0 && (
+              <div className="grid md:grid-cols-3 gap-8">
+                <NeonContainer className="contents">
+                  {(mousePosition, isTracking) => 
+                    packages.slice(0, 3).map((pkg) => {
+                      const pricing = getPricing(pkg)
+                      const isPopular = pkg.is_popular
+                      const features = getFeaturesList(pkg)
+
+                      return (
+                        <AdvancedNeonCard 
+                          key={pkg.id} 
+                          intensity={isPopular ? "high" : "medium"} 
+                          className="p-8 flex flex-col h-full min-h-[500px]"
+                          mousePosition={mousePosition}
+                          isTracking={isTracking}
+                        >
+                          {isPopular && (
+                            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                              <div className="bg-gradient-to-r from-info to-accent text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                MOST POPULAR
+                              </div>
                             </div>
                           )}
-                          <div className="mb-2">
-                            <span className="text-4xl font-bold text-white">
-                              {formatPriceFunc(pricing.price)}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground text-sm">
-                              per {selectedPeriod === 'monthly' ? 'month' : 'year'}
-                            </span>
-                          </div>
-                        </div>
 
-                        {/* Features */}
-                        <div className="flex-grow">
-                          <ul className="space-y-3 mb-8">
-                            {features.map((feature, featureIndex) => (
-                              <li key={featureIndex} className="flex items-start">
-                                <div className="flex-shrink-0 w-5 h-5 mt-0.5">
-                                  <Check className="w-5 h-5 text-success" />
-                                </div>
-                                <span className="ml-3 text-muted-foreground text-sm">
-                                  {feature}
+                          <div className="mb-6">
+                            <h3 className="text-2xl font-bold text-white mb-2" data-testid={`text-plan-name-${pkg.slug}`}>
+                              {pkg.name}
+                            </h3>
+                            <p className="text-muted-foreground text-sm">
+                              {pkg.description}
+                            </p>
+                          </div>
+
+                          <div className="mb-8">
+                            {pricing.originalPrice && (
+                              <div className="mb-2">
+                                <span className="text-lg text-muted-foreground/70 line-through" data-testid={`text-original-price-${pkg.slug}`}>
+                                  {formatPrice(pricing.originalPrice)}
                                 </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                              </div>
+                            )}
+                            <div className="mb-2">
+                              <span className="text-4xl font-bold text-white" data-testid={`text-price-${pkg.slug}`}>
+                                {formatPrice(pricing.price)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-sm">
+                                per {selectedPeriod === 'monthly' ? 'month' : 'year'}
+                              </span>
+                            </div>
+                          </div>
 
-                        {/* CTA Button */}
-                        <div className="mt-auto">
-                          <button
-                            onClick={handleGetStarted}
-                            className="w-full bg-white text-black py-3 px-6 rounded-lg font-semibold hover:bg-accent/10 transition-colors duration-200"
-                          >
-                            Get started
-                          </button>
-                        </div>
-                      </AdvancedNeonCard>
-                    )
-                  })
-                }
-              </NeonContainer>
-            </div>
+                          <div className="flex-grow">
+                            <ul className="space-y-3 mb-8">
+                              {features.map((feature, featureIndex) => (
+                                <li key={featureIndex} className="flex items-start">
+                                  <div className="flex-shrink-0 w-5 h-5 mt-0.5">
+                                    <Check className="w-5 h-5 text-success" />
+                                  </div>
+                                  <span className="ml-3 text-muted-foreground text-sm">
+                                    {feature}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div className="mt-auto">
+                            <button
+                              onClick={handleGetStarted}
+                              data-testid={`button-get-started-${pkg.slug}`}
+                              className="w-full bg-white text-black py-3 px-6 rounded-lg font-semibold hover:bg-accent/10 transition-colors duration-200"
+                            >
+                              Get started
+                            </button>
+                          </div>
+                        </AdvancedNeonCard>
+                      )
+                    })
+                  }
+                </NeonContainer>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* 3) Value Reinforcement Strip */}
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
@@ -318,7 +321,6 @@ export default function PricingPageContent() {
           </div>
         </section>
 
-        {/* 4) Objection Handling (Pricing FAQs) */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
@@ -336,6 +338,7 @@ export default function PricingPageContent() {
                   <div className="p-1">
                     <button
                       onClick={() => setExpandedFAQ(expandedFAQ === index ? null : index)}
+                      data-testid={`button-faq-${index}`}
                       className="w-full text-left p-6 focus:outline-none"
                     >
                       <div className="flex items-center justify-between">
@@ -365,7 +368,6 @@ export default function PricingPageContent() {
           </div>
         </section>
 
-        {/* 5) Comparison / Why Choose Us */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
@@ -375,7 +377,6 @@ export default function PricingPageContent() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-12">
-              {/* IndexNow - Left Side */}
               <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
                 <h3 className="text-2xl font-bold text-white mb-6">IndexNow</h3>
                 <div className="space-y-4">
@@ -394,7 +395,6 @@ export default function PricingPageContent() {
                 </div>
               </div>
 
-              {/* All-in-one tools - Right Side */}
               <div className="bg-destructive/5 backdrop-blur-sm rounded-2xl border border-destructive/20 p-8">
                 <h3 className="text-2xl font-bold text-white mb-6">All-in-one tools</h3>
                 <div className="space-y-4">
@@ -416,7 +416,6 @@ export default function PricingPageContent() {
           </div>
         </section>
 
-        {/* 7) Final CTA */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-white">
@@ -428,6 +427,7 @@ export default function PricingPageContent() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={handleGetStarted}
+                data-testid="button-start-free"
                 className="bg-white text-black px-8 py-4 rounded-full font-semibold text-lg hover:bg-accent/10 transition-all duration-300 transform hover:scale-105 shadow-lg inline-flex items-center justify-center space-x-2"
               >
                 <span>Start free</span>
@@ -435,6 +435,7 @@ export default function PricingPageContent() {
               </button>
               <a
                 href={`mailto:${siteSettings?.contact_email || 'hello@indexnow.studio'}`}
+                data-testid="link-talk-to-sales"
                 className="border border-white/20 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/5 transition-all duration-300 inline-flex items-center justify-center space-x-2"
               >
                 <MessageCircle className="w-5 h-5" />
