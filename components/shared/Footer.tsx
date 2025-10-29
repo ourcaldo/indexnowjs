@@ -61,12 +61,11 @@ export default function Footer({ siteSettings, onScrollToPricing }: FooterProps)
                       Pricing
                     </button>
                   ) : (
-                    <a href="/pricing" className="text-white hover:text-white transition-colors duration-200">
+                    <a href="https://indexnow.studio/pricing" className="text-white hover:text-white transition-colors duration-200">
                       Pricing
                     </a>
                   )}
                 </li>
-                <li><a href="#" className="text-white hover:text-white transition-colors duration-200">Downloads</a></li>
               </ul>
             </div>
 
@@ -74,10 +73,8 @@ export default function Footer({ siteSettings, onScrollToPricing }: FooterProps)
             <div className="space-y-4">
               <h3 className="text-white font-medium text-sm">Resources</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-white hover:text-white transition-colors duration-200">Docs</a></li>
-                <li><a href="/blog" className="text-white hover:text-white transition-colors duration-200">Blog</a></li>
-                <li><a href="/faq" className="text-white hover:text-white transition-colors duration-200">FAQs</a></li>
-                <li><a href="#" className="text-white hover:text-white transition-colors duration-200">Changelog</a></li>
+                <li><a href="https://indexnow.studio/blog" className="text-white hover:text-white transition-colors duration-200">Blog</a></li>
+                <li><a href="https://indexnow.studio/faq" className="text-white hover:text-white transition-colors duration-200">FAQ</a></li>
               </ul>
             </div>
 
@@ -85,8 +82,8 @@ export default function Footer({ siteSettings, onScrollToPricing }: FooterProps)
             <div className="space-y-4">
               <h3 className="text-white font-medium text-sm">Terms</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-white hover:text-white transition-colors duration-200">Terms of Service</a></li>
-                <li><a href="#" className="text-white hover:text-white transition-colors duration-200">Privacy Policy</a></li>
+                <li><a href="https://indexnow.studio/privacy" className="text-white hover:text-white transition-colors duration-200">Privacy</a></li>
+                <li><a href="https://indexnow.studio/terms" className="text-white hover:text-white transition-colors duration-200">Terms</a></li>
               </ul>
             </div>
 
@@ -94,7 +91,7 @@ export default function Footer({ siteSettings, onScrollToPricing }: FooterProps)
             <div className="space-y-4">
               <h3 className="text-white font-medium text-sm">Connect</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href={`mailto:${siteSettings?.contact_email}`} className="text-white hover:text-white transition-colors duration-200">Contact ↗</a></li>
+                <li><a href="https://indexnow.studio/contact" className="text-white hover:text-white transition-colors duration-200">Contact</a></li>
                 <li><a href="#" className="text-white hover:text-white transition-colors duration-200">Forum</a></li>
               </ul>
             </div>

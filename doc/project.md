@@ -10156,3 +10156,43 @@ Updated text colors in `DefaultPageContent.tsx` to use light colors for proper c
 - `app/(public)/[slug]/components/DefaultPageContent.tsx` - Updated all text color classes for proper contrast
 
 **Architect Review**: Pending
+
+---
+
+## October 29, 2025 - Footer Navigation Links Update
+
+**Overview**:
+Cleaned up and updated footer navigation links to remove unused sections and ensure all links point to correct pages with full URLs.
+
+**Changes Made**:
+
+### Column 1 - Product
+- **Removed**: "Downloads" link (no longer needed)
+- **Updated**: "Pricing" link to use full URL `https://indexnow.studio/pricing`
+
+### Column 2 - Resources
+- **Removed**: "Docs" link (not available)
+- **Removed**: "Changelog" link (not available)
+- **Updated**: "Blog" link to use full URL `https://indexnow.studio/blog`
+- **Updated**: "FAQs" renamed to "FAQ" with full URL `https://indexnow.studio/faq`
+
+### Column 3 - Terms
+- **Updated**: "Privacy Policy" renamed to "Privacy" with full URL `https://indexnow.studio/privacy`
+- **Updated**: "Terms of Service" renamed to "Terms" with full URL `https://indexnow.studio/terms`
+- **Reordered**: Privacy now appears first, then Terms
+
+### Column 4 - Connect
+- **Updated**: "Contact" link changed from `mailto:` to page link `https://indexnow.studio/contact`
+- **Removed**: Arrow icon (↗) from Contact link
+- **Kept**: "Forum" link (unchanged)
+
+**Impact**:
+- ✅ **Cleaner Footer**: Removed non-existent pages, keeping only active links
+- ✅ **Better Navigation**: All links now point to valid pages
+- ✅ **Consistent URLs**: Using full URLs for better clarity and SEO
+- ✅ **Improved UX**: Shorter, more concise link labels
+
+**Files Modified**:
+- `components/shared/Footer.tsx` - Updated all footer navigation links
+
+**Architect Review**: Pending
