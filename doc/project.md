@@ -775,6 +775,75 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### October 30, 2025: Paddle Integration - Comprehensive Pricing Migration Documentation ✅
+
+📚 **DOCUMENTATION ENHANCEMENT**: Added in-depth analysis and migration plan for transitioning from multi-currency pricing system (USD + IDR) to USD-only pricing for Paddle payment gateway integration
+
+**✅ DOCUMENTATION COMPLETED**:
+- **Current System Analysis**: Detailed breakdown of existing `pricing_tiers` JSONB structure with nested currency support (USD/IDR)
+- **Currency Detection Flow**: Documented geo-based currency detection using user profile and IP geolocation
+- **Conversion Infrastructure**: Analyzed three separate currency converter utilities:
+  - `lib/utils/currency-converter.ts` - Simple USD→IDR converter for Midtrans (line 85 usage)
+  - `lib/services/payments/billing/CurrencyConverter.ts` - Full bidirectional converter with 1-hour caching
+  - `lib/utils/currency-utils.ts` - Utility functions and formatting
+- **Usage Analysis**: Identified that currency conversion is only used in one location (`app/api/v1/billing/midtrans/create-payment/route.ts`) because Midtrans only accepts IDR
+- **Frontend Pricing**: Documented that frontend displays prices by direct access to `pricing_tiers[period][currency]` without any conversion
+
+**📋 MIGRATION PLAN CREATED**:
+- **Phase 1 - Database Schema**:
+  - SQL migration script to flatten `pricing_tiers` from `{monthly: {USD: {...}, IDR: {...}}}` to `{monthly: {promo_price, regular_price, paddle_price_id}}`
+  - Instructions to add Paddle price IDs to each package billing period
+- **Phase 2 - Code Changes (15 files)**:
+  - Critical path: 4 files (pricing hook, billing selector, packages API, admin panel)
+  - Supporting files: 8 files (pricing cards, checkout, trial options, etc.)
+  - Files to delete: 2 files (currency converters - ~271 lines removed)
+  - Files to simplify: 1 file (currency-utils.ts - ~64 lines removed)
+- **Phase 3 - Type Updates**: Updated TypeScript interfaces to remove nested currency structure
+- **Phase 4 - Testing Strategy**: Database verification, frontend display, API response, type safety checks
+- **Phase 5 - Rollback Plan**: SQL and git revert procedures if migration fails
+
+**🎯 KEY INSIGHTS DISCOVERED**:
+1. **Redundant Infrastructure**: Three converter utilities but conversion only used once for Midtrans
+2. **No Runtime Conversion**: Frontend picks pre-stored currency prices directly from database
+3. **Midtrans-Specific Design**: Entire conversion system built solely for Midtrans' IDR-only requirement
+4. **Paddle Eliminates Need**: Paddle handles currency localization automatically (100+ currencies)
+5. **Simplified Maintenance**: Single USD pricing instead of manually maintaining USD + IDR for each package
+
+**📊 IMPACT ANALYSIS**:
+- **Total Files Modified**: 15 files
+- **Total Lines Removed**: ~400 lines of currency conversion code
+- **Database Migration**: Transform JSONB structure from nested (2-level) to flat (1-level)
+- **Type Safety**: Updated 3 TypeScript interfaces for flat pricing structure
+- **Timeline Estimate**: 5-8 hours total (pre-migration, execution, testing)
+
+**📁 FILES DOCUMENTED**:
+- `doc/PADDLE_INTEGRATION_GUIDE.md` - Added comprehensive "Pricing Migration: Multi-Currency to USD-Only" section
+  - 8 subsections with detailed analysis
+  - Code examples with before/after comparisons
+  - SQL migration scripts with explanations
+  - Success criteria and rollback procedures
+
+**🔍 CODEBASE ANALYSIS PERFORMED**:
+- Deep dive into `pricing_tiers` database structure and usage patterns
+- Analyzed currency detection in `hooks/business/usePricingData.ts` (lines 72-121)
+- Examined pricing display in `components/checkout/BillingPeriodSelector.tsx` (lines 29-50)
+- Identified single conversion usage point in Midtrans payment creation (line 85)
+- Traced currency flow from database → API → frontend display
+
+**✅ BENEFITS FOR PADDLE MIGRATION**:
+1. **Reduced Complexity**: Remove 3 converter utilities, simplify pricing structure
+2. **Better UX**: Paddle displays prices in user's local currency automatically
+3. **Easier Maintenance**: Single USD pricing source, no manual currency sync needed
+4. **Tax Automation**: Paddle handles tax calculation in local currency
+5. **Global Scale**: Support 100+ currencies without custom code
+
+**Files Modified**:
+- `doc/PADDLE_INTEGRATION_GUIDE.md` - Added comprehensive pricing migration documentation (~1,100 lines)
+- Updated version from 1.0 to 1.1
+- Updated last modified date to October 30, 2025
+
+**Status**: ✅ **PRICING MIGRATION DOCUMENTATION COMPLETE** - Comprehensive analysis and migration plan documented for transitioning from multi-currency to USD-only pricing system for Paddle integration. Ready for implementation when Paddle integration begins.
+
 ### October 25, 2025: Plans & Billing Page Enhancements - Improved UI/UX ✅
 
 🎨 **UI/UX ENHANCEMENTS**: Enhanced the Plans & Billing page with cleaner design and better functionality for managing subscriptions and viewing billing history
