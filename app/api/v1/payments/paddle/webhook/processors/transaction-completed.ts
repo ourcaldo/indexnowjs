@@ -4,23 +4,31 @@
  */
 
 import { supabaseAdmin } from '@/lib/database'
+import { validateCustomData, safeGet } from './utils'
 
 export async function processTransactionCompleted(data: any) {
-  const {
-    id: transaction_id,
-    customer_id,
-    subscription_id,
-    items,
-    details,
-    payments,
-    custom_data,
-  } = data
-
-  const userId = custom_data?.userId
-
-  if (!userId) {
-    throw new Error('User ID not found in transaction custom data')
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid transaction data received')
   }
+
+  const transaction_id = data.id
+  const customer_id = data.customer_id
+  const subscription_id = data.subscription_id
+  const items = data.items
+  const details = data.details
+  const payments = data.payments
+  const custom_data = data.custom_data
+
+  if (!transaction_id) {
+    throw new Error('Missing transaction_id in completed transaction event')
+  }
+
+  const validatedData = validateCustomData(custom_data, transaction_id)
+  if (!validatedData || !validatedData.userId) {
+    throw new Error('Invalid or missing custom_data with userId')
+  }
+
+  const userId = validatedData.userId
 
   let dbSubscriptionId = null
   if (subscription_id) {
@@ -28,14 +36,25 @@ export async function processTransactionCompleted(data: any) {
       .from('indb_subscriptions')
       .select('id')
       .eq('paddle_subscription_id', subscription_id)
-      .single()
+      .maybeSingle()
 
     dbSubscriptionId = subscriptionData?.id || null
   }
 
+  if (!details?.totals) {
+    throw new Error('Missing details.totals in transaction data')
+  }
+
   const amount = details.totals.total
   const currency = details.totals.currency_code
-  const paymentMethod = payments[0]?.method_details?.type || 'unknown'
+
+  if (!amount || !currency) {
+    throw new Error('Missing amount or currency in transaction totals')
+  }
+
+  const paymentMethod = Array.isArray(payments) && payments.length > 0
+    ? safeGet(payments[0], 'method_details.type', 'unknown')
+    : 'unknown'
 
   const { error } = await supabaseAdmin
     .from('indb_paddle_transactions')

@@ -22,6 +22,8 @@ import {
   processTransactionPaymentFailed,
 } from './processors'
 
+const WEBHOOK_TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000
+
 export const POST = async (request: NextRequest) => {
   try {
     const rawBody = await request.text()
@@ -42,16 +44,16 @@ export const POST = async (request: NextRequest) => {
       )
     }
 
-    const isValid = verifyPaddleSignature(rawBody, signature)
+    const verificationResult = verifyPaddleSignature(rawBody, signature)
     
-    if (!isValid) {
+    if (!verificationResult.valid) {
       await ErrorHandlingService.createError(
         ErrorType.AUTHORIZATION,
-        'Invalid Paddle webhook signature',
+        `Paddle webhook signature verification failed: ${verificationResult.error}`,
         {
           severity: ErrorSeverity.HIGH,
           statusCode: 401,
-          metadata: { signature_preview: signature.substring(0, 20) + '...' }
+          metadata: { error: verificationResult.error }
         }
       )
       return NextResponse.json(
@@ -63,14 +65,45 @@ export const POST = async (request: NextRequest) => {
     const eventData = JSON.parse(rawBody)
     const { event_id, event_type, data } = eventData
 
-    await supabaseAdmin
+    if (!event_id || !event_type) {
+      await ErrorHandlingService.createError(
+        ErrorType.VALIDATION,
+        'Missing event_id or event_type in webhook payload',
+        {
+          severity: ErrorSeverity.MEDIUM,
+          statusCode: 400,
+        }
+      )
+      return NextResponse.json(
+        { error: 'Invalid webhook payload' },
+        { status: 400 }
+      )
+    }
+
+    const { data: existingEvent } = await supabaseAdmin
       .from('indb_paddle_webhook_events')
-      .insert({
-        event_id,
-        event_type,
-        event_data: eventData,
-        processed: false,
-      })
+      .select('id, processed')
+      .eq('event_id', event_id)
+      .single()
+
+    if (existingEvent) {
+      if (existingEvent.processed) {
+        return NextResponse.json({ received: true, duplicate: true }, { status: 200 })
+      }
+    } else {
+      const { error: insertError } = await supabaseAdmin
+        .from('indb_paddle_webhook_events')
+        .insert({
+          event_id,
+          event_type,
+          event_data: eventData,
+          processed: false,
+        })
+
+      if (insertError) {
+        throw new Error(`Failed to log webhook event: ${insertError.message}`)
+      }
+    }
 
     await routeWebhookEvent(event_type, data, event_id)
 
@@ -98,7 +131,12 @@ export const POST = async (request: NextRequest) => {
   }
 }
 
-function verifyPaddleSignature(rawBody: string, signature: string): boolean {
+interface SignatureVerificationResult {
+  valid: boolean
+  error?: string
+}
+
+function verifyPaddleSignature(rawBody: string, signature: string): SignatureVerificationResult {
   const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET
   
   if (!webhookSecret) {
@@ -107,21 +145,60 @@ function verifyPaddleSignature(rawBody: string, signature: string): boolean {
 
   try {
     const parts = signature.split(';')
-    const timestamp = parts[0].split('=')[1]
-    const receivedSignature = parts[1].split('=')[1]
+    
+    if (parts.length !== 2) {
+      return { valid: false, error: 'Invalid signature format' }
+    }
 
-    const payload = `${timestamp}.${rawBody}`
+    const timestampPart = parts[0].split('=')
+    const signaturePart = parts[1].split('=')
+
+    if (timestampPart.length !== 2 || timestampPart[0] !== 'ts' ||
+        signaturePart.length !== 2 || signaturePart[0] !== 'h1') {
+      return { valid: false, error: 'Invalid signature structure' }
+    }
+
+    const timestamp = timestampPart[1]
+    const receivedSignature = signaturePart[1]
+
+    if (!timestamp || !receivedSignature) {
+      return { valid: false, error: 'Missing timestamp or signature value' }
+    }
+
+    if (!/^\d+$/.test(timestamp)) {
+      return { valid: false, error: 'Invalid timestamp format' }
+    }
+
+    if (!/^[0-9a-fA-F]+$/.test(receivedSignature)) {
+      return { valid: false, error: 'Invalid signature hex format' }
+    }
+
+    const timestampMs = parseInt(timestamp, 10) * 1000
+    const currentMs = Date.now()
+    const timeDiffMs = Math.abs(currentMs - timestampMs)
+
+    if (timeDiffMs > WEBHOOK_TIMESTAMP_TOLERANCE_MS) {
+      return { valid: false, error: 'Timestamp outside tolerance window (replay attack protection)' }
+    }
+
+    const payload = `${timestamp}:${rawBody}`
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
       .update(payload)
       .digest('hex')
 
-    return crypto.timingSafeEqual(
-      Buffer.from(receivedSignature),
-      Buffer.from(expectedSignature)
+    if (receivedSignature.length !== expectedSignature.length) {
+      return { valid: false, error: 'Signature length mismatch' }
+    }
+
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(receivedSignature, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
     )
+
+    return { valid: isValid, error: isValid ? undefined : 'Signature mismatch' }
   } catch (error) {
-    return false
+    return { valid: false, error: error instanceof Error ? error.message : 'Unknown verification error' }
   }
 }
 

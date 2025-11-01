@@ -6,7 +6,16 @@
 import { supabaseAdmin } from '@/lib/database'
 
 export async function processSubscriptionResumed(data: any) {
-  const { id: subscription_id, current_billing_period } = data
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid subscription data received')
+  }
+
+  const subscription_id = data.id
+  const current_billing_period = data.current_billing_period
+
+  if (!subscription_id) {
+    throw new Error('Missing subscription_id in resume event')
+  }
 
   const { error: subscriptionError } = await supabaseAdmin
     .from('indb_subscriptions')
@@ -21,18 +30,22 @@ export async function processSubscriptionResumed(data: any) {
     throw new Error(`Failed to update subscription resume: ${subscriptionError.message}`)
   }
 
-  const { data: subscription } = await supabaseAdmin
+  const { data: subscription, error: fetchError } = await supabaseAdmin
     .from('indb_subscriptions')
     .select('user_id')
     .eq('paddle_subscription_id', subscription_id)
-    .single()
+    .maybeSingle()
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch subscription: ${fetchError.message}`)
+  }
 
   if (subscription) {
     const { error: profileError } = await supabaseAdmin
       .from('indb_auth_user_profiles')
       .update({
         subscription_active: true,
-        expires_at: current_billing_period?.ends_at,
+        expires_at: current_billing_period?.ends_at || null,
       })
       .eq('user_id', subscription.user_id)
 

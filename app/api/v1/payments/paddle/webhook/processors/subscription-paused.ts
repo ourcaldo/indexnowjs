@@ -6,13 +6,22 @@
 import { supabaseAdmin } from '@/lib/database'
 
 export async function processSubscriptionPaused(data: any) {
-  const { id: subscription_id, paused_at } = data
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid subscription data received')
+  }
+
+  const subscription_id = data.id
+  const paused_at = data.paused_at
+
+  if (!subscription_id) {
+    throw new Error('Missing subscription_id in pause event')
+  }
 
   const { error: subscriptionError } = await supabaseAdmin
     .from('indb_subscriptions')
     .update({
       status: 'paused',
-      paused_at: paused_at,
+      paused_at: paused_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq('paddle_subscription_id', subscription_id)
@@ -21,11 +30,15 @@ export async function processSubscriptionPaused(data: any) {
     throw new Error(`Failed to update subscription pause: ${subscriptionError.message}`)
   }
 
-  const { data: subscription } = await supabaseAdmin
+  const { data: subscription, error: fetchError } = await supabaseAdmin
     .from('indb_subscriptions')
     .select('user_id')
     .eq('paddle_subscription_id', subscription_id)
-    .single()
+    .maybeSingle()
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch subscription: ${fetchError.message}`)
+  }
 
   if (subscription) {
     const { error: profileError } = await supabaseAdmin
