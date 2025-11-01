@@ -975,7 +975,84 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
    - ✅ DELETED `hooks/usePaymentProcessor.ts` entirely - Resolved broken import to non-existent `MidtransClientService`
    - ✅ VERIFIED: `types/midtrans.d.ts` does not exist - broken reference resolved by deleting hook
 
-**Status:** ✅ **COMPLETE** - All Phase 7.3 cleanup actions finished, ready for Phase 8 (Paddle Integration)
+**Status:** ✅ **COMPLETE** - All Phase 7.3 cleanup actions finished, ready for Phase 7.4 leftover audit
+
+---
+
+### Phase 7.4: Post-Cleanup Leftover Logic Audit 🔍
+
+**Date:** November 1, 2025  
+**Status:** 🔄 IN PROGRESS - Audit complete, cleanup pending
+
+**Objective:** Deep audit to identify remaining Midtrans, Snap, Manual Bank Transfer logic after Phase 7.3 completion.
+
+---
+
+#### 🔴 CRITICAL LEFTOVERS - REQUIRES CLEANUP
+
+**Files with broken/active Midtrans logic:**
+
+- [ ] **`app/api/v1/billing/cancel-trial/route.ts`** (Lines 84-181)
+  - Line 2: Imports `PaymentServiceFactory` (deleted method)
+  - Line 84-104: Queries `indb_payment_midtrans` table
+  - Line 134: Calls `PaymentServiceFactory.createMidtransService()` - **METHOD DOESN'T EXIST**
+  - Lines 108-169: Full Midtrans subscription cancellation logic
+  - **Impact:** 10 LSP errors, runtime crash
+  - **Action:** Remove Midtrans subscription handling (~95 lines)
+
+- [ ] **`app/api/v1/auth/user/trial-status/route.ts`** (Lines 88-104)
+  - Line 88: SecureServiceRoleWrapper for `indb_payment_midtrans` table
+  - Lines 91-99: Query to deleted `indb_payment_midtrans` table
+  - Lines 101-104: Returns subscription info from Midtrans
+  - **Impact:** 3 LSP errors
+  - **Action:** Remove Midtrans subscription query (~17 lines)
+
+- [ ] **`lib/services/payments/core/PaymentProcessor.ts`** (Lines 406-411)
+  - Line 406: `if (paymentMethod.includes('midtrans'))`
+  - Line 411: `return 'midtrans'` - Default fallback
+  - **Action:** Update to return 'paddle' or 'unknown' (6 lines)
+
+- [ ] **`lib/payment-services/auto-cancel-job.ts`** (Line 257)
+  - Line 257: `amount: \`IDR ${Number(transaction.amount).toLocaleString('id-ID')}\``
+  - **Action:** Change to USD formatting (1 line)
+
+---
+
+#### 🟡 DOCUMENTATION UPDATES
+
+**Files with outdated comments:**
+
+- [ ] **`lib/job-management/worker-startup.ts`** (Lines 204-211)
+  - Line 204: "DISABLED: Midtrans handles recurring payments automatically via webhooks"
+  - Line 208: "Recurring billing: DISABLED - Handled by Midtrans webhooks"
+  - Line 211: "Payment confirmations come via webhook: /api/v1/payments/midtrans/webhook"
+  - **Action:** Update comments to reference Paddle webhooks (~8 lines)
+
+- [ ] **`lib/job-management/trial-monitor.ts`** (Lines 78-80)
+  - Line 78: "user should NOT have any package until Midtrans payment is processed"
+  - Line 80: "Only when Midtrans webhook confirms successful payment, user regains access"
+  - **Action:** Update to reference Paddle payment processing (3 lines)
+
+---
+
+#### 🟢 KEEP FOR BACKWARD COMPATIBILITY
+
+**Files supporting historical data (NO ACTION):**
+
+- ✅ **`app/dashboard/settings/plans-billing/orders/[order_id]/page.tsx`** (Lines 55-311)
+  - Displays `midtrans_response` data in order details UI
+  - **Reason:** Users need to view historical Midtrans transactions
+  - **Status:** KEEP
+
+- ✅ **`app/api/v1/billing/orders/[id]/route.ts`** (Line 126)
+  - Returns `midtrans_response` in API response
+  - **Reason:** Frontend needs historical order data
+  - **Status:** KEEP
+
+- ✅ **`app/api/v1/billing/payment/route.ts`** (Lines 89, 102)
+  - Comments noting Midtrans removal
+  - **Reason:** Migration documentation
+  - **Status:** KEEP
 
 ---
 
@@ -1077,6 +1154,9 @@ WHERE table_name = 'indb_auth_user_profiles'
 - [x] Completed packages page pricing form UI - replaced nested IDR/USD grid with flat USD + Paddle Price ID inputs (Phase 7.1)
 - [x] Removed all `getUserCurrency` function references and currency conversion logic (Phase 7.1)
 - [x] Conducted comprehensive leftover audit and fixed Categories 1 & 2 - removed ~102 lines of Midtrans config (Phase 7.2)
+- [x] Completed Categories 3-5 cleanup - removed ~130 lines of multi-currency and IDR code (Phase 7.2)
+- [x] Deep dive final leftover audit - cleaned 11 files, removed ~873 lines (Phase 7.3)
+- [x] Post-cleanup leftover audit - identified 9 files (6 need cleanup ~130 lines, 3 historical data) (Phase 7.4)
 
 ### 🔄 Pending (User Action Required)
 - [ ] Replace Paddle Price ID placeholders with actual IDs from Paddle Dashboard (Phase 2)
@@ -1130,6 +1210,7 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Phase 7.2: Categories 3-5 complete (~130 lines removed) - ALL CLEANUP DONE | ✅ Complete |
 | 2025-11-01 | Phase 7.3: Deep dive final leftover audit - Identified 11 files (~786+ lines) requiring cleanup | ✅ Complete |
 | 2025-11-01 | Phase 7.3: Executed cleanup for Categories 6-11 - ALL 11 FILES CLEANED (~873 lines removed) | ✅ Complete |
+| 2025-11-01 | Phase 7.4: Post-cleanup leftover audit - Identified 9 files (6 need cleanup ~130 lines, 3 historical) | ✅ Audit Complete |
 | TBD | Phase 2: Replace Paddle Price ID placeholders | 🔄 Pending |
 | TBD | Phase 3: Configure Paddle API keys | 🔄 Pending |
 | TBD | Phase 8: Paddle integration implementation | 🔄 Pending |
