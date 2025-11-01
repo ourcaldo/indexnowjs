@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { getUserCurrency } from '@/lib/utils/currency-utils'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { authenticatedApiWrapper } from '@/lib/core/api-response-middleware'
 import { formatSuccess, formatError } from '@/lib/core/api-response-formatter'
@@ -161,7 +160,6 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
       let transformedPackage = userProfileResult.data.package
       
       if (userProfileResult.data.package) {
-        const userCurrency = userProfileResult.data.country ? getUserCurrency(userProfileResult.data.country) : 'USD'
         const packageData = userProfileResult.data.package
         
         let pricingTiers = packageData.pricing_tiers
@@ -177,13 +175,12 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
           const billingPeriod = packageData.billing_period || 'monthly'
           const tierData = pricingTiers[billingPeriod]
           
-          if (tierData && tierData[userCurrency]) {
-            const currencyTierData = tierData[userCurrency]
-            const finalPrice = currencyTierData.promo_price || currencyTierData.regular_price
+          if (tierData) {
+            const finalPrice = tierData.promo_price || tierData.regular_price
             
             transformedPackage = {
               ...packageData,
-              currency: userCurrency,
+              currency: 'USD',
               price: finalPrice,
               billing_period: billingPeriod,
               pricing_tiers: pricingTiers
@@ -344,7 +341,6 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
     let billingPackages = null
     if (!packagesResult.error && packagesResult.data) {
       const userCountry = profile?.country
-      const userCurrency = getUserCurrency(userCountry)
       
       billingPackages = {
         packages: packagesResult.data.map(pkg => ({
@@ -353,19 +349,19 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
           slug: pkg.slug,
           description: pkg.description,
           price: 0,
-          currency: userCurrency,
+          currency: 'USD',
           billing_period: pkg.billing_period,
           features: pkg.features || [],
           quota_limits: pkg.quota_limits || {},
           is_popular: pkg.is_popular || false,
           is_current: pkg.id === profile?.package_id,
           pricing_tiers: pkg.pricing_tiers || {},
-          user_currency: userCurrency,
+          user_currency: 'USD',
           user_country: userCountry
         })),
         current_package_id: profile?.package_id,
         expires_at: profile?.expires_at,
-        user_currency: userCurrency,
+        user_currency: 'USD',
         user_country: userCountry
       }
     }

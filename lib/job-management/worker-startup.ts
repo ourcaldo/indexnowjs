@@ -201,14 +201,14 @@ export class WorkerStartup {
 
   /**
    * Initialize recurring billing job scheduler
-   * DISABLED: Midtrans handles recurring payments automatically via webhooks
+   * DISABLED: Paddle handles recurring payments automatically via webhooks
    */
   private async initializeRecurringBilling(): Promise<void> {
     try {
-      logger.info({}, 'Recurring billing: DISABLED - Handled by Midtrans webhooks')
+      logger.info({}, 'Recurring billing: DISABLED - Handled by Paddle webhooks')
       
-      // Recurring billing is handled by Midtrans automatically
-      // Payment confirmations come via webhook: /api/v1/payments/midtrans/webhook
+      // Recurring billing is handled by Paddle automatically
+      // Payment confirmations come via webhook: /api/v1/payments/paddle/webhook
       // No manual processing needed
       
     } catch (error) {

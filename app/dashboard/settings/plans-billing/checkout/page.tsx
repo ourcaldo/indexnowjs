@@ -73,7 +73,7 @@ export default function CheckoutPage() {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [userCurrency, setUserCurrency] = useState<'USD' | 'IDR'>('USD')
+  const [userCurrency] = useState<'USD'>('USD')
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null)
 
   const [form, setForm] = useState<CheckoutForm>({
@@ -153,8 +153,7 @@ export default function CheckoutPage() {
           country: userProfile.country || ''
         }))
 
-        // Set currency to USD (Paddle handles multi-currency conversion)
-        setUserCurrency('USD')
+        // Currency is hardcoded to USD (Paddle handles multi-currency conversion)
 
         // Fetch package and payment gateway data
         const [packageResponse, gatewaysResponse] = await Promise.all([
@@ -323,7 +322,7 @@ export default function CheckoutPage() {
       const paymentRequest = {
         package_id: selectedPackage.id,
         billing_period,
-        payment_method: selectedGateway?.slug || 'bank_transfer',
+        payment_method: selectedGateway?.slug || 'paddle',
         customer_info: {
           first_name: form.first_name,
           last_name: form.last_name,

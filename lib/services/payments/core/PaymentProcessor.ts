@@ -403,11 +403,11 @@ export class PaymentProcessor {
    * Determine gateway name from payment method
    */
   private getGatewayName(paymentMethod: string): string {
-    if (paymentMethod.includes('midtrans')) {
-      return 'midtrans'
+    if (paymentMethod.includes('paddle')) {
+      return 'paddle'
     }
     
     // Add more gateway mappings as needed
-    return 'midtrans' // Default fallback
+    return 'paddle' // Default fallback
   }
 }

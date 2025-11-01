@@ -95,16 +95,13 @@ export abstract class BasePaymentHandler {
 
   // Common amount calculation
   calculateAmount(): { originalAmount: number; finalAmount: number; currency: string; originalCurrency: string } {
-    const { getUserCurrency } = require('@/lib/utils/currency-utils')
-    const userCurrency = getUserCurrency(this.paymentData.customer_info.country)
-
     let amount = 0
     const { billing_period } = this.paymentData
 
-    // New pricing structure
-    if (this.packageData.pricing_tiers?.[billing_period]?.[userCurrency]) {
-      const currencyTier = this.packageData.pricing_tiers[billing_period][userCurrency]
-      amount = currencyTier.promo_price || currencyTier.regular_price
+    // Flat USD pricing structure (Paddle handles currency conversion)
+    if (this.packageData.pricing_tiers?.[billing_period]) {
+      const tier = this.packageData.pricing_tiers[billing_period]
+      amount = tier.promo_price || tier.regular_price
     } else {
       amount = this.packageData.price || 0
     }
@@ -118,9 +115,9 @@ export abstract class BasePaymentHandler {
 
     return {
       originalAmount: amount,
-      originalCurrency: userCurrency,
+      originalCurrency: 'USD',
       finalAmount: finalAmount,
-      currency: userCurrency
+      currency: 'USD'
     }
   }
 

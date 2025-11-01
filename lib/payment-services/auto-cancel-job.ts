@@ -254,7 +254,7 @@ export class AutoCancelJob {
             orderId: transaction.order_id || transaction.id,
             packageName: packageData.name,
             billingPeriod: transaction.billing_period || 'monthly',
-            amount: `IDR ${Number(transaction.amount).toLocaleString('id-ID')}`,
+            amount: `$${Number(transaction.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
             status: 'Expired',
             expiredDate: new Date().toLocaleDateString('en-US', {
               year: 'numeric',

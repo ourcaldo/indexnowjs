@@ -85,12 +85,12 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
             ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
             userAgent: request.headers.get('user-agent')
           },
-          { table: 'indb_payment_midtrans', operationType: 'select', columns: ['next_billing_date', 'subscription_status', 'metadata'] },
+          { table: 'indb_subscriptions', operationType: 'select', columns: ['current_period_end', 'status', 'metadata'] },
           async (db) => {
             const { data, error } = await db
-              .from('indb_payment_midtrans')
-              .select('next_billing_date, subscription_status, metadata')
-              .eq('subscription_status', 'active')
+              .from('indb_subscriptions')
+              .select('current_period_end, status, metadata')
+              .eq('status', 'active')
               .order('created_at', { ascending: false })
               .limit(1)
               .maybeSingle()
@@ -99,8 +99,8 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
           }
         )
         if (subscription) {
-          response.next_billing_date = subscription.next_billing_date
-          response.subscription_info = { status: subscription.subscription_status, metadata: subscription.metadata }
+          response.next_billing_date = subscription.current_period_end
+          response.subscription_info = { status: subscription.status, metadata: subscription.metadata }
         }
       } catch (error) {}
     }

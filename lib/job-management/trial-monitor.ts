@@ -75,9 +75,9 @@ export class TrialMonitorService {
         // Process each expired trial
         let processedCount = 0;
         for (const trial of expiredTrials) {
-          // CRITICAL FIX: For ALL expired trials, user should NOT have any package until Midtrans payment is processed
+          // CRITICAL FIX: For ALL expired trials, user should NOT have any package until Paddle payment is processed
           // Whether auto_billing_enabled is true or false, user loses access when trial ends
-          // Only when Midtrans webhook confirms successful payment, user regains access
+          // Only when Paddle webhook confirms successful payment, user regains access
           await SecureServiceRoleWrapper.executeSecureOperation(
             {
               userId: 'system',
