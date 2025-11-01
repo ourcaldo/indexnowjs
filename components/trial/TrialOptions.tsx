@@ -17,11 +17,9 @@ interface TrialEligibility {
   available_packages?: any[];
 }
 
-interface TrialOptionsProps {
-  userCurrency: 'USD' | 'IDR';
-}
+interface TrialOptionsProps {}
 
-export default function TrialOptions({ userCurrency }: TrialOptionsProps) {
+export default function TrialOptions({}: TrialOptionsProps) {
   const [eligibility, setEligibility] = useState<TrialEligibility | null>(null)
   const [loading, setLoading] = useState(true)
   const [startingTrial, setStartingTrial] = useState<string | null>(null)
@@ -76,9 +74,9 @@ export default function TrialOptions({ userCurrency }: TrialOptionsProps) {
   const calculatePrice = (pkg: any, period: string = 'monthly') => {
     if (!pkg.pricing_tiers) return { price: 0, originalPrice: 0 }
 
-    // Check new multicurrency structure
-    if (pkg.pricing_tiers[period]?.[userCurrency]) {
-      const tier = pkg.pricing_tiers[period][userCurrency]
+    // Use flat USD pricing structure (Paddle handles currency conversion)
+    if (pkg.pricing_tiers[period]) {
+      const tier = pkg.pricing_tiers[period]
       return {
         price: tier.promo_price || tier.regular_price,
         originalPrice: (tier.regular_price && tier.regular_price > 0 && tier.regular_price !== (tier.promo_price || tier.regular_price)) ? tier.regular_price : 0
@@ -90,10 +88,7 @@ export default function TrialOptions({ userCurrency }: TrialOptionsProps) {
   }
 
   const formatCurrency = (amount: number) => {
-    if (userCurrency === 'IDR') {
-      return `IDR ${amount.toLocaleString('id-ID')}`
-    }
-    return `$${amount}`
+    return `$${amount.toFixed(2)}`
   }
 
   if (loading) {

@@ -13,19 +13,8 @@ export interface CreatePaymentResponse extends ApiResponse<{
   requiresRedirect: boolean;
   paymentToken?: string;
   qrCode?: string;
-  bankTransferDetails?: BankTransferDetails;
   expiresAt?: Date;
 }> {}
-
-export interface BankTransferDetails {
-  bankName: string;
-  accountNumber: string;
-  accountName: string;
-  transferAmount: number;
-  referenceNumber: string;
-  instructions: string[];
-  qrCode?: string;
-}
 
 export interface ProcessPaymentResponse extends ApiResponse<{
   success: boolean;
@@ -352,14 +341,6 @@ export interface GetPaymentAnalyticsResponse extends ApiResponse<{
 }> {}
 
 // Gateway-specific responses
-// Midtrans response types now imported from services layer
-
-export interface BankTransferResponse extends ApiResponse<{
-  accountDetails: BankTransferDetails;
-  orderId: string;
-  expiresAt: Date;
-  statusCheckUrl: string;
-}> {}
 
 // Error responses
 export interface PaymentErrorResponse {

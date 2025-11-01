@@ -26,9 +26,8 @@ interface PackageComparisonProps {
   showComparePlans: boolean
   toggleComparePlans: () => void
   selectedBillingPeriod: string
-  userCurrency: 'USD' | 'IDR'
   getBillingPeriodPrice: (pkg: PaymentPackage, period: string) => { price: number, originalPrice?: number, discount?: number }
-  formatCurrency: (amount: number, currency?: string) => string
+  formatCurrency: (amount: number) => string
   handleSubscribe: (packageId: string) => void
   subscribing: string | null
 }
@@ -38,7 +37,6 @@ export const PackageComparison = ({
   showComparePlans,
   toggleComparePlans,
   selectedBillingPeriod,
-  userCurrency,
   getBillingPeriodPrice,
   formatCurrency,
   handleSubscribe,
@@ -82,7 +80,7 @@ export const PackageComparison = ({
                       )}
                     </div>
                     <div className="text-2xl font-bold text-foreground">
-                      {formatCurrency(getBillingPeriodPrice(pkg, selectedBillingPeriod).price, userCurrency)}
+                      {formatCurrency(getBillingPeriodPrice(pkg, selectedBillingPeriod).price)}
                     </div>
                     <div className="text-sm text-muted-foreground">per month</div>
                   </div>

@@ -265,7 +265,7 @@ export default function AdminOrdersPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{formatCurrency(ordersData.summary.total_revenue, 'IDR')}</div>
+              <div className="text-2xl font-bold text-foreground">{formatCurrency(ordersData.summary.total_revenue)}</div>
             </CardContent>
           </Card>
         </div>
@@ -397,7 +397,7 @@ export default function AdminOrdersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="font-medium text-foreground">
-                      {formatCurrency(order.amount, order.currency as 'IDR' | 'USD')}
+                      {formatCurrency(order.amount)}
                     </div>
                   </TableCell>
                   <TableCell>

@@ -26,14 +26,13 @@ interface PricingCardsProps {
   packages: PaymentPackage[]
   selectedBillingPeriod: string
   setSelectedBillingPeriod: (period: string) => void
-  userCurrency: 'USD' | 'IDR'
   subscribing: string | null
   trialEligible: boolean | null
   startingTrial: string | null
   showDetails: Record<string, boolean>
   showComparePlans: boolean
   getBillingPeriodPrice: (pkg: PaymentPackage, period: string) => { price: number, originalPrice?: number, discount?: number }
-  formatCurrency: (amount: number, currency?: string) => string
+  formatCurrency: (amount: number) => string
   handleSubscribe: (packageId: string) => void
   handleStartTrial: (packageId: string) => void
   isTrialEligiblePackage: (pkg: PaymentPackage) => boolean
@@ -44,7 +43,6 @@ export const PricingCards = ({
   packages,
   selectedBillingPeriod,
   setSelectedBillingPeriod,
-  userCurrency,
   subscribing,
   trialEligible,
   startingTrial,

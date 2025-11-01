@@ -199,17 +199,14 @@ export class PaymentProcessor {
    * Calculate payment amount based on package and billing period
    */
   private calculateAmount(packageData: any, billingPeriod: string): number {
-    // Default currency - should be determined from user location
-    const currency = 'IDR' // This should come from payment data in real implementation
-    
-    // Only use pricing_tiers structure
-    if (packageData.pricing_tiers?.[billingPeriod]?.[currency]) {
-      const currencyTier = packageData.pricing_tiers[billingPeriod][currency]
-      return currencyTier.promo_price || currencyTier.regular_price
+    // Use flat USD pricing structure (Paddle handles currency conversion)
+    if (packageData.pricing_tiers?.[billingPeriod]) {
+      const tierData = packageData.pricing_tiers[billingPeriod]
+      return tierData.promo_price || tierData.regular_price
     }
     
-    // If no pricing_tiers found, return 0 or throw error
-    throw new Error(`No pricing found for ${billingPeriod} billing in ${currency} currency`)
+    // If no pricing_tiers found, throw error
+    throw new Error(`No pricing found for ${billingPeriod} billing period`)
   }
 
   /**

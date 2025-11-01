@@ -39,11 +39,10 @@ export class BillingCycleService {
    * Calculate billing amount from pricing tiers
    */
   calculateBillingAmountFromTiers(pricingTiers: any, billingPeriod: 'monthly' | 'annual'): number {
-    const currency = 'IDR' // Should be determined from user location
-    
-    if (pricingTiers?.[billingPeriod]?.[currency]) {
-      const currencyTier = pricingTiers[billingPeriod][currency]
-      return currencyTier.promo_price || currencyTier.regular_price
+    // Use flat USD pricing structure (Paddle handles currency conversion)
+    if (pricingTiers?.[billingPeriod]) {
+      const tierData = pricingTiers[billingPeriod]
+      return tierData.promo_price || tierData.regular_price
     }
     
     return 0 // Default if no pricing found

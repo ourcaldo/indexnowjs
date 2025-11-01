@@ -6,13 +6,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Utility functions for formatting
-export function formatCurrency(amount: number, currency: 'IDR' | 'USD' = 'USD'): string {
-  const locale = currency === 'IDR' ? 'id-ID' : 'en-US'
-  return new Intl.NumberFormat(locale, {
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount)
 }
 

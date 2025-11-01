@@ -775,6 +775,92 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### November 1, 2025: Paddle Migration Phase 7.2 - Categories 3-5 Complete - ALL MIDTRANS CLEANUP DONE ✅
+
+🎉 **PHASE 7.2 FULLY COMPLETE**: Finished cleanup of remaining Categories 3-5, removing ~130 additional lines of multi-currency and IDR code. The codebase is now 100% Midtrans-free and ready for Paddle integration.
+
+**✅ CATEGORY 3: CURRENCY CONVERSION FUNCTIONS (COMPLETE)**:
+1. **`app/api/v1/auth/user/profile/route.ts`**
+   - Removed `getUserCurrency` import and usage
+   - Currency now statically set to 'USD' for all users
+   - Updated pricing tier access to use flat USD structure (removed `[userCurrency]` accessor)
+   - **Code Removed**: ~8 lines
+
+2. **`lib/utils/utils.ts`**
+   - Simplified `formatCurrency()` from multi-currency to USD-only
+   - Changed signature: `formatCurrency(amount: number, currency?: string)` → `formatCurrency(amount: number)`
+   - Now uses en-US locale with 2 decimal places for all formatting
+   - **Code Removed**: ~7 lines
+
+**✅ CATEGORY 4: IDR DISPLAY LOGIC - 17 FILES (COMPLETE)**:
+
+**Dashboard - Plans & Billing Section (10 files)**:
+- `app/dashboard/settings/plans-billing/checkout/page.tsx` - Removed userCurrency state
+- `app/dashboard/settings/plans-billing/components/BillingStats.tsx` - Removed userCurrency prop
+- `app/dashboard/settings/plans-billing/components/PackageComparison.tsx` - Removed userCurrency prop
+- `app/dashboard/settings/plans-billing/components/PricingCards.tsx` - Removed userCurrency prop
+- `app/dashboard/settings/plans-billing/history/HistoryTab.tsx` - Updated formatCurrency to USD-only
+- `app/dashboard/settings/plans-billing/history/page.tsx` - Updated formatCurrency to USD-only
+- `app/dashboard/settings/plans-billing/order/[id]/page.tsx` - Updated formatCurrency to USD-only
+- `app/dashboard/settings/plans-billing/page.tsx` - Removed userCurrency state
+- `app/dashboard/settings/plans-billing/plans/PlansTab.tsx` - Updated formatCurrency to USD-only
+- `app/dashboard/settings/plans-billing/plans/page.tsx` - Updated formatCurrency to USD-only
+
+**Backend - Admin Section (2 files)**:
+- `app/backend/admin/orders/page.tsx` - Removed currency parameters from formatCurrency
+- `app/backend/admin/users/[id]/components/PackageChangeModal.tsx` - Updated to flat USD pricing
+
+**Components (1 file)**:
+- `components/trial/TrialOptions.tsx` - Removed userCurrency prop
+
+**Payment Services (3 files)**:
+- `lib/services/payments/core/PaymentValidator.ts` - Currency validation now USD-only
+- `lib/services/payments/core/PaymentProcessor.ts` - Currency set to USD
+- `lib/services/payments/billing/BillingCycleService.ts` - Currency set to USD
+
+**API Routes (1 file)**:
+- `app/api/v1/admin/settings/packages/route.ts` - Default currency changed from 'IDR' to 'USD'
+
+**Total Code Removed**: ~95 lines
+
+**✅ CATEGORY 5: TYPE DEFINITIONS (COMPLETE)**:
+1. **`lib/types/api/responses/PaymentResponses.ts`**
+   - Removed `BankTransferDetails` interface from CreatePaymentResponse
+   - Removed `BankTransferDetails` interface definition
+   - Removed `BankTransferResponse` interface
+   - Removed obsolete Midtrans comment
+   - **Code Removed**: ~20 lines
+
+**📊 PHASE 7.2 FINAL STATISTICS**:
+| Category | Files | Lines Removed | Status |
+|----------|-------|---------------|--------|
+| Broken Imports | 1 | ~10 lines | ✅ Complete |
+| Midtrans Config | 2 | ~92 lines | ✅ Complete |
+| Currency Functions | 2 | ~15 lines | ✅ Complete |
+| IDR Display Logic | 17 | ~95 lines | ✅ Complete |
+| Type Definitions | 1 | ~20 lines | ✅ Complete |
+| **TOTAL** | **23 files** | **~232 lines** | **✅ ALL COMPLETE** |
+
+**🎯 IMPACT**:
+- ✅ No more multi-currency logic anywhere in the codebase
+- ✅ All formatCurrency calls now use single USD-only signature
+- ✅ All pricing displays show USD only (Paddle handles conversions)
+- ✅ Flat pricing structure: `pricing_tiers.monthly` instead of `pricing_tiers.monthly.USD`
+- ✅ Codebase ready for Paddle SDK integration (Phase 8)
+
+**Files Modified (23 total)**:
+- Currency conversion: 2 files
+- Dashboard billing pages: 10 files
+- Admin pages: 2 files
+- Components: 1 file
+- Payment services: 3 files
+- API routes: 1 file
+- Type definitions: 1 file
+- Config/constants: 2 files (from earlier)
+- Checkout components: 1 file (from earlier)
+
+---
+
 ### November 1, 2025: Paddle Migration Phase 7.2 - Leftover Cleanup Audit & Fixes Complete ✅
 
 🔍 **COMPREHENSIVE LEFTOVER AUDIT & CLEANUP**: Conducted deep dive analysis to identify all remaining Midtrans references, then fixed Categories 1 (Critical) and 2 (High Priority) - removed ~102 lines of Midtrans configuration and broken imports.

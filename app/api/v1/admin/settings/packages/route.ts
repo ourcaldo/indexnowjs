@@ -74,7 +74,7 @@ export const POST = adminApiWrapper(async (request: NextRequest, adminUser) => {
               name: body.name,
               slug: body.slug,
               description: body.description,
-              currency: body.currency || 'IDR',
+              currency: 'USD',
               billing_period: body.billing_period || 'monthly',
               features: body.features || [],
               quota_limits: body.quota_limits || {},

@@ -45,15 +45,13 @@ interface KeywordUsageData {
 interface BillingStatsProps {
   billingData: BillingData | null
   currentPackageId: string | null
-  formatCurrency: (amount: number, currency?: string) => string
-  userCurrency: 'USD' | 'IDR'
+  formatCurrency: (amount: number) => string
 }
 
 export const BillingStats = ({ 
   billingData, 
   currentPackageId, 
-  formatCurrency, 
-  userCurrency 
+  formatCurrency
 }: BillingStatsProps) => {
   const { currentSubscription, billingStats } = billingData || {}
   const [usageData, setUsageData] = useState<UsageData | null>(null)

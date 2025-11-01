@@ -117,7 +117,7 @@ export class PaymentValidator {
   /**
    * Validate amount
    */
-  validateAmount(amount: number, currency: string = 'USD'): ValidationResult {
+  validateAmount(amount: number): ValidationResult {
     if (amount <= 0) {
       return {
         valid: false,
@@ -125,18 +125,12 @@ export class PaymentValidator {
       }
     }
 
-    // Set minimum amounts based on currency
-    const minimums: Record<string, number> = {
-      'USD': 0.50,
-      'IDR': 1000
-    }
-
-    const minimum = minimums[currency] || 0.50
+    const minimum = 0.50
 
     if (amount < minimum) {
       return {
         valid: false,
-        error: `Amount must be at least ${minimum} ${currency}`
+        error: `Amount must be at least $${minimum} USD`
       }
     }
 

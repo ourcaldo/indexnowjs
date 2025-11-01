@@ -48,9 +48,9 @@ export function PackageChangeModal({
 
   const getPackagePrice = (pkg: Package): string => {
     const billingPeriod = pkg.billing_period || 'monthly'
-    const currency = pkg.currency || 'IDR'
     
-    const tierPricing = pkg.pricing_tiers?.[billingPeriod as 'monthly' | 'annual']?.[currency]
+    // Use flat USD pricing structure (Paddle handles currency conversion)
+    const tierPricing = pkg.pricing_tiers?.[billingPeriod as 'monthly' | 'annual']
     
     if (!tierPricing) {
       return 'Free'
@@ -62,7 +62,7 @@ export function PackageChangeModal({
       return 'Free'
     }
     
-    return `${currency} ${price.toLocaleString()}`
+    return `$${price.toFixed(2)}`
   }
 
   return (

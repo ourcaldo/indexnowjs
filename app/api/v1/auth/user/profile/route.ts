@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { authenticatedApiWrapper, formatSuccess, formatError } from '@/lib/core/api-response-middleware'
-import { getUserCurrency } from '@/lib/utils/currency-utils'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
 import { logger } from '@/lib/monitoring/error-handling'
@@ -91,7 +90,6 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
     let transformedPackage = profile.package
     
     if (profile.package) {
-      const userCurrency = profile.country ? getUserCurrency(profile.country) : 'USD'
       const packageData = profile.package
       
       let pricingTiers = packageData.pricing_tiers
@@ -107,19 +105,18 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
         const billingPeriod = packageData.billing_period || 'monthly'
         const tierData = pricingTiers[billingPeriod]
         
-        if (tierData && tierData[userCurrency]) {
-          const currencyTierData = tierData[userCurrency]
-          const finalPrice = currencyTierData.promo_price || currencyTierData.regular_price
+        if (tierData) {
+          const finalPrice = tierData.promo_price || tierData.regular_price
           
           transformedPackage = {
             ...packageData,
-            currency: userCurrency,
+            currency: 'USD',
             price: finalPrice,
             billing_period: billingPeriod,
             pricing_tiers: pricingTiers
           }
         } else {
-          transformedPackage = { ...packageData, price: 0 }
+          transformedPackage = { ...packageData, price: 0, currency: 'USD' }
         }
       }
     }

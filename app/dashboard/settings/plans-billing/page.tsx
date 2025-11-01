@@ -145,7 +145,6 @@ export default function BillingPage() {
   const [keywordUsage, setKeywordUsage] = useState<KeywordUsageData | null>(null)
   const [serviceAccountCount, setServiceAccountCount] = useState<number>(0)
   const [totalKeywords, setTotalKeywords] = useState<number>(0)
-  const [userCurrency, setUserCurrency] = useState<'USD' | 'IDR'>('USD')
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -267,12 +266,9 @@ export default function BillingPage() {
         packages: packages,
         current_package_id: profileData.package_id || billingData.current_package_id || null,
         expires_at: profileData.expires_at || billingData.expires_at || null,
-        user_currency: billingData.user_currency || (profileData.country === 'Indonesia' ? 'IDR' : 'USD'),
+        user_currency: 'USD',
         user_country: billingData.user_country || profileData.country || ''
       })
-      
-      // Set user currency
-      setUserCurrency(billingData.user_currency || (profileData.country === 'Indonesia' ? 'IDR' : 'USD'))
       
       // Extract usage data from dashboard
       if (dashboardData.user?.quota) {
@@ -370,23 +366,21 @@ export default function BillingPage() {
     if (pkg.pricing_tiers && typeof pkg.pricing_tiers === 'object' && pkg.pricing_tiers[apiPeriod]) {
       const periodTier = pkg.pricing_tiers[apiPeriod]
       
-      if (periodTier[userCurrency]) {
-        const currencyTier = periodTier[userCurrency]
-        return {
-          price: currencyTier.promo_price || currencyTier.regular_price,
-          originalPrice: currencyTier.promo_price ? currencyTier.regular_price : undefined,
-          discount: currencyTier.promo_price ? Math.round(((currencyTier.regular_price - currencyTier.promo_price) / currencyTier.regular_price) * 100) : undefined
-        }
+      // Use flat USD pricing structure (Paddle handles currency conversion)
+      return {
+        price: periodTier.promo_price || periodTier.regular_price,
+        originalPrice: periodTier.promo_price ? periodTier.regular_price : undefined,
+        discount: periodTier.promo_price ? Math.round(((periodTier.regular_price - periodTier.promo_price) / periodTier.regular_price) * 100) : undefined
       }
-      
-      if (Array.isArray(pkg.pricing_tiers)) {
-        const tier = pkg.pricing_tiers.find((t: any) => t.period === apiPeriod)
-        if (tier) {
-          return {
-            price: tier.promo_price || tier.regular_price,
-            originalPrice: tier.promo_price ? tier.regular_price : undefined,
-            discount: tier.discount_percentage
-          }
+    }
+    
+    if (Array.isArray(pkg.pricing_tiers)) {
+      const tier = pkg.pricing_tiers.find((t: any) => t.period === apiPeriod)
+      if (tier) {
+        return {
+          price: tier.promo_price || tier.regular_price,
+          originalPrice: tier.promo_price ? tier.regular_price : undefined,
+          discount: tier.discount_percentage
         }
       }
     }
@@ -394,13 +388,12 @@ export default function BillingPage() {
     return { price: pkg.price }
   }
 
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
-    const locale = currency === 'IDR' ? 'id-ID' : 'en-US'
-    return new Intl.NumberFormat(locale, {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount)
   }
 
@@ -534,11 +527,11 @@ export default function BillingPage() {
                 <CardDescription className="text-foreground/70" data-testid="text-billing-info">
                   {billingData?.currentSubscription ? (
                     <>
-                      {formatCurrency(billingData.currentSubscription.amount_paid, userCurrency)}/
+                      {formatCurrency(billingData.currentSubscription.amount_paid)}/
                       {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
                     </>
                   ) : currentPlanPricing ? (
-                    `Active package • ${formatCurrency(currentPlanPricing.price, userCurrency)}/month`
+                    `Active package • ${formatCurrency(currentPlanPricing.price)}/month`
                   ) : (
                     'Active package'
                   )}
@@ -680,11 +673,11 @@ export default function BillingPage() {
                   <div className="flex items-baseline gap-2">
                     {pricing.originalPrice && pricing.originalPrice !== pricing.price && (
                       <span className="text-lg text-muted-foreground line-through" data-testid={`text-plan-regular-price-${plan.slug}`}>
-                        {formatCurrency(pricing.originalPrice, userCurrency)}
+                        {formatCurrency(pricing.originalPrice)}
                       </span>
                     )}
                     <span className="text-3xl text-foreground font-bold" data-testid={`text-plan-price-${plan.slug}`}>
-                      {formatCurrency(pricing.price, userCurrency)}
+                      {formatCurrency(pricing.price)}
                     </span>
                     <span className="text-sm text-muted-foreground">/{selectedBillingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
                   </div>
@@ -796,7 +789,7 @@ export default function BillingPage() {
                     </div>
                     <div className="col-span-2 flex items-center justify-end">
                       <span className="text-sm text-foreground font-medium" data-testid={`text-amount-${transaction.id}`}>
-                        {formatCurrency(transaction.amount, transaction.currency)}
+                        {formatCurrency(transaction.amount)}
                       </span>
                     </div>
                     <div className="col-span-3 flex items-center justify-end">

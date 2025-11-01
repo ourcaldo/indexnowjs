@@ -99,13 +99,12 @@ export default function PlansPage() {
     }
   }
 
-  const formatCurrency = (amount: number, currency: 'IDR' | 'USD' = 'USD') => {
-    const locale = currency === 'IDR' ? 'id-ID' : 'en-US'
-    return new Intl.NumberFormat(locale, {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount)
   }
 

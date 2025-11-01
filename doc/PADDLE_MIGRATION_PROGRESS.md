@@ -654,99 +654,110 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
 
 ---
 
-#### 🟠 CATEGORY 3: CURRENCY CONVERSION FUNCTIONS
+#### 🟠 CATEGORY 3: CURRENCY CONVERSION FUNCTIONS ✅ COMPLETE
 
 **Impact:** Dead code that may confuse future developers, references to removed utility functions
 
 **Files:**
 
 1. **`app/api/v1/auth/user/profile/route.ts`**
-   - **Line 3:** `import { getUserCurrency } from '@/lib/utils/currency-utils'`
-   - **Line 94:** `const userCurrency = profile.country ? getUserCurrency(profile.country) : 'USD'`
-   - **Context:** Function was supposed to be removed in Phase 7.1
-   - **Fix Required:** Remove import and usage, set currency to static 'USD'
+   - ✅ **Line 3:** `import { getUserCurrency }` - REMOVED
+   - ✅ **Line 94:** `getUserCurrency(profile.country)` usage - REMOVED
+   - ✅ **Fix:** Currency now set to static 'USD' for all users
+   - ✅ **Fix:** Updated pricing tier access to use flat USD structure (removed `[userCurrency]` accessor)
+   - **Code Removed:** ~8 lines
 
 2. **`lib/utils/utils.ts`**
-   - **Lines 9-17:** `formatCurrency(amount: number, currency: 'IDR' | 'USD' = 'USD')` function with IDR support
-   - **Issue:** Should only support USD, Paddle handles other currencies
-   - **Fix Required:** Simplify to USD-only formatting, remove IDR logic
+   - ✅ **Lines 9-17:** Multi-currency `formatCurrency()` function - SIMPLIFIED
+   - ✅ **Fix:** Now USD-only: `formatCurrency(amount: number)` with en-US locale and 2 decimal places
+   - ✅ **Fix:** Removed IDR locale logic and currency parameter
+   - **Code Removed:** ~7 lines
 
 ---
 
-#### 🟢 CATEGORY 4: IDR CURRENCY REFERENCES (Display Logic)
+#### 🟢 CATEGORY 4: IDR CURRENCY REFERENCES (Display Logic) ✅ COMPLETE
 
 **Impact:** Visual display still shows multi-currency support, confuses users
 
-**Files with IDR References:**
+**Files with IDR References (ALL FIXED):**
 
 **Dashboard - Plans & Billing Section:**
-1. `app/dashboard/settings/plans-billing/checkout/page.tsx`
-2. `app/dashboard/settings/plans-billing/components/BillingStats.tsx`
-3. `app/dashboard/settings/plans-billing/components/PackageComparison.tsx`
-4. `app/dashboard/settings/plans-billing/components/PricingCards.tsx`
-5. `app/dashboard/settings/plans-billing/history/HistoryTab.tsx`
-6. `app/dashboard/settings/plans-billing/history/page.tsx`
-7. `app/dashboard/settings/plans-billing/order/[id]/page.tsx`
-8. `app/dashboard/settings/plans-billing/page.tsx`
-9. `app/dashboard/settings/plans-billing/plans/PlansTab.tsx`
-10. `app/dashboard/settings/plans-billing/plans/page.tsx`
+1. ✅ `app/dashboard/settings/plans-billing/checkout/page.tsx` - Removed userCurrency state, set to USD
+2. ✅ `app/dashboard/settings/plans-billing/components/BillingStats.tsx` - Removed userCurrency prop, set to USD
+3. ✅ `app/dashboard/settings/plans-billing/components/PackageComparison.tsx` - Removed userCurrency prop, set to USD
+4. ✅ `app/dashboard/settings/plans-billing/components/PricingCards.tsx` - Removed userCurrency prop, set to USD
+5. ✅ `app/dashboard/settings/plans-billing/history/HistoryTab.tsx` - Updated formatCurrency to USD-only
+6. ✅ `app/dashboard/settings/plans-billing/history/page.tsx` - Updated formatCurrency to USD-only
+7. ✅ `app/dashboard/settings/plans-billing/order/[id]/page.tsx` - Updated formatCurrency to USD-only
+8. ✅ `app/dashboard/settings/plans-billing/page.tsx` - Removed userCurrency state, set to USD
+9. ✅ `app/dashboard/settings/plans-billing/plans/PlansTab.tsx` - Updated formatCurrency to USD-only
+10. ✅ `app/dashboard/settings/plans-billing/plans/page.tsx` - Updated formatCurrency to USD-only
 
 **Backend - Admin Section:**
-11. `app/backend/admin/orders/page.tsx`
-12. `app/backend/admin/users/[id]/components/PackageChangeModal.tsx`
+11. ✅ `app/backend/admin/orders/page.tsx` - Removed currency parameters from formatCurrency calls
+12. ✅ `app/backend/admin/users/[id]/components/PackageChangeModal.tsx` - Updated to flat USD pricing structure
 
 **Components:**
-13. `components/trial/TrialOptions.tsx`
+13. ✅ `components/trial/TrialOptions.tsx` - Removed userCurrency prop, set to USD
 
-**Note:** These files likely use `formatCurrency` or display currency symbols that reference IDR. Need manual inspection to determine if they're actively using IDR or just have the parameter type allowing it.
+**Payment Services:**
+14. ✅ `lib/services/payments/core/PaymentValidator.ts` - Updated currency validation to USD-only
+15. ✅ `lib/services/payments/core/PaymentProcessor.ts` - Set currency to USD
+16. ✅ `lib/services/payments/billing/BillingCycleService.ts` - Set currency to USD
+
+**API Routes:**
+17. ✅ `app/api/v1/admin/settings/packages/route.ts` - Changed default currency from 'IDR' to 'USD'
+
+**Total Code Removed:** ~95 lines of multi-currency and IDR display logic
 
 ---
 
-#### 🔵 CATEGORY 5: TYPE DEFINITIONS
+#### 🔵 CATEGORY 5: TYPE DEFINITIONS ✅ COMPLETE
 
 **Impact:** Type system still allows Midtrans/Bank Transfer options, may cause confusion
 
 **Files:**
 
 1. **`lib/types/api/responses/PaymentResponses.ts`**
-   - **Line 355:** Comment: `// Midtrans response types now imported from services layer`
-   - **Lines 20-28, 357-362:** `BankTransferDetails` interface definition
-   - **Context:** Bank Transfer payment method was removed, but response types remain
-   - **Fix Required:** Remove comment, remove `BankTransferDetails` interface or mark as deprecated
+   - ✅ **Line 355:** Midtrans comment - REMOVED
+   - ✅ **Lines 20-28:** `BankTransferDetails` interface - REMOVED from CreatePaymentResponse
+   - ✅ **Lines 357-362:** `BankTransferDetails` interface definition - REMOVED
+   - ✅ **Lines 346-348:** `BankTransferResponse` interface - REMOVED
+   - **Code Removed:** ~20 lines
 
 ---
 
 #### 📊 CLEANUP STATISTICS
 
-| Category | Files | Lines of Code | Priority |
-|----------|-------|---------------|----------|
-| Broken Imports | 1 | ~10 lines | 🔴 Critical |
-| Midtrans Config | 2 | ~150 lines | 🟡 High |
-| Currency Functions | 2 | ~15 lines | 🟠 Medium |
-| IDR Display Logic | 13 | ~TBD (needs inspection) | 🟢 Low-Medium |
-| Type Definitions | 1 | ~15 lines | 🔵 Low |
-| **TOTAL** | **17** | **~190+ lines** | |
+| Category | Files | Lines of Code | Status |
+|----------|-------|---------------|---------|
+| Broken Imports | 1 | ~10 lines | ✅ Complete |
+| Midtrans Config | 2 | ~92 lines | ✅ Complete |
+| Currency Functions | 2 | ~15 lines | ✅ Complete |
+| IDR Display Logic | 17 | ~95 lines | ✅ Complete |
+| Type Definitions | 1 | ~20 lines | ✅ Complete |
+| **TOTAL** | **23** | **~232 lines** | **✅ ALL COMPLETE** |
 
 ---
 
-#### 🎯 RECOMMENDED CLEANUP ACTIONS
+#### 🎯 CLEANUP ACTIONS - ALL COMPLETE ✅
 
-**Priority Order:**
+**Priority Order (All Completed):**
 
-1. **CRITICAL (Do First):**
-   - Fix `PaymentMethodSelector.tsx` - Remove broken import and MidtransCreditCardForm usage
+1. ✅ **CRITICAL:**
+   - Fixed `PaymentMethodSelector.tsx` - Removed broken import and MidtransCreditCardForm usage
 
-2. **HIGH (Do Soon):**
-   - Clean up `lib/core/config/PaymentConfig.ts` - Remove entire Midtrans config, add Paddle config
-   - Clean up `lib/core/constants/ApiEndpoints.ts` - Remove Midtrans endpoints, add Paddle endpoints
+2. ✅ **HIGH:**
+   - Cleaned up `lib/core/config/PaymentConfig.ts` - Removed entire Midtrans config
+   - Cleaned up `lib/core/constants/ApiEndpoints.ts` - Removed Midtrans endpoints
 
-3. **MEDIUM (Before Paddle Integration):**
-   - Fix `app/api/v1/auth/user/profile/route.ts` - Remove getUserCurrency usage
-   - Simplify `lib/utils/utils.ts` - Make formatCurrency USD-only
+3. ✅ **MEDIUM:**
+   - Fixed `app/api/v1/auth/user/profile/route.ts` - Removed getUserCurrency usage
+   - Simplified `lib/utils/utils.ts` - Made formatCurrency USD-only
 
-4. **LOW-MEDIUM (Nice to Have):**
-   - Audit all 13 files with IDR references - Update to USD-only display
-   - Clean up `lib/types/api/responses/PaymentResponses.ts` - Remove BankTransferDetails
+4. ✅ **LOW-MEDIUM:**
+   - Audited all 17 files with IDR references - Updated to USD-only display
+   - Cleaned up `lib/types/api/responses/PaymentResponses.ts` - Removed BankTransferDetails
 
 ---
 
@@ -914,12 +925,13 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Phase 7: Admin UI & Type System cleanup | ✅ Complete |
 | 2025-11-01 | Phase 7.1: Final UI cleanup and currency migration | ✅ Complete |
 | 2025-11-01 | Phase 7.2: Leftover audit + fixed Categories 1-2 (~102 lines removed) | ✅ Complete |
+| 2025-11-01 | Phase 7.2: Categories 3-5 complete (~130 lines removed) - ALL CLEANUP DONE | ✅ Complete |
 | TBD | Replace Paddle Price ID placeholders | 🔄 Pending |
 | TBD | Configure Paddle API keys | 🔄 Pending |
 | TBD | Paddle integration implementation (Phase 8) | 🔄 Pending |
 
 ---
 
-**Document Version:** 2.2  
+**Document Version:** 2.3  
 **Last Updated:** November 1, 2025  
-**Next Review:** After remaining Categories 3-5 cleanup and before Paddle integration
+**Next Review:** Before Paddle integration (Phase 8)

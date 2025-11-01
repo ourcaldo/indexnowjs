@@ -133,13 +133,12 @@ export default function PlansTab() {
     }
   }
 
-  const formatCurrency = (amount: number, currency: 'IDR' | 'USD' = 'USD') => {
-    const locale = currency === 'IDR' ? 'id-ID' : 'en-US'
-    return new Intl.NumberFormat(locale, {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount)
   }
 
@@ -403,12 +402,12 @@ export default function PlansTab() {
                 <div className="mb-6">
                   {pricingInfo.originalPrice && (
                     <div className="text-muted-foreground line-through text-lg mb-1">
-                      {formatCurrency(pricingInfo.originalPrice, pkg.currency as 'IDR' | 'USD')}
+                      {formatCurrency(pricingInfo.originalPrice)}
                     </div>
                   )}
                   <div className="flex items-baseline justify-center">
                     <span className="text-4xl font-bold text-foreground">
-                      {formatCurrency(pricingInfo.price, pkg.currency as 'IDR' | 'USD')}
+                      {formatCurrency(pricingInfo.price)}
                     </span>
                     <span className="text-muted-foreground ml-1">
                       {currentPeriod?.suffix}
