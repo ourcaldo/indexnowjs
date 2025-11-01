@@ -4,9 +4,7 @@
  */
 
 import { dailyRankCheckJob } from '../rank-tracking/daily-rank-check-job'
-import { recurringBillingJob } from '../payment-services/recurring-billing-job'
 import { autoCancelJob } from '../payment-services/auto-cancel-job'
-import { trialMonitorJob } from './trial-monitor-job'
 import { JobMonitor } from './job-monitor'
 import { JobErrorHandler } from './JobErrorHandler'
 import { logger } from '@/lib/monitoring/error-handling'
@@ -45,7 +43,6 @@ export class WorkerStartup {
         await this.initializeBullMQWorkers()
         await this.initializeRankCheckScheduler()
         await this.initializeAutoCancelService()
-        await this.initializeTrialMonitoring()
         await this.initializeJobMonitor()
         await this.initializeSeRankingKeywordBank()
 
@@ -157,25 +154,6 @@ export class WorkerStartup {
     }
   }
 
-  /**
-   * Initialize trial monitoring job scheduler
-   */
-  private async initializeTrialMonitoring(): Promise<void> {
-    try {
-      logger.info({}, 'Starting trial monitoring job scheduler')
-      
-      // Start the trial monitoring job scheduler
-      trialMonitorJob.start()
-      
-      // Get job status for confirmation
-      const status = trialMonitorJob.getStatus()
-      logger.info({ isScheduled: status.isScheduled, schedule: status.schedule, description: status.description }, `Trial monitoring scheduler status`)
-      
-    } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to initialize trial monitoring')
-      throw error
-    }
-  }
 
   /**
    * Initialize SeRanking keyword enrichment worker (simple table-based approach)
@@ -266,19 +244,16 @@ export class WorkerStartup {
     actuallyReady: boolean
     serviceStates: {
       dailyRankCheck: boolean
-      trialMonitor: boolean
       autoCancel: boolean
       jobMonitor: boolean
     }
   } {
     // Check actual service states rather than just the boolean flag
     const rankCheckStatus = dailyRankCheckJob.getStatus()
-    const trialMonitorStatus = trialMonitorJob.getStatus()
     const autoCancelStatus = autoCancelJob.getStatus()
     
     // Debug logging for service states
     logger.debug({ dailyRankCheckScheduled: rankCheckStatus.isScheduled, cronJob: rankCheckStatus.isScheduled ? 'active' : 'null' }, 'Service status check')
-    logger.debug({ trialMonitorScheduled: trialMonitorStatus.isScheduled }, 'Trial monitor status check')
     logger.debug({ autoCancelScheduled: autoCancelStatus.isScheduled }, 'Auto cancel status check')
     
     // Get JobMonitor status (it has a getStatus method)
@@ -296,7 +271,6 @@ export class WorkerStartup {
     // A service is considered ready if it's scheduled (has active cron job)
     const serviceStates = {
       dailyRankCheck: rankCheckStatus.isScheduled,
-      trialMonitor: trialMonitorStatus.isScheduled,
       autoCancel: autoCancelStatus.isScheduled,
       jobMonitor: jobMonitorReady
     }

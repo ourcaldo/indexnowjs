@@ -116,14 +116,12 @@ export const GET = authenticatedApiWrapper(async (
     
     customer_info: transaction.metadata?.customer_info || {},
     
-    payment_details: transaction.metadata?.payment_details || transaction.gateway_response?.va_numbers ? {
-      va_numbers: transaction.gateway_response.va_numbers,
-      payment_code: transaction.gateway_response.payment_code,
-      store: transaction.gateway_response.store,
-      expires_at: transaction.gateway_response.expiry_time
-    } : {},
-    
-    midtrans_response: transaction.gateway_response || {}
+    payment_details: transaction.metadata?.payment_details || (transaction.gateway_response?.va_numbers ? {
+      va_numbers: transaction.gateway_response?.va_numbers,
+      payment_code: transaction.gateway_response?.payment_code,
+      store: transaction.gateway_response?.store,
+      expires_at: transaction.gateway_response?.expiry_time
+    } : {})
   }
 
   return formatSuccess({

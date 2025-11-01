@@ -49,10 +49,6 @@ export const queueConfig = {
     name: 'payments',
     concurrency: parseInt(process.env.BULLMQ_CONCURRENCY_PAYMENTS || '3'),
   },
-  trialMonitor: {
-    name: 'trial-monitor',
-    concurrency: 1,
-  },
   keywordEnrichment: {
     name: 'keyword-enrichment',
     concurrency: 1,

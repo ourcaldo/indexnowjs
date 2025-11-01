@@ -51,12 +51,6 @@ export const AutoCancelJobSchema = z.object({
 
 export type AutoCancelJob = z.infer<typeof AutoCancelJobSchema>
 
-export const TrialMonitorJobSchema = z.object({
-  scheduledAt: z.string().datetime(),
-})
-
-export type TrialMonitorJob = z.infer<typeof TrialMonitorJobSchema>
-
 export const KeywordEnrichmentJobSchema = z.object({
   scheduledAt: z.string().datetime(),
 })

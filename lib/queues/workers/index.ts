@@ -4,7 +4,6 @@ import { initializeEmailWorker } from './email.worker'
 import { initializePaymentWorker } from './payments.worker'
 import { initializeDailyRankCheckWorker } from './rank-schedule.worker'
 import { initializeAutoCancelWorker } from './auto-cancel.worker'
-import { initializeTrialMonitorWorker } from './trial-monitor.worker'
 import { initializeKeywordEnrichmentWorker } from './keyword-enrichment.worker'
 import { initializeQuotaResetWorker } from './quota-reset.worker'
 import { initializeIndexingMonitorWorker } from './indexing-monitor.worker'
@@ -26,7 +25,6 @@ export async function initializeAllWorkers(): Promise<void> {
     await initializeDailyRankCheckWorker()
     await initializeHourlyRankRetryWorker()
     await initializeAutoCancelWorker()
-    await initializeTrialMonitorWorker()
     await initializeKeywordEnrichmentWorker()
     await initializeQuotaResetWorker()
     await initializeIndexingMonitorWorker()

@@ -52,16 +52,6 @@ interface OrderData {
     payment_method?: string
     expires_at?: string
   }
-  midtrans_response?: {
-    webhook_data?: {
-      va_numbers?: Array<{
-        va_number: string
-        bank: string
-      }>
-      payment_code?: string
-      store?: string
-    }
-  }
 }
 
 export default function OrderSuccessPage() {
@@ -252,17 +242,15 @@ export default function OrderSuccessPage() {
 
               {/* Payment Details */}
               {(orderData.payment_details?.va_numbers ||
-                orderData.payment_details?.payment_code ||
-                orderData.midtrans_response?.webhook_data?.va_numbers ||
-                orderData.midtrans_response?.webhook_data?.payment_code) && (
+                orderData.payment_details?.payment_code) && (
                 <div className="mt-8">
                   <h4 className="font-semibold text-foreground mb-4 flex items-center">
                     <CreditCard className="w-4 h-4 mr-2" />
                     Payment Details
                   </h4>
 
-                  {/* Display VA numbers from payment_details or midtrans_response */}
-                  {(orderData.payment_details?.va_numbers || orderData.midtrans_response?.webhook_data?.va_numbers)?.map(
+                  {/* Display VA numbers from payment_details */}
+                  {orderData.payment_details?.va_numbers?.map(
                     (va, index) => (
                       <div
                         key={index}
@@ -293,22 +281,22 @@ export default function OrderSuccessPage() {
                     )
                   )}
 
-                  {/* Display payment code from payment_details or midtrans_response */}
-                  {(orderData.payment_details?.payment_code || orderData.midtrans_response?.webhook_data?.payment_code) && (
+                  {/* Display payment code from payment_details */}
+                  {orderData.payment_details?.payment_code && (
                     <div className="bg-background/30 rounded-lg p-4 mb-3">
                       <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">
-                        {(orderData.payment_details?.store || orderData.midtrans_response?.webhook_data?.store || 'Payment')} Code
+                        {(orderData.payment_details?.store || 'Payment')} Code
                       </p>
                       <div className="flex items-center justify-between">
                         <p className="text-foreground font-mono text-lg font-bold tracking-wider">
-                          {orderData.payment_details?.payment_code || orderData.midtrans_response?.webhook_data?.payment_code}
+                          {orderData.payment_details?.payment_code}
                         </p>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() =>
                             copyToClipboard(
-                              (orderData.payment_details?.payment_code || orderData.midtrans_response?.webhook_data?.payment_code)!,
+                              orderData.payment_details?.payment_code!,
                               'Payment Code'
                             )
                           }

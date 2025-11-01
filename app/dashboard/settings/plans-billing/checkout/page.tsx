@@ -253,7 +253,7 @@ export default function CheckoutPage() {
     const paymentRequest = {
       package_id: selectedPackage.id,
       billing_period,
-      payment_method: 'midtrans_recurring',
+      payment_method: 'paddle',
       is_trial: isTrialFlow,
       customer_info: {
         first_name: form.first_name,

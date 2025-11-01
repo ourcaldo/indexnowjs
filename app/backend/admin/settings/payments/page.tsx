@@ -181,61 +181,6 @@ export default function PaymentGateways() {
             />
           </div>
 
-          {/* Bank Transfer Configuration */}
-          {formData.slug === 'bank_transfer' && (
-            <>
-              <div className="md:col-span-2">
-                <h3 className="text-lg font-medium text-foreground mb-4 border-b border-border pb-2">
-                  Bank Transfer Configuration
-                </h3>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Bank Name</label>
-                <input
-                  type="text"
-                  value={formData.configuration?.bank_name || ''}
-                  onChange={(e) => updateConfigurationField('bank_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="Bank Central Asia"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Bank Code</label>
-                <input
-                  type="text"
-                  value={formData.configuration?.bank_code || ''}
-                  onChange={(e) => updateConfigurationField('bank_code', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="014"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Account Name</label>
-                <input
-                  type="text"
-                  value={formData.configuration?.account_name || ''}
-                  onChange={(e) => updateConfigurationField('account_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="PT. IndexNow Studio"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Account Number</label>
-                <input
-                  type="text"
-                  value={formData.configuration?.account_number || ''}
-                  onChange={(e) => updateConfigurationField('account_number', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="1234567890"
-                />
-              </div>
-            </>
-          )}
-
           {/* Paddle Configuration */}
           {formData.slug === 'paddle' && (
             <>
@@ -463,19 +408,6 @@ export default function PaymentGateways() {
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">{gateway.description}</p>
                       <p className="text-xs text-muted-foreground mt-1">Slug: {gateway.slug}</p>
-                      {gateway.slug === 'bank_transfer' && gateway.configuration && (
-                        <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                          {gateway.configuration.bank_name && (
-                            <p><strong>Bank:</strong> {gateway.configuration.bank_name}</p>
-                          )}
-                          {gateway.configuration.account_name && (
-                            <p><strong>Account:</strong> {gateway.configuration.account_name}</p>
-                          )}
-                          {gateway.configuration.account_number && (
-                            <p><strong>Number:</strong> {gateway.configuration.account_number}</p>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
