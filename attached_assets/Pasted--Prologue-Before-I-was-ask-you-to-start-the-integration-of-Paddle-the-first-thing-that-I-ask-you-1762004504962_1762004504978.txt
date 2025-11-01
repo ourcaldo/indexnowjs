@@ -1,0 +1,24 @@
+
+Prologue:
+Before I was ask you to start the integration of Paddle, the first thing that I ask you is related to database using this instruction:
+```
+Then, before we've discuss a lot about Paddle and payment gateway and now we'll integrate the Paddle into this project.
+For now, I need you to read what we've discussed earlier in the document doc/PADDLE_INTEGRATION_GUIDE.md please deep dive into it, in and out until you've understand.
+
+After you do understand, I need you to start by fixing the database things first and remove the Midtrans and other payment gateway (manual bank transfer).
+After you do that, please review and deep dive into the changes, no need to do the integration for Paddle yet.
+
+Also, don't forget to give the SQL queries for me to run it on the Supabase.
+```
+
+Output:
+Then, the output was we documented on file doc/PADDLE_MIGRATION_PROGRESS.md and I want you to deep dive into this file and other file that I have mention.
+
+After that, I need you to continue the implementation as you already finished up to Phase 7.3 and you already delete the leftover files from Midtrans, now I need you to:
+1. Deep dive into the doc/PADDLE_MIGRATION_PROGRESS.md and all other documents that I've mention
+2. Check does Phase 1 to Phase 7 are already have been done applied for we still miss a things
+3. Check, does we still have any leftover or logic related to other payment gateway like Midtrans, Snap, Manual Bank transfer and that may related to it. If yet, then write under Phase 7.4 (make sub-phase/task)
+
+At the end, you need to made documentation on file:
+1. On doc/PADDLE_MIGRATION_PROGRESS.md for what you have already done. To write it, just fucking givin checklist on each part, not fucking made new section doc/PADDLE_MIGRATION_PROGRESS.md. No need fucking summary, report and any new fucking sections in doc/PADDLE_MIGRATION_PROGRESS.md, just directly give checklist on fucking phase/sub phase/task that been done
+2. On doc/project.md for all summary. For the project.md, you need to write all in new changelogs format, not same as PADDLE_MIGRATION_PROGRESS.md. 
