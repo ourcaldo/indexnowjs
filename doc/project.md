@@ -8227,6 +8227,57 @@ ON public.indb_cms_posts(category, status);
 
 ## Recent Changes
 
+### November 1, 2025 - Paddle Migration Phase 7.4: Leftover Code Audit ✅
+
+**Objective:** Comprehensive audit to identify ALL remaining Midtrans, Snap, Bank Transfer, and multi-currency code after Phase 7.3 completion.
+
+**Audit Scope:**
+- Searched entire codebase for: `midtrans`, `snap`, `bank_transfer`, `manual_bank`, `getUserCurrency`, `IDR`
+- Verified all active code files for broken imports, LSP errors, and legacy payment logic
+- Confirmed Phase 1-7.3 completion status
+- Identified 9 files requiring cleanup + 4 files to keep for historical data
+
+**Leftovers Identified:**
+
+**🔴 Critical (6 files with LSP errors or broken logic):**
+1. `app/api/v1/billing/cancel-trial/route.ts` - Midtrans subscription cancellation logic (5 LSP errors)
+2. `app/api/v1/auth/user/trial-status/route.ts` - indb_payment_midtrans table query (3 LSP errors)
+3. `app/api/v1/dashboard/route.ts` - getUserCurrency imports/usage (6 LSP errors)
+4. `app/api/v1/billing/channels/shared/base-handler.ts` - getUserCurrency + nested currency pricing
+5. `lib/services/payments/core/PaymentProcessor.ts` - Midtrans gateway detection fallback
+6. `lib/payment-services/auto-cancel-job.ts` - IDR currency formatting in emails
+
+**🟡 Documentation (2 files):**
+7. `lib/job-management/worker-startup.ts` - Outdated Midtrans webhook comments
+8. `lib/job-management/trial-monitor.ts` - Midtrans payment flow comments
+
+**🟠 Checkout Page (1 file):**
+9. `app/dashboard/settings/plans-billing/checkout/page.tsx` - IDR state, midtrans_recurring references
+
+**🟢 Keep for Historical Data (4 files):**
+10. `app/dashboard/settings/plans-billing/orders/[order_id]/page.tsx` - Display midtrans_response in order history
+11. `app/api/v1/billing/orders/[id]/route.ts` - Return midtrans_response in API
+12. `app/api/v1/billing/payment/route.ts` - Migration documentation comments
+13. `app/backend/admin/settings/payments/page.tsx` - bank_transfer configuration display
+
+**Current Status:**
+- Total LSP errors: 14 errors across 4 files
+- Estimated cleanup: ~150 lines to remove/update
+- Next steps: User to decide whether to proceed with cleanup now or wait until Paddle Phase 8
+
+**Impact:**
+- Some API routes (cancel-trial, trial-status) will crash if users try to use old trial flow with Midtrans
+- Dashboard API has broken imports that may cause issues
+- Email notifications showing wrong currency (IDR instead of USD)
+- Historical order viewing functionality preserved correctly
+
+**Files Modified:**
+- `doc/PADDLE_MIGRATION_PROGRESS.md` - Added Phase 7.4 audit findings with checklists
+
+**Status:** ✅ AUDIT COMPLETE - All leftovers documented and categorized for future cleanup
+
+---
+
 ### October 29, 2025 - Marketing Website Pricing: Complete Removal of API Fallback Data ✅
 
 🎯 **API FALLBACK DATA ELIMINATION**: Removed all static fallback pricing data from marketing website to ensure users always see real-time pricing from API

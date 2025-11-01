@@ -982,77 +982,50 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
 ### Phase 7.4: Post-Cleanup Leftover Logic Audit 🔍
 
 **Date:** November 1, 2025  
-**Status:** 🔄 IN PROGRESS - Audit complete, cleanup pending
+**Status:** ✅ AUDIT COMPLETE - Cleanup tasks identified and documented
 
 **Objective:** Deep audit to identify remaining Midtrans, Snap, Manual Bank Transfer logic after Phase 7.3 completion.
+
+**Audit Scope:**
+- Searched entire codebase for: `midtrans`, `Midtrans`, `MIDTRANS`, `snap`, `Snap`, `SNAP`, `bank_transfer`, `manual_bank`, `IDR`, `idr`
+- Checked all active code files for broken imports, LSP errors, and legacy payment logic
+- Verified Phase 1-7.3 completion status
+- Identified 6 critical files + 2 additional files requiring attention
+
+**Total Leftovers Found:** 8 files (~136 lines to remove/update)
 
 ---
 
 #### 🔴 CRITICAL LEFTOVERS - REQUIRES CLEANUP
 
-**Files with broken/active Midtrans logic:**
-
-- [ ] **`app/api/v1/billing/cancel-trial/route.ts`** (Lines 84-181)
-  - Line 2: Imports `PaymentServiceFactory` (deleted method)
-  - Line 84-104: Queries `indb_payment_midtrans` table
-  - Line 134: Calls `PaymentServiceFactory.createMidtransService()` - **METHOD DOESN'T EXIST**
-  - Lines 108-169: Full Midtrans subscription cancellation logic
-  - **Impact:** 10 LSP errors, runtime crash
-  - **Action:** Remove Midtrans subscription handling (~95 lines)
-
-- [ ] **`app/api/v1/auth/user/trial-status/route.ts`** (Lines 88-104)
-  - Line 88: SecureServiceRoleWrapper for `indb_payment_midtrans` table
-  - Lines 91-99: Query to deleted `indb_payment_midtrans` table
-  - Lines 101-104: Returns subscription info from Midtrans
-  - **Impact:** 3 LSP errors
-  - **Action:** Remove Midtrans subscription query (~17 lines)
-
+- [ ] **`app/api/v1/billing/cancel-trial/route.ts`** (Lines 2, 84-170) - 5 LSP errors
+- [ ] **`app/api/v1/auth/user/trial-status/route.ts`** (Lines 88-104) - 3 LSP errors  
+- [ ] **`app/api/v1/dashboard/route.ts`** (Lines 4, 164, 347) - 6 LSP errors
+- [ ] **`app/api/v1/billing/channels/shared/base-handler.ts`** (Lines 98-124)
 - [ ] **`lib/services/payments/core/PaymentProcessor.ts`** (Lines 406-411)
-  - Line 406: `if (paymentMethod.includes('midtrans'))`
-  - Line 411: `return 'midtrans'` - Default fallback
-  - **Action:** Update to return 'paddle' or 'unknown' (6 lines)
-
 - [ ] **`lib/payment-services/auto-cancel-job.ts`** (Line 257)
-  - Line 257: `amount: \`IDR ${Number(transaction.amount).toLocaleString('id-ID')}\``
-  - **Action:** Change to USD formatting (1 line)
 
 ---
 
 #### 🟡 DOCUMENTATION UPDATES
 
-**Files with outdated comments:**
-
 - [ ] **`lib/job-management/worker-startup.ts`** (Lines 204-211)
-  - Line 204: "DISABLED: Midtrans handles recurring payments automatically via webhooks"
-  - Line 208: "Recurring billing: DISABLED - Handled by Midtrans webhooks"
-  - Line 211: "Payment confirmations come via webhook: /api/v1/payments/midtrans/webhook"
-  - **Action:** Update comments to reference Paddle webhooks (~8 lines)
-
 - [ ] **`lib/job-management/trial-monitor.ts`** (Lines 78-80)
-  - Line 78: "user should NOT have any package until Midtrans payment is processed"
-  - Line 80: "Only when Midtrans webhook confirms successful payment, user regains access"
-  - **Action:** Update to reference Paddle payment processing (3 lines)
+
+---
+
+#### 🟠 CHECKOUT PAGE REVIEW
+
+- [ ] **`app/dashboard/settings/plans-billing/checkout/page.tsx`** (Lines 76, 257, 326)
 
 ---
 
 #### 🟢 KEEP FOR BACKWARD COMPATIBILITY
 
-**Files supporting historical data (NO ACTION):**
-
-- ✅ **`app/dashboard/settings/plans-billing/orders/[order_id]/page.tsx`** (Lines 55-311)
-  - Displays `midtrans_response` data in order details UI
-  - **Reason:** Users need to view historical Midtrans transactions
-  - **Status:** KEEP
-
-- ✅ **`app/api/v1/billing/orders/[id]/route.ts`** (Line 126)
-  - Returns `midtrans_response` in API response
-  - **Reason:** Frontend needs historical order data
-  - **Status:** KEEP
-
-- ✅ **`app/api/v1/billing/payment/route.ts`** (Lines 89, 102)
-  - Comments noting Midtrans removal
-  - **Reason:** Migration documentation
-  - **Status:** KEEP
+- ✅ **`app/dashboard/settings/plans-billing/orders/[order_id]/page.tsx`** (Lines 55-311) - midtrans_response display
+- ✅ **`app/api/v1/billing/orders/[id]/route.ts`** (Line 126) - midtrans_response API
+- ✅ **`app/api/v1/billing/payment/route.ts`** (Lines 89, 102) - Migration comments
+- ✅ **`app/backend/admin/settings/payments/page.tsx`** (Lines 185, 466) - bank_transfer config display
 
 ---
 
