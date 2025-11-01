@@ -621,11 +621,10 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
 
 **Files:**
 1. **`components/checkout/payment-methods/PaymentMethodSelector.tsx`**
-   - **Line 8:** `import MidtransCreditCardForm from '@/components/MidtransCreditCardForm'`
-   - **Lines 64-72:** Usage of non-existent `MidtransCreditCardForm` component
-   - **Issue:** Component was deleted in Phase 4, but import/usage remains
-   - **LSP Error:** `Cannot find module '@/components/MidtransCreditCardForm' or its corresponding type declarations.`
-   - **Fix Required:** Remove import and conditional rendering block
+   - ✅ **Line 8:** `import MidtransCreditCardForm` - REMOVED
+   - ✅ **Lines 64-72:** Usage of non-existent `MidtransCreditCardForm` component - REMOVED  
+   - ✅ **LSP Error:** Resolved - component now compiles successfully
+   - **Code Removed:** ~10 lines
 
 ---
 
@@ -636,21 +635,22 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
 **Files:**
 
 1. **`lib/core/config/PaymentConfig.ts`**
-   - **Lines 70-87:** Complete Midtrans configuration object (serverKey, clientKey, apiUrl, snapUrl, enabledMethods)
-   - **Lines 89-90:** Default currency set to 'IDR', supported currencies include ['IDR', 'USD']
-   - **Lines 97-99:** Midtrans webhook configuration
-   - **Lines 109-111:** Payment limits in IDR (50M IDR max, 10K IDR min)
-   - **Lines 118-122:** Payment method constants (SNAP, RECURRING, BANK_TRANSFER)
-   - **Lines 128-133:** IDR currency configuration (symbol, decimals, separators)
-   - **Lines 167-176:** Midtrans validation requiring MIDTRANS_SERVER_KEY and NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
-   - **Fix Required:** Remove entire Midtrans config, update to Paddle, change default currency to USD, remove IDR config
+   - ✅ **Lines 70-87:** Complete Midtrans configuration object - REMOVED
+   - ✅ **Lines 89-90:** Default currency changed from 'IDR' to 'USD', supported currencies now ['USD'] only
+   - ✅ **Lines 97-99:** Midtrans webhook configuration - REMOVED
+   - ✅ **Lines 109-111:** Payment limits changed from IDR (50M/10K) to USD ($10,000/$1)
+   - ✅ **Lines 118-122:** Payment method constants (SNAP, RECURRING, BANK_TRANSFER) - REMOVED
+   - ✅ **Lines 128-133:** IDR currency configuration - REMOVED (USD only)
+   - ✅ **Lines 167-176:** Midtrans validation - REMOVED
+   - ✅ **formatCurrency()** simplified to USD-only: `formatCurrency(amount)`
+   - **Code Removed:** ~80 lines
 
 2. **`lib/core/constants/ApiEndpoints.ts`**
-   - **Lines 175-177:** MIDTRANS_SNAP, MIDTRANS_RECURRING, BANK_TRANSFER endpoint constants
-   - **Lines 180-183:** MIDTRANS_CREATE_PAYMENT, MIDTRANS_3DS_CALLBACK, MIDTRANS_CONFIG, MIDTRANS_PROCESS_RECURRING
-   - **Line 189:** MIDTRANS_WEBHOOK constant
-   - **Line 261:** Legacy MIDTRANS_WEBHOOK endpoint
-   - **Fix Required:** Remove all Midtrans endpoint constants, add Paddle endpoint constants
+   - ✅ **Lines 175-177:** MIDTRANS_SNAP, MIDTRANS_RECURRING, BANK_TRANSFER endpoint constants - REMOVED
+   - ✅ **Lines 180-183:** MIDTRANS_CREATE_PAYMENT, MIDTRANS_3DS_CALLBACK, MIDTRANS_CONFIG, MIDTRANS_PROCESS_RECURRING - REMOVED
+   - ✅ **Line 189:** MIDTRANS_WEBHOOK constant - REMOVED
+   - ✅ **Line 261:** Legacy MIDTRANS_WEBHOOK endpoint - REMOVED
+   - **Code Removed:** ~12 lines
 
 ---
 
@@ -863,7 +863,7 @@ WHERE table_name = 'indb_auth_user_profiles'
 - [x] Updated admin packages UI - simplified pricing interface to flat USD structure (Phase 7)
 - [x] Completed packages page pricing form UI - replaced nested IDR/USD grid with flat USD + Paddle Price ID inputs (Phase 7.1)
 - [x] Removed all `getUserCurrency` function references and currency conversion logic (Phase 7.1)
-- [x] Conducted comprehensive leftover audit - identified 17 files with Midtrans/currency/IDR references (Phase 7.2)
+- [x] Conducted comprehensive leftover audit and fixed Categories 1 & 2 - removed ~102 lines of Midtrans config (Phase 7.2)
 
 ### 🔄 Pending (User Action Required)
 - [ ] Replace Paddle Price ID placeholders with actual IDs from Paddle Dashboard (Phase 2)
@@ -913,7 +913,7 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Phase 5: Frontend verified using USD-only pricing | ✅ Complete |
 | 2025-11-01 | Phase 7: Admin UI & Type System cleanup | ✅ Complete |
 | 2025-11-01 | Phase 7.1: Final UI cleanup and currency migration | ✅ Complete |
-| 2025-11-01 | Phase 7.2: Leftover cleanup audit - 17 files identified | ✅ Complete |
+| 2025-11-01 | Phase 7.2: Leftover audit + fixed Categories 1-2 (~102 lines removed) | ✅ Complete |
 | TBD | Replace Paddle Price ID placeholders | 🔄 Pending |
 | TBD | Configure Paddle API keys | 🔄 Pending |
 | TBD | Paddle integration implementation (Phase 8) | 🔄 Pending |
@@ -922,4 +922,4 @@ WHERE slug = 'paddle';
 
 **Document Version:** 2.2  
 **Last Updated:** November 1, 2025  
-**Next Review:** After leftover files are cleaned up and before Paddle integration
+**Next Review:** After remaining Categories 3-5 cleanup and before Paddle integration

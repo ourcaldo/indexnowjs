@@ -170,23 +170,11 @@ export const BILLING_ENDPOINTS = {
   // Transactions
   TRANSACTIONS: `${API_BASE.V1}/billing/transactions`,
   TRANSACTION_BY_ID: (id: string) => `${API_BASE.V1}/billing/transactions/${id}`,
-  
-  // Payment channels
-  MIDTRANS_SNAP: `${API_BASE.V1}/billing/channels/midtrans-snap`,
-  MIDTRANS_RECURRING: `${API_BASE.V1}/billing/channels/midtrans-recurring`,
-  BANK_TRANSFER: `${API_BASE.V1}/billing/channels/bank-transfer`,
-  
-  // Midtrans specific
-  MIDTRANS_CREATE_PAYMENT: `${API_BASE.V1}/billing/midtrans/create-payment`,
-  MIDTRANS_3DS_CALLBACK: `${API_BASE.V1}/billing/midtrans-3ds-callback`,
-  MIDTRANS_CONFIG: `${API_BASE.V1}/billing/midtrans-config`,
-  MIDTRANS_PROCESS_RECURRING: `${API_BASE.V1}/billing/midtrans/process-recurring`,
 } as const;
 
 // Payment endpoints
 export const PAYMENT_ENDPOINTS = {
-  SNAP: `${API_BASE.V1}/payments/channels/snap`,
-  MIDTRANS_WEBHOOK: `${API_BASE.V1}/payments/midtrans/webhook`,
+  // Reserved for Paddle webhook endpoints
 } as const;
 
 // Activity logging endpoints (non-admin)
@@ -258,7 +246,7 @@ export const INTEGRATION_ENDPOINTS = {
 
 // Legacy API endpoints (for compatibility)
 export const LEGACY_ENDPOINTS = {
-  MIDTRANS_WEBHOOK: '/api/midtrans/webhook',
+  // Reserved for legacy endpoint compatibility
 } as const;
 
 // Helper function to build endpoint URLs with query parameters

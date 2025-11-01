@@ -775,9 +775,9 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
-### November 1, 2025: Paddle Migration Phase 7.2 - Leftover Cleanup Audit Complete ✅
+### November 1, 2025: Paddle Migration Phase 7.2 - Leftover Cleanup Audit & Fixes Complete ✅
 
-🔍 **COMPREHENSIVE LEFTOVER AUDIT**: Deep dive analysis completed to identify all remaining Midtrans, currency conversion, and multiple currency (IDR) references that were missed in previous cleanup phases (Phase 4, 5, 7, 7.1).
+🔍 **COMPREHENSIVE LEFTOVER AUDIT & CLEANUP**: Conducted deep dive analysis to identify all remaining Midtrans references, then fixed Categories 1 (Critical) and 2 (High Priority) - removed ~102 lines of Midtrans configuration and broken imports.
 
 **📋 AUDIT FINDINGS SUMMARY**:
 - **Total Files Identified**: 17 files with leftover references
@@ -830,20 +830,25 @@ JWT_SECRET=[jwt-secret-key]
 - Type Definitions: 1 file (~15 lines) - 🔵 Low
 - **TOTAL**: 17 files, ~190+ lines
 
-**🎯 RECOMMENDED NEXT STEPS**:
-1. **CRITICAL**: Fix broken import in `PaymentMethodSelector.tsx`
-2. **HIGH**: Clean up `PaymentConfig.ts` and `ApiEndpoints.ts`
-3. **MEDIUM**: Remove remaining `getUserCurrency` usage and simplify `formatCurrency`
-4. **LOW-MEDIUM**: Audit and update 13 files with IDR display references
-5. **LOW**: Clean up type definitions
+**✅ FIXES COMPLETED**:
+- ✅ Category 1 (Critical): Fixed broken import in `PaymentMethodSelector.tsx` (~10 lines removed)
+- ✅ Category 2 (High): Cleaned up `PaymentConfig.ts` - removed Midtrans config, changed default currency to USD (~80 lines removed)
+- ✅ Category 2 (High): Cleaned up `ApiEndpoints.ts` - removed Midtrans endpoint constants (~12 lines removed)
+- ✅ **Total cleanup**: ~102 lines of Midtrans code removed
+- ⚠️ **Breaking change**: `formatCurrency()` now USD-only: `formatCurrency(amount)`
 
-**📝 DOCUMENTATION**:
-- **Detailed Audit Report**: See `doc/PADDLE_MIGRATION_PROGRESS.md` - Phase 7.2 section
-- **File-by-File Breakdown**: All 17 files documented with line numbers and fix requirements
-- **Breaking Changes Analysis**: Documented potential impacts of cleanup
-- **Migration Readiness**: Notes for Phase 8 (Paddle Integration)
+**🎯 REMAINING WORK**:
+- Category 3 (Medium): Remove remaining `getUserCurrency` usage, update `lib/utils/utils.ts`
+- Category 4-5 (Low): Clean up 13 files with IDR display references, update type definitions
 
-**Status**: ✅ **PHASE 7.2 COMPLETE** - Comprehensive audit completed. All leftover files identified and documented. Ready for cleanup before Paddle integration.
+**Files Modified**:
+- `components/checkout/payment-methods/PaymentMethodSelector.tsx`
+- `lib/core/config/PaymentConfig.ts`
+- `lib/core/constants/ApiEndpoints.ts`
+- `doc/PADDLE_MIGRATION_PROGRESS.md`
+- `doc/project.md`
+
+**Status**: ✅ **PHASE 7.2 COMPLETE** - Audit completed and Categories 1-2 fixed. Removed ~102 lines of Midtrans code. Categories 3-5 remain for future cleanup.
 
 ---
 
