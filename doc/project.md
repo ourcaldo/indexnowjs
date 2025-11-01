@@ -775,6 +775,86 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### November 1, 2025: Paddle Database Migration Phase 1 - Schema Updates Complete ✅
+
+🗄️ **DATABASE MIGRATION**: Successfully migrated database schema from Midtrans/Bank Transfer payment system to prepare for Paddle payment gateway integration
+
+**✅ PRICING STRUCTURE SIMPLIFIED**:
+- **Multi-Currency Removed**: Transformed `pricing_tiers` from nested `{monthly: {USD: {...}, IDR: {...}}}` to flat `{monthly: {promo_price, regular_price, paddle_price_id}}`
+- **USD-Only Pricing**: All packages (Basic, Premium, Pro) now use single-currency USD pricing structure
+- **Paddle Price ID Fields Added**: Each billing period (monthly/annual) now includes `paddle_price_id` field for Paddle integration
+- **SQL Migration Executed**: Used `jsonb_object_agg` to extract USD pricing and flatten structure without data loss
+
+**🆕 NEW PADDLE INFRASTRUCTURE CREATED**:
+- **`indb_subscriptions` Table**: Created for Paddle subscription management with fields:
+  - `paddle_subscription_id`, `paddle_customer_id`, `status`, `plan_id`, `paddle_price_id`
+  - Indexes on `user_id`, `paddle_subscription_id`, `status`
+- **`indb_paddle_transactions` Table**: Created for Paddle transaction records with fields:
+  - `paddle_transaction_id`, `amount`, `currency`, `status`, `receipt_url`, `invoice_number`
+  - Indexes on `user_id`, `subscription_id`, `status`
+- **`indb_paddle_webhook_events` Table**: Created for webhook event logging with fields:
+  - `event_id`, `event_type`, `event_data`, `processed`, `error_message`, `retry_count`
+  - Indexes on `event_type`, `processed`
+
+**🔧 USER PROFILES UPDATED**:
+- **Added Subscription Fields to `indb_auth_user_profiles`**:
+  - `subscription_tier` VARCHAR(50) - Values: 'free', 'pro', 'enterprise'
+  - `subscription_active` BOOLEAN - Default: false
+  - `subscription_id` UUID - References `indb_subscriptions(id)`
+
+**🔒 OLD PAYMENT GATEWAYS DEACTIVATED**:
+- **Midtrans Snap**: `is_active` set to `false` (preserved for transaction history)
+- **Midtrans Recurring**: `is_active` set to `false` (preserved for transaction history)
+- **Manual Bank Transfer**: `is_active` set to `false` (preserved for transaction history)
+- **Rationale**: Gateways not deleted to maintain foreign key relationships with `indb_payment_transactions` and preserve audit trail
+
+**✨ PADDLE GATEWAY ADDED**:
+- **New Gateway**: `paddle` slug added to `indb_payment_gateways`
+- **Configuration**: Sandbox environment, USD default currency, subscriptions enabled
+- **Security**: API credentials stored in environment variables (not database)
+  - `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`
+- **Status**: Inactive until API keys configured and Paddle Price IDs updated
+
+**📁 DOCUMENTATION CREATED**:
+- **`doc/PADDLE_DATABASE_MIGRATION.md`**: Comprehensive migration log documenting all SQL queries, database changes, current state, next steps, verification queries, and rollback plan
+
+**🎯 SQL QUERIES EXECUTED**:
+1. **Pricing Structure Migration**: `UPDATE indb_payment_packages` to flatten `pricing_tiers` JSONB
+2. **Paddle Price ID Addition**: Three `UPDATE` queries to add `paddle_price_id` fields to Basic, Premium, Pro packages
+3. **Table Creation**: `CREATE TABLE` for `indb_subscriptions`, `indb_paddle_transactions`, `indb_paddle_webhook_events`
+4. **Profile Update**: `ALTER TABLE indb_auth_user_profiles` to add subscription fields
+5. **Gateway Deactivation**: `UPDATE indb_payment_gateways` to disable old gateways
+6. **Paddle Gateway Addition**: `INSERT INTO indb_payment_gateways` to add Paddle
+
+**✅ MIGRATION VERIFICATION**:
+- ✅ All packages have flat USD-only pricing structure
+- ✅ All packages have `paddle_price_id` fields (placeholders ready for replacement)
+- ✅ Three new Paddle tables created with proper indexes
+- ✅ User profiles updated with subscription fields
+- ✅ Old gateways deactivated (not deleted)
+- ✅ Paddle gateway added (inactive)
+- ✅ Transaction history preserved intact
+
+**🔄 PENDING ACTIONS (Phase 2)**:
+1. **User Action Required**: Create products/prices in Paddle Dashboard, replace `paddle_price_id` placeholders, configure Paddle API keys
+2. **Code Cleanup** (Not Yet Done): Remove Midtrans/Bank Transfer code (~16 routes, ~3 services, ~2 converters, ~400 lines)
+3. **Paddle Integration** (Future): Install Paddle SDK, implement webhooks, create service layer, update checkout flow
+
+**Files Modified**:
+- `doc/PADDLE_DATABASE_MIGRATION.md` - Created comprehensive migration documentation
+- `doc/project.md` - Updated Recent Changes section
+
+**Database Changes**:
+- `indb_payment_packages` - Pricing structure simplified, Paddle Price ID fields added
+- `indb_payment_gateways` - Old gateways deactivated, Paddle gateway added
+- `indb_auth_user_profiles` - Subscription fields added
+- `indb_subscriptions` - Created (new)
+- `indb_paddle_transactions` - Created (new)
+- `indb_paddle_webhook_events` - Created (new)
+
+**Status**: ✅ **PHASE 1 COMPLETE** - Database schema successfully migrated and prepared for Paddle integration. Ready for Phase 2 (code cleanup) after Paddle Price IDs are configured.
+
+
 ### October 30, 2025: Paddle Integration - Comprehensive Pricing Migration Documentation ✅
 
 📚 **DOCUMENTATION ENHANCEMENT**: Added in-depth analysis and migration plan for transitioning from multi-currency pricing system (USD + IDR) to USD-only pricing for Paddle payment gateway integration
