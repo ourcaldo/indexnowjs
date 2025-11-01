@@ -379,6 +379,106 @@ null
 
 ---
 
+## Phase 7.4: Final Cleanup - Trial Monitor & Remaining Legacy Code
+
+### Overview
+Completed final cleanup of trial monitoring system and remaining Midtrans/Bank Transfer references. Paddle handles subscriptions, trials, and recurring billing automatically via webhooks - manual monitoring systems are no longer needed.
+
+### Phase 7.4.1: Trial Monitor System Removal ✅
+
+**Rationale:** Paddle handles trial management automatically via webhooks. Manual cron-based trial monitoring is redundant and adds unnecessary complexity.
+
+**Files Deleted (4 files, ~394 lines):**
+- ❌ `lib/job-management/trial-monitor.ts` (152 lines) - Trial monitoring logic
+- ❌ `lib/job-management/trial-monitor-job.ts` (73 lines) - Trial monitor job scheduler
+- ❌ `lib/queues/workers/trial-monitor.worker.ts` (60 lines) - Trial monitor worker
+- ❌ `app/api/v1/billing/cancel-trial/route.ts` (109 lines) - Cancel trial API endpoint
+
+**Files Modified:**
+- ✅ `lib/job-management/worker-startup.ts`:
+  - Removed `trialMonitorJob` import and initialization
+  - Removed `initializeTrialMonitoring()` method and call
+  - Updated `getStatus()` return type (removed trialMonitor from serviceStates)
+  - Removed unused `recurringBillingJob` import
+
+- ✅ `lib/queues/workers/index.ts`:
+  - Removed `initializeTrialMonitorWorker` import and call
+
+- ✅ `lib/queues/config.ts`:
+  - Removed `trialMonitor` queue configuration
+
+- ✅ `lib/queues/types.ts`:
+  - Removed `TrialMonitorJobSchema` and `TrialMonitorJob` type definitions
+
+**Impact:**
+- **Lines Removed:** ~400 total
+- **Architectural Change:** Migrated from manual cron-based trial monitoring to Paddle webhook-based trial management
+
+### Phase 7.4.2: Midtrans Response References Cleanup ✅
+
+**Rationale:** Remove legacy Midtrans data mapping as we're migrating to Paddle. All new orders use Paddle data structure via `metadata.payment_details`.
+
+**Files Modified:**
+- ✅ `app/dashboard/settings/plans-billing/orders/[order_id]/page.tsx`:
+  - Removed `midtrans_response` from OrderData interface
+  - Updated payment details to use only `payment_details` (removed midtrans_response fallbacks)
+  - Simplified VA number and payment code display logic
+
+- ✅ `app/api/v1/billing/orders/[id]/route.ts`:
+  - Removed `midtrans_response` mapping from orderData response object
+  - **CRITICAL BUG FIX:** Added proper optional chaining for `gateway_response` to prevent crashes on Paddle orders:
+    ```typescript
+    // Before (BROKEN):
+    payment_details: transaction.metadata?.payment_details || transaction.gateway_response?.va_numbers ? {
+      va_numbers: transaction.gateway_response.va_numbers,  // ❌ No optional chaining
+      ...
+    } : {}
+    
+    // After (FIXED):
+    payment_details: transaction.metadata?.payment_details || (transaction.gateway_response?.va_numbers ? {
+      va_numbers: transaction.gateway_response?.va_numbers,  // ✅ With optional chaining
+      ...
+    } : {})
+    ```
+
+- ✅ `app/dashboard/settings/plans-billing/checkout/page.tsx`:
+  - Changed `payment_method` from 'midtrans_recurring' to 'paddle'
+
+**Impact:**
+- **Lines Removed/Updated:** ~25 lines
+- **Bug Fixed:** Prevented runtime crashes for Paddle orders without gateway_response
+
+### Phase 7.4.3: Bank Transfer UI Removal ✅
+
+**Rationale:** Bank transfer payment method no longer supported - Paddle handles all payment methods (credit card, PayPal, etc.) automatically.
+
+**Files Modified:**
+- ✅ `app/backend/admin/settings/payments/page.tsx`:
+  - Removed Bank Transfer Configuration section (53 lines) from gateway form
+  - Removed bank transfer details display (13 lines) from gateway list
+
+**Impact:**
+- **Lines Removed:** ~66 lines
+- **UI Simplified:** Admin payment settings now only shows relevant Paddle configuration
+
+### Phase 7.4 Summary
+
+| Metric | Count |
+|--------|-------|
+| Files Deleted | 4 |
+| Files Modified | 8 |
+| Total Lines Removed/Updated | ~491 lines |
+
+**Key Architectural Changes:**
+1. **Trial Management:** Migrated from manual cron-based monitoring to Paddle webhook-based handling
+2. **Payment Methods:** Consolidated to Paddle-only (removed Midtrans, Bank Transfer UI)
+3. **Data Model:** Cleaned up legacy Midtrans response references from order endpoints
+4. **Error Handling:** Fixed critical optional chaining bug for Paddle order compatibility
+
+**Architect Review:** ✅ Approved (no security issues found, critical bug fixed)
+
+---
+
 ## Next Steps
 
 ### Phase 2: Update Paddle Price IDs (User Action Required)
@@ -1188,7 +1288,10 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Phase 7.3: Deep dive final leftover audit - Identified 11 files (~786+ lines) requiring cleanup | ✅ Complete |
 | 2025-11-01 | Phase 7.3: Executed cleanup for Categories 6-11 - ALL 11 FILES CLEANED (~873 lines removed) | ✅ Complete |
 | 2025-11-01 | Phase 7.4: Post-cleanup leftover audit - Identified 9 files (6 need cleanup ~130 lines, 3 historical) | ✅ Audit Complete |
-| 2025-11-01 | Phase 7.4: Cleanup execution - All 8 files fixed (~136 lines removed/updated) | ✅ Complete |
+| 2025-11-01 | Phase 7.4.1: Trial Monitor System Removal - 4 files deleted, 4 files modified (~400 lines removed) | ✅ Complete |
+| 2025-11-01 | Phase 7.4.2: Midtrans Response References Cleanup - 3 files modified (~25 lines updated) + critical bug fix | ✅ Complete |
+| 2025-11-01 | Phase 7.4.3: Bank Transfer UI Removal - 1 file modified (~66 lines removed) | ✅ Complete |
+| 2025-11-01 | Phase 7.4: All cleanup complete - 4 files deleted, 8 files modified (~491 lines removed/updated) | ✅ Complete |
 | TBD | Phase 2: Replace Paddle Price ID placeholders | 🔄 Pending |
 | TBD | Phase 3: Configure Paddle API keys | 🔄 Pending |
 | TBD | Phase 8: Paddle integration implementation | 🔄 Pending |
