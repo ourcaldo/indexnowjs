@@ -8,10 +8,8 @@ import { formatSuccess, formatError } from '@/lib/core/api-response-formatter'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
 import type { AuthenticatedRequest } from '@/lib/core/api-middleware'
 
-// Import handlers directly
-import MidtransSnapHandler from '../channels/midtrans-snap/handler'
-import MidtransRecurringHandler from '../channels/midtrans-recurring/handler'  
-import BankTransferHandler from '../channels/bank-transfer/handler'
+// TODO: Import Paddle handler when implemented
+// import PaddlePaymentHandler from '../channels/paddle/handler'
 
 export const POST = authenticatedApiWrapper(async (request: NextRequest, auth: AuthenticatedRequest) => {
   // Parse request body
@@ -88,67 +86,50 @@ export const POST = authenticatedApiWrapper(async (request: NextRequest, auth: A
   }
 
   // Route to specific payment channel handler
-  let handler: BasePaymentHandler
-
-  switch (payment_method) {
-    case 'midtrans_snap':
-      handler = new MidtransSnapHandler(paymentData)
-      break
-    
-    case 'midtrans_recurring':
-      if (!token_id) {
-        const error = await ErrorHandlingService.createError(
-          ErrorType.VALIDATION,
-          'Valid card token is required for recurring payments',
-          {
-            severity: ErrorSeverity.MEDIUM,
-            statusCode: 400,
-            userId: auth.userId,
-            userMessageKey: 'missing_required'
-          }
-        )
-        return formatError(error)
+  // Note: Midtrans and Bank Transfer payment methods have been removed
+  // TODO: Implement Paddle payment handler
+  
+  const error = await ErrorHandlingService.createError(
+    ErrorType.VALIDATION,
+    'Payment processing is currently unavailable. Paddle integration pending.',
+    {
+      severity: ErrorSeverity.MEDIUM,
+      statusCode: 503,
+      userId: auth.userId,
+      userMessageKey: 'default',
+      metadata: {
+        requestedMethod: payment_method,
+        note: 'Legacy payment methods (Midtrans/Bank Transfer) removed. Paddle integration in progress.'
       }
-      handler = new MidtransRecurringHandler(paymentData, token_id)
-      break
-      
-    case 'bank_transfer':
-      handler = new BankTransferHandler(paymentData)
-      break
-      
-    default:
-      const error = await ErrorHandlingService.createError(
-        ErrorType.VALIDATION,
-        `Unsupported payment method: ${payment_method}`,
-        {
-          severity: ErrorSeverity.MEDIUM,
-          statusCode: 400,
-          userId: auth.userId,
-          userMessageKey: 'invalid_format'
-        }
-      )
-      return formatError(error)
-  }
+    }
+  )
+  return formatError(error)
+  
+  // Future Paddle implementation:
+  // let handler: BasePaymentHandler
+  // switch (payment_method) {
+  //   case 'paddle':
+  //     handler = new PaddlePaymentHandler(paymentData)
+  //     break
+  //   default:
+  //     return formatError(await ErrorHandlingService.createError(...))
+  // }
 
-  try {
-    // Execute payment processing
-    const result = await handler.execute()
-    
-    // The handler returns NextResponse, so we return it as-is
-    // (handlers already use their own response formatting)
-    return result
-
-  } catch (error: any) {
-    const structuredError = await ErrorHandlingService.createError(
-      ErrorType.EXTERNAL_API,
-      error,
-      {
-        severity: ErrorSeverity.HIGH,
-        statusCode: 500,
-        userId: auth.userId,
-        userMessageKey: 'default'
-      }
-    )
-    return formatError(structuredError)
-  }
+  // TODO: Uncomment when Paddle handler is implemented
+  // try {
+  //   const result = await handler.execute()
+  //   return result
+  // } catch (error: any) {
+  //   const structuredError = await ErrorHandlingService.createError(
+  //     ErrorType.EXTERNAL_API,
+  //     error,
+  //     {
+  //       severity: ErrorSeverity.HIGH,
+  //       statusCode: 500,
+  //       userId: auth.userId,
+  //       userMessageKey: 'default'
+  //     }
+  //   )
+  //   return formatError(structuredError)
+  // }
 })

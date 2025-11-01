@@ -4,8 +4,6 @@
  */
 
 import { PaymentProcessor } from './core/PaymentProcessor'
-import { MidtransSnapService } from './midtrans/MidtransSnapService'
-import { MidtransRecurringService } from './midtrans/MidtransRecurringService'
 import { supabaseAdmin } from '@/lib/database'
 import { SecureServiceRoleWrapper } from '../security/SecureServiceRoleWrapper'
 
@@ -75,16 +73,9 @@ export class PaymentServiceFactory {
   private static async registerGateway(processor: PaymentProcessor, config: any): Promise<void> {
     try {
       switch (config.gateway_name.toLowerCase()) {
-        case 'midtrans':
-          // Register both Snap and Recurring services for Midtrans
-          const snapService = new MidtransSnapService(config)
-          const recurringService = new MidtransRecurringService(config)
-          
-          processor.registerGateway('midtrans_snap', snapService)
-          processor.registerGateway('midtrans_recurring', recurringService)
-          processor.registerGateway('midtrans', snapService) // Default fallback
-          
-          console.log('✅ Registered Midtrans payment services')
+        case 'paddle':
+          // Future: Register Paddle service when implemented
+          console.log('✅ Paddle gateway configuration loaded (implementation pending)')
           break
           
         default:
@@ -92,17 +83,6 @@ export class PaymentServiceFactory {
       }
     } catch (error) {
       console.error(`Error registering ${config.gateway_name} gateway:`, error)
-    }
-  }
-
-  /**
-   * Create standalone Midtrans service
-   */
-  static createMidtransService(type: 'snap' | 'recurring', config: any) {
-    if (type === 'snap') {
-      return new MidtransSnapService(config)
-    } else {
-      return new MidtransRecurringService(config)
     }
   }
 
