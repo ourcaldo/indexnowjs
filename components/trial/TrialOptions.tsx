@@ -231,8 +231,7 @@ export default function TrialOptions({}: TrialOptionsProps) {
               </p>
               <p className="text-sm text-warning/80">
                 A valid credit card is required to start your free trial. You'll be charged automatically 
-                when the trial ends unless you cancel before then. Other payment methods (bank transfer) 
-                are not available for trial subscriptions.
+                when the trial ends unless you cancel before then.
               </p>
             </div>
           </div>
