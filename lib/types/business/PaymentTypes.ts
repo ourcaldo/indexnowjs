@@ -4,9 +4,9 @@
 
 // Basic payment types
 export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded';
-export type PaymentMethod = 'midtrans-snap' | 'midtrans-recurring' | 'bank-transfer' | 'credit-card' | 'paypal';
+export type PaymentMethod = 'paddle' | 'credit-card';
 export type BillingPeriod = 'monthly' | 'annual';
-export type Currency = 'USD' | 'IDR' | 'EUR' | 'GBP' | 'SGD' | 'MYR';
+export type Currency = 'USD';
 
 // Package and pricing
 export interface Package {
@@ -151,60 +151,7 @@ export interface PaymentResponse {
   error?: string;
 }
 
-// Midtrans specific types
-export interface MidtransSnapResponse {
-  token: string;
-  redirect_url: string;
-}
-
-export interface MidtransNotification {
-  transaction_time: string;
-  transaction_status: string;
-  transaction_id: string;
-  status_message: string;
-  status_code: string;
-  signature_key: string;
-  payment_type: string;
-  order_id: string;
-  merchant_id: string;
-  masked_card?: string;
-  gross_amount: string;
-  fraud_status: string;
-  eci?: string;
-  currency: string;
-  approval_code?: string;
-  bank?: string;
-  va_numbers?: Array<{
-    va_number: string;
-    bank: string;
-  }>;
-  biller_code?: string;
-  bill_key?: string;
-}
-
-export interface MidtransRecurringRequest {
-  order_id: string;
-  gross_amount: number;
-  payment_type: 'credit_card';
-  credit_card: {
-    token_id: string;
-    authentication?: boolean;
-  };
-  customer_details: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-    billing_address: {
-      first_name: string;
-      last_name: string;
-      address: string;
-      city: string;
-      postal_code: string;
-      country_code: string;
-    };
-  };
-}
+// Paddle-specific types will be added here when implementing Paddle integration
 
 // Subscription management
 export interface Subscription {

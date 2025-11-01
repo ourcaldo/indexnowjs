@@ -279,7 +279,7 @@ export const PaymentSchemas = {
   paymentRequest: z.object({
     packageId: BaseSchemas.uuid,
     billingPeriod: z.enum(['monthly', 'quarterly', 'biannual', 'annual']),
-    paymentMethod: z.enum(['midtrans-snap', 'midtrans-recurring', 'bank-transfer']),
+    paymentMethod: z.enum(['paddle', 'credit-card']),
     customerInfo: customerInfoSchema,
     promoCode: z.string().optional(),
     isTrialToSubscription: z.boolean().default(false),

@@ -9,7 +9,7 @@ import type { CustomerInfo, InvoiceItem, InvoiceDiscount, InvoiceTax } from '../
 export interface CreatePaymentRequest {
   packageId: string;
   billingPeriod: 'monthly' | 'quarterly' | 'biannual' | 'annual';
-  paymentMethod: 'midtrans-snap' | 'midtrans-recurring' | 'bank-transfer' | 'credit-card';
+  paymentMethod: 'paddle' | 'credit-card';
   customerInfo: CustomerInfo;
   promoCode?: string;
   isTrialToSubscription?: boolean;
@@ -207,7 +207,7 @@ export const customerInfoSchema = z.object({
 export const createPaymentSchema = z.object({
   packageId: z.string().uuid('Invalid package ID'),
   billingPeriod: z.enum(['monthly', 'quarterly', 'biannual', 'annual']),
-  paymentMethod: z.enum(['midtrans-snap', 'midtrans-recurring', 'bank-transfer', 'credit-card']),
+  paymentMethod: z.enum(['paddle', 'credit-card']),
   customerInfo: customerInfoSchema,
   promoCode: z.string().optional(),
   isTrialToSubscription: z.boolean().optional(),

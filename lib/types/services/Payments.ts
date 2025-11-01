@@ -3,9 +3,9 @@
  */
 
 // Payment types - consolidated from business layer
-export type PaymentMethod = 'midtrans-snap' | 'midtrans-recurring' | 'bank-transfer' | 'credit-card' | 'paypal';
+export type PaymentMethod = 'paddle' | 'credit-card';
 export type BillingPeriod = 'monthly' | 'quarterly' | 'biannual' | 'annual';
-export type Currency = 'USD' | 'IDR';
+export type Currency = 'USD';
 export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'expired';
 
 export interface Package {
@@ -160,158 +160,7 @@ export interface GatewayCapabilities {
   reporting: boolean;
 }
 
-// Midtrans-specific types
-export interface MidtransConfig {
-  serverKey: string;
-  clientKey: string;
-  merchantId: string;
-  environment: 'sandbox' | 'production';
-  isProduction: boolean;
-  apiUrl: string;
-  snapUrl: string;
-  enableLogging: boolean;
-  overrideNotification: boolean;
-}
-
-export interface MidtransSnapRequest {
-  transactionDetails: {
-    orderId: string;
-    grossAmount: number;
-  };
-  creditCard?: {
-    secure: boolean;
-    channel?: 'migs';
-    bank?: string;
-    installment?: {
-      required: boolean;
-      terms?: Record<string, number[]>;
-    };
-    whitelist_bins?: string[];
-  };
-  customerDetails: MidtransCustomerDetails;
-  itemDetails?: MidtransItemDetails[];
-  billingAddress?: MidtransAddress;
-  shippingAddress?: MidtransAddress;
-  enabledPayments?: string[];
-  customField1?: string;
-  customField2?: string;
-  customField3?: string;
-  pageExpiry?: {
-    duration: number;
-    unit: 'day' | 'hour' | 'minute';
-  };
-  callbacks?: {
-    finish?: string;
-    error?: string;
-    pending?: string;
-  };
-  expiry?: {
-    start_time: string;
-    unit: 'day' | 'hour' | 'minute';
-    duration: number;
-  };
-}
-
-export interface MidtransCustomerDetails {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  billingAddress?: MidtransAddress;
-  shippingAddress?: MidtransAddress;
-}
-
-export interface MidtransAddress {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  countryCode: string;
-}
-
-export interface MidtransItemDetails {
-  id: string;
-  price: number;
-  quantity: number;
-  name: string;
-  brand?: string;
-  category?: string;
-  merchantName?: string;
-  url?: string;
-}
-
-export interface MidtransSnapResponse {
-  token: string;
-  redirectUrl: string;
-  expiresAt: Date;
-}
-
-export interface MidtransRecurringRequest {
-  name: string;
-  amount: number;
-  currency: string;
-  paymentType: string;
-  token: string;
-  schedule: {
-    interval: number;
-    intervalType: 'day' | 'week' | 'month';
-    maxInterval: number;
-    startTime: string;
-  };
-  metadata?: Record<string, any>;
-  customerDetails: MidtransCustomerDetails;
-  creditCard?: {
-    tokenId: string;
-    authentication?: boolean;
-  };
-}
-
-export interface MidtransRecurringResponse {
-  id: string;
-  name: string;
-  amount: number;
-  currency: string;
-  createdAt: Date;
-  schedule: {
-    interval: number;
-    intervalType: string;
-    maxInterval: number;
-    startTime: string;
-  };
-  status: 'active' | 'paused' | 'cancelled';
-  nextExecutionAt: Date;
-}
-
-export interface MidtransNotification {
-  transactionTime: string;
-  transactionStatus: string;
-  transactionId: string;
-  statusMessage: string;
-  statusCode: string;
-  signatureKey: string;
-  paymentType: string;
-  orderId: string;
-  merchantId: string;
-  grossAmount: string;
-  fraudStatus: string;
-  currency: string;
-  approvalCode?: string;
-  cardType?: string;
-  bank?: string;
-  maskedCard?: string;
-  eci?: string;
-  channelResponseCode?: string;
-  channelResponseMessage?: string;
-  threeDsVersion?: string;
-  challengeCompletion?: string;
-  settlementTime?: string;
-  customField1?: string;
-  customField2?: string;
-  customField3?: string;
-}
+// Paddle-specific types will be added here when implementing Paddle integration
 
 // Payment processor types
 export interface PaymentProcessor {

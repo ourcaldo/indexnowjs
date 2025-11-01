@@ -3,7 +3,7 @@
  */
 
 import type { ApiResponse, PaginatedResponse } from '../../common/ResponseTypes';
-import type { Package, Order, Transaction, Subscription, Invoice, PromoCode, Refund, CustomerInfo, PaymentMethod, MidtransSnapResponse, MidtransRecurringResponse } from '../../services/Payments';
+import type { Package, Order, Transaction, Subscription, Invoice, PromoCode, Refund, CustomerInfo, PaymentMethod } from '../../services/Payments';
 
 // Payment processing responses
 export interface CreatePaymentResponse extends ApiResponse<{
