@@ -18,23 +18,12 @@ import {
   Search
 } from 'lucide-react'
 
-interface CurrencyPricing {
-  regular_price: number
-  promo_price: number
-  period_label: string
-}
-
 interface PricingTier {
   period: 'monthly' | 'quarterly' | 'biannual' | 'annual'
-  IDR: CurrencyPricing
-  USD: CurrencyPricing
-}
-
-interface LegacyPricingTier {
-  period: 'monthly' | 'quarterly' | 'biannual' | 'annual'
   period_label: string
   regular_price: number
   promo_price: number
+  paddle_price_id?: string
 }
 
 interface PaymentPackage {
@@ -157,17 +146,12 @@ export default function PackageManagement() {
       }))
     }
 
-    const updatePricingTierField = (period: string, currency: 'IDR' | 'USD', field: keyof CurrencyPricing, value: any) => {
+    const updatePricingTierField = (period: string, field: string, value: any) => {
       const currentTiers = (formData.pricing_tiers as any) || {}
       
       // Ensure period object exists
       if (!currentTiers[period]) {
-        currentTiers[period] = {}
-      }
-      
-      // Ensure currency object exists for this period
-      if (!currentTiers[period][currency]) {
-        currentTiers[period][currency] = { period_label: period, regular_price: 0, promo_price: 0 }
+        currentTiers[period] = { period_label: period, regular_price: 0, promo_price: 0, paddle_price_id: '' }
       }
       
       // Update the specific field
@@ -175,10 +159,7 @@ export default function PackageManagement() {
         ...currentTiers,
         [period]: {
           ...currentTiers[period],
-          [currency]: {
-            ...currentTiers[period][currency],
-            [field]: value
-          }
+          [field]: value
         }
       }
       
@@ -205,14 +186,8 @@ export default function PackageManagement() {
 
     const initializePricingTiers = () => {
       const defaultTiers = {
-        monthly: {
-          IDR: { period_label: 'Monthly', regular_price: 0, promo_price: 0 },
-          USD: { period_label: 'Monthly', regular_price: 0, promo_price: 0 }
-        },
-        annual: {
-          IDR: { period_label: 'Annual', regular_price: 0, promo_price: 0 },
-          USD: { period_label: 'Annual', regular_price: 0, promo_price: 0 }
-        }
+        monthly: { period_label: 'Monthly', regular_price: 0, promo_price: 0, paddle_price_id: '' },
+        annual: { period_label: 'Annual', regular_price: 0, promo_price: 0, paddle_price_id: '' }
       }
       setFormData(prev => ({ ...prev, pricing_tiers: defaultTiers as any }))
     }
@@ -259,17 +234,20 @@ export default function PackageManagement() {
             />
           </div>
 
-          {/* Currency */}
+          {/* Currency - USD Only */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">Currency</label>
-            <select
-              value={formData.currency || 'IDR'}
-              onChange={(e) => updateField('currency', e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-            >
-              <option value="IDR">IDR (Indonesian Rupiah)</option>
-              <option value="USD">USD (US Dollar)</option>
-            </select>
+            <input
+              type="text"
+              value="USD"
+              readOnly
+              disabled
+              className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground"
+              data-testid="input-currency"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              All packages use USD pricing (Paddle handles multi-currency conversion)
+            </p>
           </div>
 
           {/* Sort Order */}

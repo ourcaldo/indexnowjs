@@ -236,15 +236,15 @@ export default function PaymentGateways() {
             </>
           )}
 
-          {/* Midtrans Recurring Configuration */}
-          {formData.slug === 'midtrans' && (
+          {/* Paddle Configuration */}
+          {formData.slug === 'paddle' && (
             <>
               <div className="md:col-span-2">
                 <h3 className="text-lg font-medium text-foreground mb-4 border-b border-border pb-2">
-                  Midtrans Recurring API Configuration
+                  Paddle Billing API Configuration
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Configure your Midtrans credentials for recurring subscription payments. Note: Midtrans only accepts IDR currency.
+                  Configure your Paddle credentials for subscription billing and payments. Paddle handles all payment methods, tax calculation, and compliance globally.
                 </p>
               </div>
 
@@ -254,6 +254,7 @@ export default function PaymentGateways() {
                   value={formData.configuration?.environment || 'sandbox'}
                   onChange={(e) => updateConfigurationField('environment', e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                  data-testid="select-paddle-environment"
                 >
                   <option value="sandbox">Sandbox</option>
                   <option value="production">Production</option>
@@ -261,56 +262,59 @@ export default function PaymentGateways() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Merchant ID</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Vendor ID</label>
                 <input
                   type="text"
-                  value={formData.api_credentials?.merchant_id || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    api_credentials: {
-                      ...prev.api_credentials,
-                      merchant_id: e.target.value
-                    }
-                  }))}
+                  value={formData.configuration?.vendor_id || ''}
+                  onChange={(e) => updateConfigurationField('vendor_id', e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="G123456789"
+                  placeholder="12345"
+                  data-testid="input-paddle-vendor-id"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Client Key</label>
-                <input
-                  type="text"
-                  value={formData.api_credentials?.client_key || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    api_credentials: {
-                      ...prev.api_credentials,
-                      client_key: e.target.value
-                    }
-                  }))}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="SB-Mid-client-..."
-                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your Paddle Vendor ID from Settings → Authentication
+                </p>
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">Server Key</label>
+                <label className="block text-sm font-medium text-foreground mb-2">API Key</label>
                 <input
                   type="password"
-                  value={formData.api_credentials?.server_key || ''}
+                  value={formData.api_credentials?.api_key || ''}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
                     api_credentials: {
                       ...prev.api_credentials,
-                      server_key: e.target.value
+                      api_key: e.target.value
                     }
                   }))}
                   className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="SB-Mid-server-..."
+                  placeholder="paddle_api_..."
+                  data-testid="input-paddle-api-key"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Server key will be encrypted before storing in database
+                  API key will be encrypted before storing in database. Recommended: Store in environment variables (PADDLE_API_KEY).
+                </p>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-foreground mb-2">Webhook Secret</label>
+                <input
+                  type="password"
+                  value={formData.api_credentials?.webhook_secret || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    api_credentials: {
+                      ...prev.api_credentials,
+                      webhook_secret: e.target.value
+                    }
+                  }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                  placeholder="pdl_ntfset_..."
+                  data-testid="input-paddle-webhook-secret"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Webhook secret for verifying event signatures. Recommended: Store in environment variables (PADDLE_WEBHOOK_SECRET).
                 </p>
               </div>
 
@@ -321,106 +325,12 @@ export default function PaymentGateways() {
                   value={formData.configuration?.webhook_url || ''}
                   onChange={(e) => updateConfigurationField('webhook_url', e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="https://yourdomain.com/api/midtrans/webhook"
+                  placeholder="https://yourdomain.com/api/paddle/webhook"
                   readOnly
+                  data-testid="input-paddle-webhook-url"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  This webhook URL should be configured in your Midtrans dashboard
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* Midtrans Snap Configuration */}
-          {formData.slug === 'midtrans_snap' && (
-            <>
-              <div className="md:col-span-2">
-                <h3 className="text-lg font-medium text-foreground mb-4 border-b border-border pb-2">
-                  Midtrans Snap API Configuration
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Configure your Midtrans Snap credentials for one-time payments with popup interface. Supports credit cards, bank transfers, e-wallets, and more payment methods.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Environment</label>
-                <select
-                  value={formData.configuration?.environment || 'sandbox'}
-                  onChange={(e) => updateConfigurationField('environment', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                >
-                  <option value="sandbox">Sandbox</option>
-                  <option value="production">Production</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Merchant ID</label>
-                <input
-                  type="text"
-                  value={formData.api_credentials?.merchant_id || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    api_credentials: {
-                      ...prev.api_credentials,
-                      merchant_id: e.target.value
-                    }
-                  }))}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="G123456789"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Client Key</label>
-                <input
-                  type="text"
-                  value={formData.api_credentials?.client_key || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    api_credentials: {
-                      ...prev.api_credentials,
-                      client_key: e.target.value
-                    }
-                  }))}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="SB-Mid-client-..."
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">Server Key</label>
-                <input
-                  type="password"
-                  value={formData.api_credentials?.server_key || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    api_credentials: {
-                      ...prev.api_credentials,
-                      server_key: e.target.value
-                    }
-                  }))}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="SB-Mid-server-..."
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Server key will be encrypted before storing in database
-                </p>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">Webhook URL</label>
-                <input
-                  type="url"
-                  value={formData.configuration?.webhook_url || ''}
-                  onChange={(e) => updateConfigurationField('webhook_url', e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="https://yourdomain.com/api/midtrans/webhook"
-                  readOnly
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  This webhook URL should be configured in your Midtrans dashboard for payment notifications
+                  This webhook URL should be configured in your Paddle dashboard under Developer Tools → Notifications
                 </p>
               </div>
             </>
