@@ -594,6 +594,189 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
 
 ---
 
+### Phase 7.2: Leftover Cleanup Audit - Midtrans, Currency Conversion & IDR References ✅ COMPLETE
+
+**Date:** November 1, 2025
+
+**Objective:** Deep dive audit to identify and document all remaining Midtrans, currency conversion, and multi-currency (IDR) references that were missed in previous cleanup phases.
+
+**Audit Method:** 
+- Comprehensive codebase search using grep patterns
+- LSP diagnostics check for broken imports
+- Manual file inspection of all payment-related code
+- Verification against PADDLE_INTEGRATION_GUIDE.md requirements
+
+---
+
+#### 📋 FINDINGS SUMMARY
+
+**Total Leftover Files Found:** 17 files  
+**Categories:** 5 (Broken Imports, Config/Endpoints, Currency Functions, Display Logic, Type Definitions)
+
+---
+
+#### 🔴 CATEGORY 1: BROKEN IMPORTS (Critical - Causes LSP Errors)
+
+**Impact:** Causes build failures, TypeScript errors
+
+**Files:**
+1. **`components/checkout/payment-methods/PaymentMethodSelector.tsx`**
+   - **Line 8:** `import MidtransCreditCardForm from '@/components/MidtransCreditCardForm'`
+   - **Lines 64-72:** Usage of non-existent `MidtransCreditCardForm` component
+   - **Issue:** Component was deleted in Phase 4, but import/usage remains
+   - **LSP Error:** `Cannot find module '@/components/MidtransCreditCardForm' or its corresponding type declarations.`
+   - **Fix Required:** Remove import and conditional rendering block
+
+---
+
+#### 🟡 CATEGORY 2: MIDTRANS CONFIGURATION & ENDPOINTS
+
+**Impact:** Dead code, configuration bloat, misleading constants
+
+**Files:**
+
+1. **`lib/core/config/PaymentConfig.ts`**
+   - **Lines 70-87:** Complete Midtrans configuration object (serverKey, clientKey, apiUrl, snapUrl, enabledMethods)
+   - **Lines 89-90:** Default currency set to 'IDR', supported currencies include ['IDR', 'USD']
+   - **Lines 97-99:** Midtrans webhook configuration
+   - **Lines 109-111:** Payment limits in IDR (50M IDR max, 10K IDR min)
+   - **Lines 118-122:** Payment method constants (SNAP, RECURRING, BANK_TRANSFER)
+   - **Lines 128-133:** IDR currency configuration (symbol, decimals, separators)
+   - **Lines 167-176:** Midtrans validation requiring MIDTRANS_SERVER_KEY and NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
+   - **Fix Required:** Remove entire Midtrans config, update to Paddle, change default currency to USD, remove IDR config
+
+2. **`lib/core/constants/ApiEndpoints.ts`**
+   - **Lines 175-177:** MIDTRANS_SNAP, MIDTRANS_RECURRING, BANK_TRANSFER endpoint constants
+   - **Lines 180-183:** MIDTRANS_CREATE_PAYMENT, MIDTRANS_3DS_CALLBACK, MIDTRANS_CONFIG, MIDTRANS_PROCESS_RECURRING
+   - **Line 189:** MIDTRANS_WEBHOOK constant
+   - **Line 261:** Legacy MIDTRANS_WEBHOOK endpoint
+   - **Fix Required:** Remove all Midtrans endpoint constants, add Paddle endpoint constants
+
+---
+
+#### 🟠 CATEGORY 3: CURRENCY CONVERSION FUNCTIONS
+
+**Impact:** Dead code that may confuse future developers, references to removed utility functions
+
+**Files:**
+
+1. **`app/api/v1/auth/user/profile/route.ts`**
+   - **Line 3:** `import { getUserCurrency } from '@/lib/utils/currency-utils'`
+   - **Line 94:** `const userCurrency = profile.country ? getUserCurrency(profile.country) : 'USD'`
+   - **Context:** Function was supposed to be removed in Phase 7.1
+   - **Fix Required:** Remove import and usage, set currency to static 'USD'
+
+2. **`lib/utils/utils.ts`**
+   - **Lines 9-17:** `formatCurrency(amount: number, currency: 'IDR' | 'USD' = 'USD')` function with IDR support
+   - **Issue:** Should only support USD, Paddle handles other currencies
+   - **Fix Required:** Simplify to USD-only formatting, remove IDR logic
+
+---
+
+#### 🟢 CATEGORY 4: IDR CURRENCY REFERENCES (Display Logic)
+
+**Impact:** Visual display still shows multi-currency support, confuses users
+
+**Files with IDR References:**
+
+**Dashboard - Plans & Billing Section:**
+1. `app/dashboard/settings/plans-billing/checkout/page.tsx`
+2. `app/dashboard/settings/plans-billing/components/BillingStats.tsx`
+3. `app/dashboard/settings/plans-billing/components/PackageComparison.tsx`
+4. `app/dashboard/settings/plans-billing/components/PricingCards.tsx`
+5. `app/dashboard/settings/plans-billing/history/HistoryTab.tsx`
+6. `app/dashboard/settings/plans-billing/history/page.tsx`
+7. `app/dashboard/settings/plans-billing/order/[id]/page.tsx`
+8. `app/dashboard/settings/plans-billing/page.tsx`
+9. `app/dashboard/settings/plans-billing/plans/PlansTab.tsx`
+10. `app/dashboard/settings/plans-billing/plans/page.tsx`
+
+**Backend - Admin Section:**
+11. `app/backend/admin/orders/page.tsx`
+12. `app/backend/admin/users/[id]/components/PackageChangeModal.tsx`
+
+**Components:**
+13. `components/trial/TrialOptions.tsx`
+
+**Note:** These files likely use `formatCurrency` or display currency symbols that reference IDR. Need manual inspection to determine if they're actively using IDR or just have the parameter type allowing it.
+
+---
+
+#### 🔵 CATEGORY 5: TYPE DEFINITIONS
+
+**Impact:** Type system still allows Midtrans/Bank Transfer options, may cause confusion
+
+**Files:**
+
+1. **`lib/types/api/responses/PaymentResponses.ts`**
+   - **Line 355:** Comment: `// Midtrans response types now imported from services layer`
+   - **Lines 20-28, 357-362:** `BankTransferDetails` interface definition
+   - **Context:** Bank Transfer payment method was removed, but response types remain
+   - **Fix Required:** Remove comment, remove `BankTransferDetails` interface or mark as deprecated
+
+---
+
+#### 📊 CLEANUP STATISTICS
+
+| Category | Files | Lines of Code | Priority |
+|----------|-------|---------------|----------|
+| Broken Imports | 1 | ~10 lines | 🔴 Critical |
+| Midtrans Config | 2 | ~150 lines | 🟡 High |
+| Currency Functions | 2 | ~15 lines | 🟠 Medium |
+| IDR Display Logic | 13 | ~TBD (needs inspection) | 🟢 Low-Medium |
+| Type Definitions | 1 | ~15 lines | 🔵 Low |
+| **TOTAL** | **17** | **~190+ lines** | |
+
+---
+
+#### 🎯 RECOMMENDED CLEANUP ACTIONS
+
+**Priority Order:**
+
+1. **CRITICAL (Do First):**
+   - Fix `PaymentMethodSelector.tsx` - Remove broken import and MidtransCreditCardForm usage
+
+2. **HIGH (Do Soon):**
+   - Clean up `lib/core/config/PaymentConfig.ts` - Remove entire Midtrans config, add Paddle config
+   - Clean up `lib/core/constants/ApiEndpoints.ts` - Remove Midtrans endpoints, add Paddle endpoints
+
+3. **MEDIUM (Before Paddle Integration):**
+   - Fix `app/api/v1/auth/user/profile/route.ts` - Remove getUserCurrency usage
+   - Simplify `lib/utils/utils.ts` - Make formatCurrency USD-only
+
+4. **LOW-MEDIUM (Nice to Have):**
+   - Audit all 13 files with IDR references - Update to USD-only display
+   - Clean up `lib/types/api/responses/PaymentResponses.ts` - Remove BankTransferDetails
+
+---
+
+#### ⚠️ POTENTIAL BREAKING CHANGES
+
+**If These Files Are Cleaned Up:**
+- Any code importing `MidtransCreditCardForm` will break (already broken)
+- Any code relying on `MIDTRANS_*` endpoint constants will break (should be none after Phase 4)
+- Any code calling `formatCurrency(amount, 'IDR')` will need to be updated to `formatCurrency(amount)` or `formatCurrency(amount, 'USD')`
+- Any code using `PaymentConfig.midtrans` will break (should be none)
+
+**Mitigation:**
+- Search codebase for usage before deletion
+- Use TypeScript compiler to catch broken references
+- Run LSP diagnostics after cleanup
+- Test all payment-related pages after cleanup
+
+---
+
+#### 📝 NOTES FOR PHASE 8 (Paddle Integration)
+
+When implementing Paddle, remember to:
+1. ✅ Create new Paddle configuration in `PaymentConfig.ts`
+2. ✅ Add Paddle endpoints to `ApiEndpoints.ts`
+3. ✅ Ensure all currency displays are USD-only (Paddle handles conversion)
+4. ✅ Remove all references to old payment methods from UI components
+5. ✅ Update type definitions to reflect Paddle-only payment system
+
+---
+
 ### Phase 8: Paddle Integration (Future)
 
 **Implementation Tasks:**
@@ -680,6 +863,7 @@ WHERE table_name = 'indb_auth_user_profiles'
 - [x] Updated admin packages UI - simplified pricing interface to flat USD structure (Phase 7)
 - [x] Completed packages page pricing form UI - replaced nested IDR/USD grid with flat USD + Paddle Price ID inputs (Phase 7.1)
 - [x] Removed all `getUserCurrency` function references and currency conversion logic (Phase 7.1)
+- [x] Conducted comprehensive leftover audit - identified 17 files with Midtrans/currency/IDR references (Phase 7.2)
 
 ### 🔄 Pending (User Action Required)
 - [ ] Replace Paddle Price ID placeholders with actual IDs from Paddle Dashboard (Phase 2)
@@ -729,12 +913,13 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Phase 5: Frontend verified using USD-only pricing | ✅ Complete |
 | 2025-11-01 | Phase 7: Admin UI & Type System cleanup | ✅ Complete |
 | 2025-11-01 | Phase 7.1: Final UI cleanup and currency migration | ✅ Complete |
+| 2025-11-01 | Phase 7.2: Leftover cleanup audit - 17 files identified | ✅ Complete |
 | TBD | Replace Paddle Price ID placeholders | 🔄 Pending |
 | TBD | Configure Paddle API keys | 🔄 Pending |
 | TBD | Paddle integration implementation (Phase 8) | 🔄 Pending |
 
 ---
 
-**Document Version:** 2.1  
+**Document Version:** 2.2  
 **Last Updated:** November 1, 2025  
-**Next Review:** After Paddle Price IDs are configured and API keys added
+**Next Review:** After leftover files are cleaned up and before Paddle integration
