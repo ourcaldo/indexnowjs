@@ -7,18 +7,16 @@ import {
   BarChart3,
   DollarSign
 } from 'lucide-react'
-import { getUserCurrency } from '@/lib/utils/currency-utils'
 
 interface PricingData {
   promo_price: number
   period_label: string
   regular_price: number
+  paddle_price_id?: string
 }
 
 interface PricingTiers {
-  [billingPeriod: string]: {
-    [currency: string]: PricingData
-  }
+  [billingPeriod: string]: PricingData
 }
 
 interface Package {
@@ -89,7 +87,6 @@ export function PackageSubscriptionCard({ user }: PackageSubscriptionCardProps) 
                         try {
                           pricingTiers = JSON.parse(pricingTiers)
                         } catch (e) {
-                          console.log('Failed to parse pricing_tiers as JSON:', pricingTiers)
                           return 'Free'
                         }
                       }
@@ -99,25 +96,19 @@ export function PackageSubscriptionCard({ user }: PackageSubscriptionCardProps) 
                         return 'Free'
                       }
                       
-                      // Get pricing for current billing period and user's currency
+                      // Get pricing for current billing period (flat USD structure)
                       const billingPeriod = user.package.billing_period
-                      const currency = getUserCurrency(user.country)
                       
-                      const periodTiers = pricingTiers[billingPeriod]
-                      if (!periodTiers) {
+                      const pricingData = pricingTiers[billingPeriod]
+                      if (!pricingData) {
                         return 'Free'
                       }
                       
-                      const currencyData = periodTiers[currency]
-                      if (!currencyData) {
+                      const price = pricingData.promo_price || pricingData.regular_price
+                      if (price === undefined || price === null || price === 0) {
                         return 'Free'
                       }
-                      
-                      const price = currencyData.promo_price || currencyData.regular_price
-                      if (price === undefined || price === null) {
-                        return 'Free'
-                      }
-                      return price === 0 ? 'Free' : `${currency} ${price.toLocaleString()}`
+                      return `$${price.toLocaleString()}`
                     })()}
                   </span>
                   <span className="text-sm text-muted-foreground">

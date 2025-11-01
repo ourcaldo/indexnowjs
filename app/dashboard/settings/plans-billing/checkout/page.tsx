@@ -1,6 +1,5 @@
 'use client'
 
-/// <reference path="../../../../types/midtrans.d.ts" />
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
@@ -8,7 +7,6 @@ import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import { authService } from '@/lib/auth'
 import { supabaseBrowser } from '@/lib/database'
 import { usePaymentProcessor } from '@/hooks/usePaymentProcessor'
-import { MidtransClientService } from '@/lib/payment-services/midtrans-client-service'
 import BillingPeriodSelector from '@/components/checkout/BillingPeriodSelector'
 import OrderSummary from '@/components/checkout/OrderSummary'
 import PaymentMethodSelector from '@/components/checkout/payment-methods/PaymentMethodSelector'
@@ -155,10 +153,8 @@ export default function CheckoutPage() {
           country: userProfile.country || ''
         }))
 
-        // Set user currency based on country from profile
-        const { getUserCurrency } = await import('@/lib/utils/currency-utils')
-        const detectedCurrency = getUserCurrency(userProfile.country)
-        setUserCurrency(detectedCurrency)
+        // Set currency to USD (Paddle handles multi-currency conversion)
+        setUserCurrency('USD')
 
         // Fetch package and payment gateway data
         const [packageResponse, gatewaysResponse] = await Promise.all([
@@ -226,55 +222,19 @@ export default function CheckoutPage() {
     }
   }, [package_id, router, addToast, isTrialFlow])
 
-  // Load Midtrans SDKs
-  useEffect(() => {
-    const loadMidtransSDKs = async () => {
-      try {
-        const token = (await supabaseBrowser.auth.getSession()).data.session?.access_token
-        if (!token) return
-        
-        const config = await MidtransClientService.getMidtransConfig(token)
-        
-        if (config) {
-          await Promise.all([
-            MidtransClientService.load3DSSDK(config.client_key, config.environment),
-            MidtransClientService.loadSnapSDK(config.client_key, config.environment)
-          ])
-        }
-      } catch (error) {
-        // SDK loading failures are handled silently
-      }
-    }
 
-    loadMidtransSDKs()
-  }, [])
-
-  // Pricing calculation
+  // Pricing calculation (flat USD structure)
   const calculatePrice = () => {
     if (!selectedPackage) return { price: 0, discount: 0, originalPrice: 0 }
 
     if (selectedPackage.pricing_tiers && typeof selectedPackage.pricing_tiers === 'object' && selectedPackage.pricing_tiers[billing_period]) {
-      const periodTier = selectedPackage.pricing_tiers[billing_period]
+      const pricingData = selectedPackage.pricing_tiers[billing_period]
+      
+      const price = pricingData.promo_price || pricingData.regular_price
+      const originalPrice = pricingData.regular_price
+      const discount = pricingData.promo_price ? Math.round(((originalPrice - pricingData.promo_price) / originalPrice) * 100) : 0
 
-      if (periodTier[userCurrency]) {
-        const currencyTier = periodTier[userCurrency]
-        const price = currencyTier.promo_price || currencyTier.regular_price
-        const originalPrice = currencyTier.regular_price
-        const discount = currencyTier.promo_price ? Math.round(((originalPrice - currencyTier.promo_price) / originalPrice) * 100) : 0
-
-        return { price, discount, originalPrice }
-      }
-
-      if (Array.isArray(selectedPackage.pricing_tiers)) {
-        const tier = selectedPackage.pricing_tiers.find((t: any) => t.period === billing_period)
-        if (tier) {
-          const price = tier.promo_price || tier.regular_price
-          const originalPrice = tier.regular_price
-          const discount = tier.promo_price ? Math.round(((originalPrice - tier.promo_price) / originalPrice) * 100) : 0
-
-          return { price, discount, originalPrice }
-        }
-      }
+      return { price, discount, originalPrice }
     }
 
     return { price: 0, discount: 0, originalPrice: 0 }
@@ -378,21 +338,7 @@ export default function CheckoutPage() {
         }
       }
 
-      // Handle Midtrans recurring (credit card)
-      if (selectedGateway?.slug === 'midtrans' || selectedGateway?.slug === 'midtrans_recurring') {
-        if (!window.midtransSubmitCard) {
-          addToast({
-            title: "Payment system not ready",
-            description: "Please wait a moment and try again.",
-            type: "error"
-          })
-          return
-        }
-        await window.midtransSubmitCard()
-        return
-      }
-
-      // Handle other payment methods
+      // Process payment via payment processor
       await paymentProcessor.processPayment(paymentRequest, token)
 
     } catch (error) {
@@ -431,7 +377,6 @@ export default function CheckoutPage() {
                 {/* Billing Period Selection */}
                 <BillingPeriodSelector
                   selectedPackage={selectedPackage}
-                  userCurrency={userCurrency}
                   selectedPeriod={billing_period}
                   onPeriodChange={setBillingPeriod}
                 />
@@ -461,7 +406,6 @@ export default function CheckoutPage() {
             <div className="lg:col-span-1">
               <OrderSummary
                 selectedPackage={selectedPackage}
-                userCurrency={userCurrency}
                 billingPeriod={billing_period}
                 isTrialFlow={isTrialFlow}
               />

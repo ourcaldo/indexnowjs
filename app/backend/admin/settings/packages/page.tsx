@@ -344,85 +344,60 @@ export default function PackageManagement() {
                         </h4>
                       </div>
 
-                      {/* Currency Pricing Grid */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* IDR Pricing */}
-                        <div className="bg-white p-4 rounded-lg border border-border">
-                          <h4 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
-                            <span className="bg-success text-white px-2 py-1 text-xs rounded">IDR</span>
-                            Indonesian Rupiah
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
-                              <label className="block text-sm font-medium text-foreground mb-2">Period Label</label>
-                              <input
-                                type="text"
-                                value={tierData.IDR?.period_label || periodInfo.defaultLabel}
-                                onChange={(e) => updatePricingTierField(periodInfo.period, 'IDR', 'period_label', e.target.value)}
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent text-sm"
-                                placeholder={periodInfo.defaultLabel}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-foreground mb-2">Regular Price</label>
-                              <input
-                                type="number"
-                                value={tierData.IDR?.regular_price || 0}
-                                onChange={(e) => updatePricingTierField(periodInfo.period, 'IDR', 'regular_price', parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent text-sm"
-                                placeholder="50000"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-foreground mb-2">Promo Price</label>
-                              <input
-                                type="number"
-                                value={tierData.IDR?.promo_price || 0}
-                                onChange={(e) => updatePricingTierField(periodInfo.period, 'IDR', 'promo_price', parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent text-sm"
-                                placeholder="25000"
-                              />
-                            </div>
+                      {/* USD Pricing Fields */}
+                      <div className="bg-white p-4 rounded-lg border border-border">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">Period Label</label>
+                            <input
+                              type="text"
+                              value={tierData.period_label || periodInfo.defaultLabel}
+                              onChange={(e) => updatePricingTierField(periodInfo.period, 'period_label', e.target.value)}
+                              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                              placeholder={periodInfo.defaultLabel}
+                              data-testid={`input-period-label-${periodInfo.period}`}
+                            />
                           </div>
-                        </div>
-
-                        {/* USD Pricing */}
-                        <div className="bg-white p-4 rounded-lg border border-border">
-                          <h4 className="text-md font-semibold text-foreground mb-3 flex items-center gap-2">
-                            <span className="bg-accent text-white px-2 py-1 text-xs rounded">USD</span>
-                            US Dollar
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
-                              <label className="block text-sm font-medium text-foreground mb-2">Period Label</label>
-                              <input
-                                type="text"
-                                value={tierData.USD?.period_label || periodInfo.defaultLabel}
-                                onChange={(e) => updatePricingTierField(periodInfo.period, 'USD', 'period_label', e.target.value)}
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent text-sm"
-                                placeholder={periodInfo.defaultLabel}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-foreground mb-2">Regular Price</label>
-                              <input
-                                type="number"
-                                value={tierData.USD?.regular_price || 0}
-                                onChange={(e) => updatePricingTierField(periodInfo.period, 'USD', 'regular_price', parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent text-sm"
-                                placeholder="10"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-foreground mb-2">Promo Price</label>
-                              <input
-                                type="number"
-                                value={tierData.USD?.promo_price || 0}
-                                onChange={(e) => updatePricingTierField(periodInfo.period, 'USD', 'promo_price', parseFloat(e.target.value) || 0)}
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent text-sm"
-                                placeholder="5"
-                              />
-                            </div>
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">Paddle Price ID</label>
+                            <input
+                              type="text"
+                              value={tierData.paddle_price_id || ''}
+                              onChange={(e) => updatePricingTierField(periodInfo.period, 'paddle_price_id', e.target.value)}
+                              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent font-mono text-sm"
+                              placeholder="pri_01hxxxx..."
+                              data-testid={`input-paddle-price-id-${periodInfo.period}`}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Get this from Paddle Dashboard → Catalog → Prices
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">Regular Price (USD)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={tierData.regular_price || 0}
+                              onChange={(e) => updatePricingTierField(periodInfo.period, 'regular_price', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                              placeholder="29.99"
+                              data-testid={`input-regular-price-${periodInfo.period}`}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">Promo Price (USD)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={tierData.promo_price || 0}
+                              onChange={(e) => updatePricingTierField(periodInfo.period, 'promo_price', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                              placeholder="19.99"
+                              data-testid={`input-promo-price-${periodInfo.period}`}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Leave at 0 if no promotional pricing
+                            </p>
                           </div>
                         </div>
                       </div>

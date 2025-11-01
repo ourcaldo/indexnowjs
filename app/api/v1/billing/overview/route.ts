@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server'
-import { getUserCurrency } from '@/lib/utils/currency-utils'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { logger } from '@/lib/monitoring/error-handling'
 import { authenticatedApiWrapper } from '@/lib/core/api-response-middleware'
@@ -158,13 +157,12 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
       billing_period: currentSubscription.billing_period
     }
   } else if (userProfile.package_id && userProfile.package) {
-    const userCurrency = getUserCurrency(userProfile.country)
     const billingPeriod = userProfile.package.billing_period || 'monthly'
     
     let calculatedAmount = 0
-    if (userProfile.package.pricing_tiers?.[billingPeriod]?.[userCurrency]) {
-      const currencyTier = userProfile.package.pricing_tiers[billingPeriod][userCurrency]
-      calculatedAmount = currencyTier.promo_price || currencyTier.regular_price || 0
+    if (userProfile.package.pricing_tiers?.[billingPeriod]) {
+      const pricingTier = userProfile.package.pricing_tiers[billingPeriod]
+      calculatedAmount = pricingTier.promo_price || pricingTier.regular_price || 0
     } else {
       calculatedAmount = userProfile.package.price || 0
     }
@@ -185,7 +183,6 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
     
     if (completedTransaction && completedTransaction.package) {
       const transactionPackage = completedTransaction.package
-      const userCurrency = getUserCurrency(userProfile.country)
       const billingPeriod = (completedTransaction.metadata as any)?.billing_period || 
                            completedTransaction.billing_period || 
                            'monthly'

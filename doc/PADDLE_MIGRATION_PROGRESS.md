@@ -525,6 +525,75 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
 
 ---
 
+### Phase 7.1: Final UI Cleanup and Currency Migration ✅ COMPLETE
+
+**Date:** November 1, 2025
+
+**Objective:** Complete the remaining PENDING task from Phase 7 - update the packages page pricing form UI to use flat USD + Paddle Price ID fields, and remove all remaining `getUserCurrency` references.
+
+**Changes Made:**
+
+1. **Fixed Packages Admin UI** (`app/backend/admin/settings/packages/page.tsx`):
+   - ✅ Replaced nested IDR/USD pricing grid (lines 347-428) with flat USD pricing form
+   - ✅ Added fields:
+     - Period Label (text input)
+     - Paddle Price ID (text input with helper text)
+     - Regular Price (USD) (number input)
+     - Promo Price (USD) (number input)
+   - ✅ Removed all IDR/USD currency selection UI
+   - ✅ Added data-testid attributes for all new fields
+   - ✅ Added helpful placeholder text and descriptions
+   - **Lines Changed:** ~82 lines replaced with ~57 lines
+
+2. **Removed `getUserCurrency` Function References:**
+   
+   - **`app/api/v1/billing/overview/route.ts`:**
+     - ✅ Removed import of `getUserCurrency`
+     - ✅ Updated pricing tier access to use flat structure (removed `[userCurrency]` nesting)
+     - ✅ Lines 161-168: Changed from `periodTier[userCurrency]` to direct `pricingTier` access
+     - ✅ Lines 188-193: Removed currency detection for transaction data
+
+   - **`app/dashboard/settings/plans-billing/checkout/page.tsx`:**
+     - ✅ Removed Midtrans import and SDK loading code
+     - ✅ Removed dynamic currency detection (lines 159-161)
+     - ✅ Set currency to hardcoded 'USD'
+     - ✅ Updated `calculatePrice()` to use flat pricing structure
+     - ✅ Removed `userCurrency` prop from `BillingPeriodSelector`
+     - ✅ Removed `userCurrency` prop from `OrderSummary`
+     - ✅ Removed Midtrans-specific payment handling code (lines 342-353)
+
+   - **`app/backend/admin/users/[id]/components/PackageSubscriptionCard.tsx`:**
+     - ✅ Removed import of `getUserCurrency`
+     - ✅ Updated type definitions from nested currency structure to flat structure
+     - ✅ Changed pricing access from `periodTiers[currency]` to direct `pricingData` access
+     - ✅ Updated price display to always show USD
+
+3. **Updated OrderSummary Component** (`components/checkout/OrderSummary.tsx`):
+   - ✅ Removed `userCurrency` prop from interface
+   - ✅ Removed currency detection and IDR conversion logic
+   - ✅ Updated `calculatePrice()` to use flat USD structure
+   - ✅ Removed all `userCurrency` state and effects
+   - ✅ Changed all `formatCurrency()` calls to use single argument (USD-only)
+   - ✅ Removed currency conversion display section
+   - **Lines Removed:** ~44 lines of currency conversion code
+
+**Files Modified:**
+- `app/backend/admin/settings/packages/page.tsx`
+- `app/api/v1/billing/overview/route.ts`
+- `app/dashboard/settings/plans-billing/checkout/page.tsx`
+- `app/backend/admin/users/[id]/components/PackageSubscriptionCard.tsx`
+- `components/checkout/OrderSummary.tsx`
+
+**Total Code Removed:** ~120 lines of currency-related code
+
+**Verification:**
+- ✅ All LSP errors resolved
+- ✅ No `getUserCurrency` function references remaining in codebase
+- ✅ All components now use flat USD pricing structure
+- ✅ All currency conversion logic removed (Paddle will handle this)
+
+---
+
 ### Phase 8: Paddle Integration (Future)
 
 **Implementation Tasks:**
@@ -609,9 +678,8 @@ WHERE table_name = 'indb_auth_user_profiles'
 - [x] Cleaned up type system - removed all Midtrans types, updated to Paddle (Phase 7)
 - [x] Updated admin payment gateway UI - added Paddle configuration form (Phase 7)
 - [x] Updated admin packages UI - simplified pricing interface to flat USD structure (Phase 7)
-
-### ⚠️ Final UI Update Required
-- [ ] Complete packages page pricing form UI - replace nested IDR/USD grid with flat USD + Paddle Price ID inputs (see lines 347-450 in app/backend/admin/settings/packages/page.tsx)
+- [x] Completed packages page pricing form UI - replaced nested IDR/USD grid with flat USD + Paddle Price ID inputs (Phase 7.1)
+- [x] Removed all `getUserCurrency` function references and currency conversion logic (Phase 7.1)
 
 ### 🔄 Pending (User Action Required)
 - [ ] Replace Paddle Price ID placeholders with actual IDs from Paddle Dashboard (Phase 2)
@@ -659,13 +727,14 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Paddle gateway added | ✅ Complete |
 | 2025-11-01 | Phase 4: All Midtrans/Bank Transfer code removed | ✅ Complete |
 | 2025-11-01 | Phase 5: Frontend verified using USD-only pricing | ✅ Complete |
-| 2025-11-01 | Phase 7: Admin UI & Type System cleanup | ✅ Nearly Complete (1 form UI pending) |
+| 2025-11-01 | Phase 7: Admin UI & Type System cleanup | ✅ Complete |
+| 2025-11-01 | Phase 7.1: Final UI cleanup and currency migration | ✅ Complete |
 | TBD | Replace Paddle Price ID placeholders | 🔄 Pending |
 | TBD | Configure Paddle API keys | 🔄 Pending |
 | TBD | Paddle integration implementation (Phase 8) | 🔄 Pending |
 
 ---
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Last Updated:** November 1, 2025  
 **Next Review:** After Paddle Price IDs are configured and API keys added

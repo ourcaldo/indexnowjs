@@ -1,59 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Check, Shield, Info } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { Check, Shield } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils/currency-utils'
 
 interface OrderSummaryProps {
   selectedPackage: any
   billingPeriod: string
-  userCurrency: 'USD' | 'IDR'
   isTrialFlow?: boolean
 }
 
-export default function OrderSummary({ selectedPackage, billingPeriod, userCurrency, isTrialFlow = false }: OrderSummaryProps) {
-  const [idrAmount, setIdrAmount] = useState<number | null>(null)
-  const [conversionRate, setConversionRate] = useState<number | null>(null)
-
-  useEffect(() => {
-    const fetchConversionRate = async () => {
-      if (userCurrency === 'USD') {
-        try {
-          const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
-          if (response.ok) {
-            const data = await response.json()
-            const rate = data.rates?.IDR
-            if (rate && typeof rate === 'number') {
-              setConversionRate(rate)
-              const usdPrice = calculatePrice().price
-              setIdrAmount(Math.round(usdPrice * rate))
-            }
-          }
-        } catch (error) {
-          // Use fallback rate
-          const fallbackRate = 15800
-          setConversionRate(fallbackRate)
-          const usdPrice = calculatePrice().price
-          setIdrAmount(Math.round(usdPrice * fallbackRate))
-        }
-      }
-    }
-
-    fetchConversionRate()
-  }, [selectedPackage, billingPeriod, userCurrency])
-
+export default function OrderSummary({ selectedPackage, billingPeriod, isTrialFlow = false }: OrderSummaryProps) {
   if (!selectedPackage) return null
 
   const calculatePrice = () => {
-    if (selectedPackage.pricing_tiers?.[billingPeriod]?.[userCurrency]) {
-      const currencyTier = selectedPackage.pricing_tiers[billingPeriod][userCurrency]
-      const price = currencyTier.promo_price || currencyTier.regular_price
-      const originalPrice = currencyTier.regular_price
-      const discount = currencyTier.promo_price 
-        ? Math.round(((originalPrice - currencyTier.promo_price) / originalPrice) * 100) 
+    if (selectedPackage.pricing_tiers?.[billingPeriod]) {
+      const pricingData = selectedPackage.pricing_tiers[billingPeriod]
+      const price = pricingData.promo_price || pricingData.regular_price
+      const originalPrice = pricingData.regular_price
+      const discount = pricingData.promo_price 
+        ? Math.round(((originalPrice - pricingData.promo_price) / originalPrice) * 100) 
         : 0
-      const periodLabel = currencyTier.period_label || billingPeriod
+      const periodLabel = pricingData.period_label || billingPeriod
 
       return { price, discount, originalPrice, periodLabel }
     }
@@ -67,9 +35,8 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
   const getTrialPricing = () => {
     if (!isTrialFlow) return null
 
-    // Trial charge is always $1 USD equivalent
+    // Trial charge is always $1 USD
     const trialChargeUSD = 1
-    const trialChargeIDR = Math.round(trialChargeUSD * (conversionRate || 15800)) // Use current rate or fallback
 
     // Future billing date (3 days from now)
     const futureDate = new Date()
@@ -81,7 +48,7 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
     })
 
     return {
-      trialAmount: userCurrency === 'USD' ? trialChargeUSD : trialChargeIDR,
+      trialAmount: trialChargeUSD,
       futureBillingDate: futureDateStr,
       futureAmount: price
     }
@@ -133,7 +100,7 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Today's charge:</span>
                 <span className="font-medium text-foreground">
-                  {formatCurrency(trialInfo.trialAmount, userCurrency)}
+                  {formatCurrency(trialInfo.trialAmount)}
                 </span>
               </div>
 
@@ -146,7 +113,7 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
               <div className="text-sm text-muted-foreground">
                 On {trialInfo.futureBillingDate} you'll be charged{' '}
                 <span className="font-medium text-foreground">
-                  {formatCurrency(trialInfo.futureAmount, userCurrency)}
+                  {formatCurrency(trialInfo.futureAmount)}
                 </span>
                 {' '}for your {periodLabel} subscription.
               </div>
@@ -156,7 +123,7 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-foreground">Total today:</span>
                 <span className="text-lg font-bold text-foreground">
-                  {formatCurrency(trialInfo.trialAmount, userCurrency)}
+                  {formatCurrency(trialInfo.trialAmount)}
                 </span>
               </div>
             </>
@@ -166,7 +133,7 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Subtotal:</span>
                 <span className="font-medium text-foreground">
-                  {formatCurrency(originalPrice, userCurrency)}
+                  {formatCurrency(originalPrice)}
                 </span>
               </div>
 
@@ -174,14 +141,14 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Discount ({discount}%):</span>
                   <span className="font-medium text-warning">
-                    -{formatCurrency(originalPrice - price, userCurrency)}
+                    -{formatCurrency(originalPrice - price)}
                   </span>
                 </div>
               )}
 
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Tax:</span>
-                <span className="font-medium text-foreground">{formatCurrency(0, userCurrency)}</span>
+                <span className="font-medium text-foreground">{formatCurrency(0)}</span>
               </div>
 
               <hr className="border-border" />
@@ -189,26 +156,10 @@ export default function OrderSummary({ selectedPackage, billingPeriod, userCurre
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-foreground">Total:</span>
                 <span className="text-lg font-bold text-foreground">
-                  {formatCurrency(price, userCurrency)}
+                  {formatCurrency(price)}
                 </span>
               </div>
             </>
-          )}
-
-          {/* Currency Conversion Display for USD users */}
-          {userCurrency === 'USD' && conversionRate && (
-            <div className="text-sm text-muted-foreground space-y-1">
-              <div>Payment will be processed in IDR</div>
-              <div>Conversion rate: 1 USD = {conversionRate.toLocaleString()} IDR</div>
-              <div className="font-medium text-foreground">
-                You will pay: {formatCurrency(
-                  isTrialFlow && trialInfo 
-                    ? Math.round(trialInfo.trialAmount * conversionRate)
-                    : (idrAmount || Math.round((calculatePrice().price) * conversionRate)), 
-                  'IDR'
-                )}
-              </div>
-            </div>
           )}
         </div>
 
