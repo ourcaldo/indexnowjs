@@ -859,6 +859,195 @@ lib/services/payments/paddle/
 
 ---
 
+## Phase 6: Webhook Implementation ✅ COMPLETE
+
+**Date:** November 1, 2025  
+**Status:** ✅ COMPLETE
+
+### Objectives
+- [x] Create webhook handler route with signature verification
+- [x] Implement webhook event logging to database
+- [x] Create webhook event processors for subscription lifecycle
+- [x] Create webhook event processors for transaction events
+- [x] Implement proper error handling and retry logic
+
+### Implementation
+
+#### 6.1 Webhook Handler Route ✅
+
+**File Created:** `app/api/v1/payments/paddle/webhook/route.ts`
+
+**Key Features:**
+- **Signature Verification:** HMAC SHA-256 signature validation using `PADDLE_WEBHOOK_SECRET`
+- **Event Logging:** All events logged to `indb_paddle_webhook_events` table before processing
+- **Event Routing:** Routes events to appropriate processors based on `event_type`
+- **Error Handling:** Failed events logged with error messages and retry count
+- **Security:** Returns 401 for missing or invalid signatures (uses `ErrorType.AUTHORIZATION`)
+
+**Webhook Security Flow:**
+1. Extract `paddle-signature` header from request
+2. Verify signature using webhook secret from environment variable
+3. Log event to database (with `processed: false`)
+4. Route to appropriate processor
+5. Update database (with `processed: true` on success, or error details on failure)
+
+**Supported Event Types:**
+- `subscription.created`
+- `subscription.updated`
+- `subscription.canceled`
+- `subscription.paused`
+- `subscription.resumed`
+- `transaction.completed`
+- `transaction.payment_failed`
+
+#### 6.2 Webhook Event Processors ✅
+
+**Directory:** `app/api/v1/payments/paddle/webhook/processors/`
+
+##### 6.2.1 subscription-created.ts
+- Creates new subscription record in `indb_subscriptions` table
+- Updates user profile with subscription details:
+  - `package_id`, `subscription_tier`, `subscription_active`
+  - `subscribed_at`, `expires_at`, `subscription_id`
+- Extracts user ID and package slug from `custom_data`
+- Stores Paddle subscription ID and customer ID
+
+##### 6.2.2 subscription-updated.ts
+- Updates subscription status in database
+- Syncs billing period changes (`current_period_start`, `current_period_end`)
+- Updates pause status if subscription paused
+- Updates user profile with new expiration date and active status
+
+##### 6.2.3 subscription-canceled.ts
+- Handles both immediate and scheduled cancellations
+- Sets `cancel_at_period_end` flag for scheduled cancellations
+- Updates user profile:
+  - Immediate: `subscription_active = false`
+  - Scheduled: Keeps `subscription_active = true` until period end
+- Records cancellation timestamp
+
+##### 6.2.4 subscription-paused.ts
+- Sets subscription status to `'paused'`
+- Records `paused_at` timestamp
+- Updates user profile to `subscription_active = false`
+
+##### 6.2.5 subscription-resumed.ts
+- Sets subscription status back to `'active'`
+- Clears `paused_at` timestamp
+- Updates user profile to `subscription_active = true`
+- Updates expiration date from billing period
+
+##### 6.2.6 transaction-completed.ts
+- Logs successful payment to `indb_paddle_transactions` table
+- Records: amount, currency, payment method, receipt URL, invoice number
+- Links transaction to subscription if applicable
+- Stores transaction metadata and custom data
+
+##### 6.2.7 transaction-payment-failed.ts
+- Logs failed payment to `indb_paddle_transactions` with `status = 'failed'`
+- Creates error log entry via `ErrorHandlingService` (severity: MEDIUM)
+- Stores failure reason in transaction metadata
+
+##### 6.2.8 index.ts
+- Exports all processors for easy import in webhook route
+
+### Database Integration
+
+**Tables Used:**
+- `indb_paddle_webhook_events` - Event log with processing status
+- `indb_subscriptions` - Subscription state management
+- `indb_paddle_transactions` - Payment transaction records
+- `indb_auth_user_profiles` - User subscription status
+- `indb_payment_packages` - Package configuration lookup
+
+**Data Synchronization:**
+- Webhook events update local database immediately
+- User profile always reflects current Paddle subscription state
+- Transaction history maintained for all payment events
+
+### Security & Error Handling
+
+**Security Measures:**
+- HMAC SHA-256 signature verification (timing-safe comparison)
+- Environment variable for webhook secret (never hardcoded)
+- 401 responses for unauthorized requests
+- All security events logged via ErrorHandlingService
+
+**Error Handling:**
+- Try-catch blocks in all processors
+- Failed events logged with error messages
+- Retry count tracked in webhook events table
+- Error details preserved for debugging
+
+**LSP Quality:**
+- All TypeScript errors resolved
+- Fixed `ErrorType.SECURITY` → `ErrorType.AUTHORIZATION`
+- Proper error type casting (`error instanceof Error`)
+- No broken imports or missing dependencies
+
+### Architecture
+
+**Service Pattern:**
+- Main webhook route delegates to specialized processors
+- Each processor handles single event type (single responsibility)
+- Processors use Supabase Admin client for database operations
+- Error handling isolated per processor
+
+**Code Organization:**
+```
+app/api/v1/payments/paddle/webhook/
+├── route.ts                                    # Main webhook handler
+└── processors/
+    ├── subscription-created.ts                 # Subscription lifecycle
+    ├── subscription-updated.ts
+    ├── subscription-canceled.ts
+    ├── subscription-paused.ts
+    ├── subscription-resumed.ts
+    ├── transaction-completed.ts                # Payment events
+    ├── transaction-payment-failed.ts
+    └── index.ts                                # Processor exports
+```
+
+### Testing Recommendations
+
+**Webhook Testing:**
+1. ✅ Configure webhook URL in Paddle Dashboard: `https://your-domain.com/api/v1/payments/paddle/webhook`
+2. ⚠️ Test signature verification with valid/invalid signatures
+3. ⚠️ Test each event type (subscription created, updated, canceled, etc.)
+4. ⚠️ Verify database updates after each webhook event
+5. ⚠️ Test error handling with malformed payloads
+6. ⚠️ Verify retry logic for failed processors
+
+**Paddle Dashboard Setup:**
+- Navigate to: Developer Tools → Notifications → Webhook endpoints
+- Add webhook URL
+- Copy webhook secret to `PADDLE_WEBHOOK_SECRET` environment variable
+- Enable all subscription and transaction events
+
+### Files Created (9 files, ~650 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/route.ts` (151 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/subscription-created.ts` (60 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/subscription-updated.ts` (50 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/subscription-canceled.ts` (51 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/subscription-paused.ts` (37 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/subscription-resumed.ts` (40 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/transaction-completed.ts` (58 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/transaction-payment-failed.ts` (65 lines)
+- ✅ `app/api/v1/payments/paddle/webhook/processors/index.ts` (9 lines)
+
+### Next Steps
+- Phase 7: Frontend Integration (Paddle.js Provider, PaddleProvider)
+- Phase 8: Checkout Flow Integration
+- Phase 9: Subscription Management UI
+- Phase 10: Testing & Verification
+- Phase 11: Production Deployment
+
+**Architect Review:** ⏳ Pending review with full git diff
+
+**Result:** ✅ Webhook infrastructure successfully implemented with signature verification, event logging, and 7 specialized processors for subscription and transaction lifecycle management
+
+---
+
 ### Phase 4: Code Cleanup ✅ COMPLETE
 
 **Files Deleted:**
