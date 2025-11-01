@@ -4,25 +4,24 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency-utils'
 
 interface BillingPeriodOption {
   period: string
   period_label: string
   regular_price: number
   promo_price?: number
+  paddle_price_id?: string
 }
 
 interface BillingPeriodSelectorProps {
   selectedPackage: any
-  userCurrency: 'USD' | 'IDR'
   selectedPeriod: string
   onPeriodChange: (period: string) => void
 }
 
 export default function BillingPeriodSelector({
   selectedPackage,
-  userCurrency,
   selectedPeriod,
   onPeriodChange
 }: BillingPeriodSelectorProps) {
@@ -30,21 +29,20 @@ export default function BillingPeriodSelector({
     return null
   }
 
-  // Get available billing periods in the specified order: monthly → quarterly → biannual → annual
   const periodOrder = ['monthly', 'quarterly', 'biannual', 'annual']
   const availablePeriods = periodOrder.filter(period => 
-    selectedPackage.pricing_tiers[period] && 
-    selectedPackage.pricing_tiers[period][userCurrency]
+    selectedPackage.pricing_tiers[period]
   )
 
   const formatPeriodOptions = (): BillingPeriodOption[] => {
     return availablePeriods.map(period => {
-      const tierData = selectedPackage.pricing_tiers[period][userCurrency]
+      const tierData = selectedPackage.pricing_tiers[period]
       return {
         period,
         period_label: tierData.period_label || period,
         regular_price: tierData.regular_price,
-        promo_price: tierData.promo_price
+        promo_price: tierData.promo_price,
+        paddle_price_id: tierData.paddle_price_id
       }
     })
   }
@@ -85,6 +83,7 @@ export default function BillingPeriodSelector({
                     onPeriodChange(option.period)
                   }
                 }}
+                data-testid={`billing-period-${option.period}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -115,11 +114,11 @@ export default function BillingPeriodSelector({
                     <div className="flex items-center space-x-2">
                       {option.promo_price && option.regular_price > 0 && option.regular_price !== option.promo_price && (
                         <span className="text-sm text-muted-foreground line-through">
-                          {formatCurrency(option.regular_price, userCurrency)}
+                          {formatCurrency(option.regular_price)}
                         </span>
                       )}
-                      <span className="text-lg font-bold text-foreground">
-                        {formatCurrency(finalPrice, userCurrency)}
+                      <span className="text-lg font-bold text-foreground" data-testid={`price-${option.period}`}>
+                        {formatCurrency(finalPrice)}
                       </span>
                     </div>
                   </div>

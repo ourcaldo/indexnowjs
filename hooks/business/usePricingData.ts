@@ -1,21 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/database/supabase-browser'
-import { getUserCurrency, formatCurrency as formatCurrencyUtil } from '@/lib/utils/currency-utils'
-import { AUTH_ENDPOINTS, PUBLIC_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
+import { formatCurrency as formatCurrencyUtil } from '@/lib/utils/currency-utils'
+import { PUBLIC_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 
 export interface PricingTierData {
-  IDR: {
-    promo_price: number
-    period_label: string
-    regular_price: number
-  }
-  USD: {
-    promo_price: number
-    period_label: string
-    regular_price: number
-  }
+  promo_price: number
+  period_label: string
+  regular_price: number
+  paddle_price_id?: string
 }
 
 export interface PackageData {
@@ -31,8 +24,8 @@ export interface PackageData {
     service_accounts?: number
   }
   pricing_tiers: {
-    annual: PricingTierData
-    monthly: PricingTierData
+    annual?: PricingTierData
+    monthly?: PricingTierData
   }
   is_popular?: boolean
   is_active?: boolean
@@ -45,10 +38,10 @@ export interface PriceInfo {
   period: string
   discount?: number
   periodLabel?: string
+  paddlePriceId?: string
 }
 
 export type BillingPeriod = 'monthly' | 'annual'
-export type Currency = 'USD' | 'IDR'
 
 export interface UsePricingDataOptions {
   initialPeriod?: BillingPeriod
@@ -60,68 +53,18 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
   
   const [packages, setPackages] = useState<PackageData[]>([])
   const [selectedPeriod, setSelectedPeriod] = useState<BillingPeriod>(initialPeriod)
-  const [currency, setCurrency] = useState<Currency>('USD')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Load packages and detect currency
   useEffect(() => {
-    detectCurrencyAndLoadPackages()
+    loadPackages()
   }, [])
 
-  const detectCurrencyAndLoadPackages = async () => {
+  const loadPackages = async () => {
     try {
       setIsLoading(true)
       setError(null)
       
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      let detectedCurrency: Currency = 'USD'
-      
-      if (user) {
-        // User is logged in - get country from profile
-        const { data: profile } = await supabase
-          .from('indb_auth_user_profiles')
-          .select('country')
-          .eq('user_id', user.id)
-          .single()
-        
-        if (profile?.country) {
-          detectedCurrency = getUserCurrency(profile.country)
-        }
-      } else {
-        // User not logged in - use IP detection
-        try {
-          const locationResponse = await fetch(AUTH_ENDPOINTS.DETECT_LOCATION, {
-            credentials: 'include'
-          })
-          if (locationResponse.ok) {
-            const locationData = await locationResponse.json()
-            if (locationData.country) {
-              detectedCurrency = getUserCurrency(locationData.country)
-            }
-          }
-        } catch (error) {
-          // Fall back to USD
-        }
-      }
-      
-      setCurrency(detectedCurrency)
-      await loadPackages()
-      
-    } catch (err) {
-      console.error('Failed to detect currency:', err)
-      setError('Failed to load pricing data')
-      setCurrency('USD')
-      await loadPackages()
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const loadPackages = async () => {
-    try {
       const response = await fetch(PUBLIC_ENDPOINTS.SETTINGS, {
         method: 'GET',
         headers: {
@@ -132,15 +75,13 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
 
       if (response.ok) {
         const result = await response.json()
-        // API returns: { success: true, data: { siteSettings: {...}, packages: { packages: [...], count: N } } }
         const data = result?.success === true && result.data ? result.data : result
         if (data.packages && data.packages.packages && Array.isArray(data.packages.packages)) {
           let packagesData = data.packages.packages.map((pkg: any) => ({
             ...pkg,
-            is_popular: pkg.is_popular || pkg.slug === 'premium' // Default Premium as popular if not set
+            is_popular: pkg.is_popular || pkg.slug === 'premium'
           })) as PackageData[]
           
-          // Limit packages if specified
           if (maxPackages) {
             packagesData = packagesData.slice(0, maxPackages)
           }
@@ -153,15 +94,15 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
     } catch (err) {
       console.error('Failed to load packages:', err)
       setError('Failed to load packages')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  // Format price using currency
-  const formatPrice = (price: number, targetCurrency: Currency = currency) => {
-    return formatCurrencyUtil(price, targetCurrency)
+  const formatPrice = (price: number) => {
+    return formatCurrencyUtil(price)
   }
 
-  // Get pricing information for a package and period
   const getPricing = (pkg: PackageData, period: BillingPeriod = selectedPeriod): PriceInfo => {
     if (!pkg.pricing_tiers || typeof pkg.pricing_tiers !== 'object') {
       return { 
@@ -172,7 +113,7 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
     }
     
     const periodData = pkg.pricing_tiers[period]
-    if (!periodData || !periodData[currency]) {
+    if (!periodData) {
       return { 
         price: 0, 
         period: pkg.description || period,
@@ -180,21 +121,22 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
       }
     }
     
-    const tierData = periodData[currency]
-    const price = tierData.promo_price || tierData.regular_price
-    const originalPrice = (tierData.regular_price && tierData.regular_price > 0 && tierData.regular_price !== tierData.promo_price) ? tierData.regular_price : undefined
+    const price = periodData.promo_price || periodData.regular_price
+    const originalPrice = (periodData.regular_price && periodData.regular_price > 0 && periodData.regular_price !== periodData.promo_price) 
+      ? periodData.regular_price 
+      : undefined
     const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : undefined
     
     return { 
       price,
       originalPrice,
-      period: tierData.period_label,
-      periodLabel: tierData.period_label,
-      discount: discount && discount > 0 ? discount : undefined
+      period: periodData.period_label,
+      periodLabel: periodData.period_label,
+      discount: discount && discount > 0 ? discount : undefined,
+      paddlePriceId: periodData.paddle_price_id
     }
   }
 
-  // Extract features list from package
   const getFeaturesList = (pkg: PackageData): string[] => {
     const features: string[] = []
     
@@ -203,7 +145,6 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
     const concurrentJobs = pkg.quota_limits?.concurrent_jobs || 1
     const dailyUrls = pkg.quota_limits?.daily_urls || 0
     
-    // Add keyword limit
     if (keywordLimit === -1) {
       features.push('Unlimited Keywords')
     } else if (keywordLimit >= 1000) {
@@ -212,7 +153,6 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
       features.push(`${keywordLimit} Keywords`)
     }
     
-    // Add service accounts
     if (serviceAccounts === -1) {
       features.push('Unlimited Service Accounts')
     } else if (serviceAccounts === 1) {
@@ -221,19 +161,16 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
       features.push(`${serviceAccounts} Service Accounts`)
     }
     
-    // Add daily URLs for indexing
     if (dailyUrls === -1) {
       features.push('Unlimited Daily Indexing')
     } else if (dailyUrls > 0) {
       features.push(`${dailyUrls} Daily URL Quota`)
     }
     
-    // Add concurrent jobs
     if (concurrentJobs > 1) {
       features.push(`${concurrentJobs} Concurrent Jobs`)
     }
     
-    // Add package-specific features from database features array
     if (pkg.features && Array.isArray(pkg.features)) {
       pkg.features.forEach(feature => {
         if (feature && !features.some(f => f.toLowerCase().includes(feature.toLowerCase().substring(0, 10)))) {
@@ -245,30 +182,26 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
     return features
   }
 
-  // Get available billing periods
   const getAvailablePeriods = (): BillingPeriod[] => {
     if (packages.length === 0) return ['monthly', 'annual']
     
     const firstPackage = packages[0]
     const periods = Object.keys(firstPackage.pricing_tiers) as BillingPeriod[]
     
-    // Define the order: monthly → annual
     const periodOrder: BillingPeriod[] = ['monthly', 'annual']
     
     return periodOrder.filter(period => periods.includes(period))
   }
 
-  // Get period label for display
   const getPeriodLabel = (period: BillingPeriod): string => {
     if (packages.length === 0) return period
     
     const firstPackage = packages[0]
     const periodData = firstPackage.pricing_tiers[period]
     
-    return periodData?.[currency]?.period_label || period
+    return periodData?.period_label || period
   }
 
-  // Get savings percentage for a period compared to monthly
   const getSavingsPercentage = (period: BillingPeriod): number | null => {
     if (period === 'monthly' || packages.length === 0) return null
     
@@ -278,7 +211,6 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
     
     if (monthlyPrice === 0 || periodPrice === 0) return null
     
-    // Calculate monthly equivalent for period price
     const periodMultiplier = period === 'annual' ? 12 : 1
     const monthlyEquivalent = periodPrice / periodMultiplier
     
@@ -288,19 +220,14 @@ export const usePricingData = (options: UsePricingDataOptions = {}) => {
   }
 
   return {
-    // Data
     packages,
     selectedPeriod,
-    currency,
     isLoading,
     error,
     
-    // Actions
     setSelectedPeriod,
-    setCurrency,
-    reloadData: detectCurrencyAndLoadPackages,
+    reloadData: loadPackages,
     
-    // Helpers
     formatPrice,
     getPricing,
     getFeaturesList,
