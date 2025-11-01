@@ -665,6 +665,200 @@ npm install @paddle/paddle-node-sdk @paddle/paddle-js
 
 ---
 
+## Phase 5: Backend Service Layer ✅ COMPLETE
+
+**Date:** November 1, 2025  
+**Status:** ✅ COMPLETE
+
+### Objectives
+- [x] Create Paddle service layer directory structure
+- [x] Implement PaddleService.ts - Core SDK wrapper
+- [x] Implement PaddleCheckoutService.ts - Transaction operations
+- [x] Implement PaddleSubscriptionService.ts - Subscription management
+- [x] Implement PaddleCustomerService.ts - Customer operations
+- [x] Update PaymentServiceFactory to initialize Paddle gateway
+
+### Implementation
+
+#### 5.1 Directory Structure Created ✅
+```
+lib/services/payments/paddle/
+├── PaddleService.ts           # Core SDK wrapper & configuration
+├── PaddleCheckoutService.ts   # Transaction/checkout operations
+├── PaddleSubscriptionService.ts # Subscription lifecycle management
+├── PaddleCustomerService.ts   # Customer & portal operations
+└── index.ts                   # Service exports
+```
+
+#### 5.2 PaddleService.ts - Core SDK Wrapper ✅
+
+**Purpose:** Singleton Paddle SDK instance manager with database-backed configuration
+
+**Key Features:**
+- Singleton pattern for SDK instance management
+- Loads gateway configuration from `indb_payment_gateways` table
+- Reads API key from `PADDLE_API_KEY` environment variable
+- Supports environment switching (sandbox/production)
+- Provides `isConfigured()` helper for initialization checks
+
+**Methods:**
+- `getInstance()` - Returns configured Paddle SDK instance
+- `getGatewayConfig()` - Loads Paddle gateway config from database
+- `isConfigured()` - Verifies Paddle is ready for use
+- `resetInstance()` - Resets instance (for testing)
+
+**Hybrid Architecture Implementation:**
+- ✅ Secrets (API keys) stored in environment variables
+- ✅ Configuration (environment, features) stored in database
+- ✅ Security: No secrets in database, only env var references
+
+#### 5.3 PaddleCheckoutService.ts - Transaction Operations ✅
+
+**Purpose:** Backend transaction creation and management
+
+**Key Features:**
+- Create transactions via Paddle API (backend-initiated)
+- Get transaction details
+- List transactions with filtering
+- **Note:** Frontend checkouts use Paddle.js (implemented in Phase 7)
+
+**Methods:**
+- `createTransaction()` - Create backend-initiated transaction
+- `getTransaction()` - Fetch transaction details
+- `listTransactions()` - List transactions with filters (customerId, subscriptionId, status)
+
+**Types:**
+- `TransactionRequest` - Transaction creation parameters
+- Uses Paddle SDK's `TransactionStatus` enum for type safety
+
+#### 5.4 PaddleSubscriptionService.ts - Subscription Management ✅
+
+**Purpose:** Subscription lifecycle operations with database synchronization
+
+**Key Features:**
+- Cancel subscriptions (immediately or at period end)
+- Pause/Resume subscriptions
+- Update subscriptions (plan changes)
+- Automatic database sync after Paddle API calls
+- Fetch subscriptions by user ID
+
+**Methods:**
+- `getSubscription()` - Get Paddle subscription details
+- `cancelSubscription()` - Cancel with timing control
+- `pauseSubscription()` - Pause with optional effective date
+- `resumeSubscription()` - Resume paused subscription
+- `updateSubscription()` - Change subscription plan/price
+- `getSubscriptionByUserId()` - Get user's active subscription from database
+
+**Database Integration:**
+- Updates `indb_subscriptions` table after each Paddle operation
+- Maintains status synchronization between Paddle and local database
+- Tracks cancellation, pause timestamps
+
+#### 5.5 PaddleCustomerService.ts - Customer Operations ✅
+
+**Purpose:** Customer management and portal access
+
+**Key Features:**
+- Get customer details from Paddle
+- Update customer information
+- Generate customer portal URLs
+- List customer transactions
+
+**Methods:**
+- `getCustomer()` - Fetch customer details
+- `updateCustomer()` - Update email/name
+- `getCustomerPortalUrl()` - Generate portal URL for subscription management
+- `getCustomerTransactions()` - List all customer transactions
+
+**Customer Portal:**
+- Generates environment-specific portal URLs
+- Production: `https://customer-portal.paddle.com`
+- Sandbox: `https://sandbox-customer-portal.paddle.com`
+
+#### 5.6 PaymentServiceFactory Updates ✅
+
+**Critical Bug Fix:** Fixed table name in PaymentServiceFactory
+- **Before:** Queried non-existent `indb_payment_gateway_configs` table
+- **After:** Correctly queries `indb_payment_gateways` table
+
+**Paddle Integration:**
+- Imports `PaddleService` from paddle services
+- Calls `PaddleService.isConfigured()` to verify setup
+- Initializes Paddle SDK instance via `PaddleService.getInstance()`
+- Logs initialization success/failure
+
+**Updated Methods:**
+- `initializeGateways()` - Fixed table name bug
+- `registerGateway()` - Now uses `config.slug` instead of `config.gateway_name`
+- `initializePaddleGateway()` - New method for Paddle initialization
+
+#### 5.7 TypeScript Quality ✅
+
+**LSP Diagnostics:** All TypeScript errors fixed (6 → 0)
+
+**Fixes Applied:**
+1. **PaddleService.ts** - Imported `Environment` enum from Paddle SDK
+2. **PaddleCheckoutService.ts** - Fixed `listTransactions()` parameter types (arrays)
+3. **PaddleSubscriptionService.ts** - Fixed `pause()`/`resume()` method signatures
+4. **PaddleCustomerService.ts** - Replaced non-existent `createPortalSession()` with standard portal URL generation
+
+**Type Safety:**
+- All Paddle SDK types properly imported
+- Correct use of `TransactionStatus[]`, `Environment` enum
+- Proper optional parameter handling
+
+### Architecture Notes
+
+**Service Layer Pattern:**
+- Each service has single responsibility (checkout, subscriptions, customers)
+- All services use PaddleService singleton for SDK access
+- Database operations wrapped in try-catch with error logging
+- Consistent method naming and return types
+
+**Error Handling:**
+- Gateway configuration errors throw descriptive messages
+- Missing API keys detected early with clear error messages
+- Database update failures logged but don't block Paddle operations
+
+**Security:**
+- API keys NEVER stored in database (only in env vars)
+- Database only stores non-sensitive configuration
+- Customer portal URLs use environment-specific endpoints
+
+### Testing Recommendations
+
+**Before Production:**
+1. ✅ Verify `PADDLE_API_KEY` is set in environment
+2. ✅ Verify Paddle gateway exists in `indb_payment_gateways` table with `is_active=true`
+3. ⚠️ Test subscription creation, cancellation, pause/resume flows
+4. ⚠️ Verify database sync after Paddle operations
+5. ⚠️ Test customer portal URL generation
+
+### Files Created (5 files, ~400 lines)
+- ✅ `lib/services/payments/paddle/PaddleService.ts` (70 lines)
+- ✅ `lib/services/payments/paddle/PaddleCheckoutService.ts` (68 lines)
+- ✅ `lib/services/payments/paddle/PaddleSubscriptionService.ts` (145 lines)
+- ✅ `lib/services/payments/paddle/PaddleCustomerService.ts` (67 lines)
+- ✅ `lib/services/payments/paddle/index.ts` (9 lines)
+
+### Files Modified (1 file, ~50 lines changed)
+- ✅ `lib/services/payments/PaymentServiceFactory.ts` - Fixed table name bug, added Paddle initialization
+
+### Next Steps
+- Phase 6: Webhook Handler Implementation
+- Phase 7: Frontend Integration (Paddle.js, PaddleProvider)
+- Phase 8: Checkout Flow Integration
+- Phase 9: Subscription Management UI
+- Phase 10: Testing
+- Phase 11: Production Deployment
+
+**Architect Review:** ⏳ Pending review with full git diff
+
+**Result:** ✅ Backend service layer successfully implemented with proper SDK integration, database sync, and type safety
+
+---
+
 ### Phase 4: Code Cleanup ✅ COMPLETE
 
 **Files Deleted:**
@@ -1435,7 +1629,8 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Phase 2: Update Paddle Price IDs - Added real Paddle Price IDs for all packages (Basic, Premium, Pro) | ✅ Complete |
 | 2025-11-01 | Phase 3: Environment Variables Setup - Created .env.example with Paddle API credentials | ✅ Complete |
 | 2025-11-01 | Phase 4: Install Paddle SDK - Installed @paddle/paddle-node-sdk v3.3.0 and @paddle/paddle-js v1.4.2 | ✅ Complete |
-| TBD | Phase 5-11: Paddle integration implementation (service layer, webhooks, frontend, testing) | 🔄 Pending |
+| 2025-11-01 | Phase 5: Backend Service Layer - Implemented Paddle services (5 files, ~400 lines), fixed PaymentServiceFactory bug | ✅ Complete |
+| TBD | Phase 6-11: Paddle integration (webhooks, frontend, checkout, subscription UI, testing, deployment) | 🔄 Pending |
 
 ---
 

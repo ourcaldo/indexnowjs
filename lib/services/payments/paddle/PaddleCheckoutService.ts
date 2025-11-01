@@ -31,6 +31,9 @@ export class PaddleCheckoutService {
     // Create transaction via Paddle API
     const transaction = await paddle.transactions.create({
       items: request.items,
+      customer: {
+        email: request.customerEmail,
+      },
       customData: {
         userId: request.userId,
         packageSlug: request.packageSlug,

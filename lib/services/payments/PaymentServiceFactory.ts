@@ -6,6 +6,7 @@
 import { PaymentProcessor } from './core/PaymentProcessor'
 import { supabaseAdmin } from '@/lib/database'
 import { SecureServiceRoleWrapper } from '../security/SecureServiceRoleWrapper'
+import { PaddleService } from './paddle'
 
 export class PaymentServiceFactory {
   private static processor: PaymentProcessor | null = null
@@ -30,27 +31,27 @@ export class PaymentServiceFactory {
       const gateways = await SecureServiceRoleWrapper.executeSecureOperation(
         {
           userId: 'system',
-          operation: 'load_active_payment_gateway_configs',
-          reason: 'Loading active payment gateway configurations for payment processor initialization',
+          operation: 'load_active_payment_gateways',
+          reason: 'Loading active payment gateways for payment processor initialization',
           source: 'services/payments/PaymentServiceFactory',
           metadata: {
             operation_type: 'gateway_config_lookup'
           }
         },
         {
-          table: 'indb_payment_gateway_configs',
+          table: 'indb_payment_gateways',
           operationType: 'select',
           columns: ['*'],
           whereConditions: { is_active: true }
         },
         async () => {
           const { data: gateways, error } = await supabaseAdmin
-            .from('indb_payment_gateway_configs')
+            .from('indb_payment_gateways')
             .select('*')
             .eq('is_active', true)
 
           if (error) {
-            throw new Error(`Failed to load payment gateway configurations: ${error.message}`)
+            throw new Error(`Failed to load payment gateways: ${error.message}`)
           }
 
           return gateways || []
@@ -72,17 +73,40 @@ export class PaymentServiceFactory {
    */
   private static async registerGateway(processor: PaymentProcessor, config: any): Promise<void> {
     try {
-      switch (config.gateway_name.toLowerCase()) {
+      const gatewaySlug = config.slug.toLowerCase()
+      
+      switch (gatewaySlug) {
         case 'paddle':
-          // Future: Register Paddle service when implemented
-          console.log('✅ Paddle gateway configuration loaded (implementation pending)')
+          await this.initializePaddleGateway()
           break
           
         default:
-          console.warn(`Unknown payment gateway: ${config.gateway_name}`)
+          console.warn(`Unknown payment gateway: ${config.slug}`)
       }
     } catch (error) {
-      console.error(`Error registering ${config.gateway_name} gateway:`, error)
+      console.error(`Error registering ${config.slug} gateway:`, error)
+    }
+  }
+
+  /**
+   * Initialize Paddle gateway
+   */
+  private static async initializePaddleGateway(): Promise<void> {
+    try {
+      // Verify Paddle is configured
+      const isConfigured = await PaddleService.isConfigured()
+      
+      if (!isConfigured) {
+        throw new Error('Paddle gateway is not properly configured')
+      }
+
+      // Initialize Paddle SDK instance
+      await PaddleService.getInstance()
+      
+      console.log('✅ Paddle payment gateway initialized successfully')
+    } catch (error) {
+      console.error('❌ Failed to initialize Paddle gateway:', error)
+      throw error
     }
   }
 

@@ -32,7 +32,7 @@ export class PaddleSubscriptionService {
     })
 
     // Update local subscription record
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('indb_subscriptions')
       .update({
         status: effectiveFrom === 'immediately' ? 'canceled' : 'active',
@@ -41,6 +41,11 @@ export class PaddleSubscriptionService {
         updated_at: new Date().toISOString(),
       })
       .eq('paddle_subscription_id', subscriptionId)
+
+    if (error) {
+      console.error('Failed to sync subscription cancellation to database:', error)
+      throw new Error(`Database sync failed after Paddle cancellation: ${error.message}`)
+    }
 
     return subscription
   }
@@ -60,7 +65,7 @@ export class PaddleSubscriptionService {
     )
 
     // Update local subscription record
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('indb_subscriptions')
       .update({
         status: 'paused',
@@ -68,6 +73,11 @@ export class PaddleSubscriptionService {
         updated_at: new Date().toISOString(),
       })
       .eq('paddle_subscription_id', subscriptionId)
+
+    if (error) {
+      console.error('Failed to sync subscription pause to database:', error)
+      throw new Error(`Database sync failed after Paddle pause: ${error.message}`)
+    }
 
     return subscription
   }
@@ -87,7 +97,7 @@ export class PaddleSubscriptionService {
     )
 
     // Update local subscription record
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('indb_subscriptions')
       .update({
         status: 'active',
@@ -95,6 +105,11 @@ export class PaddleSubscriptionService {
         updated_at: new Date().toISOString(),
       })
       .eq('paddle_subscription_id', subscriptionId)
+
+    if (error) {
+      console.error('Failed to sync subscription resume to database:', error)
+      throw new Error(`Database sync failed after Paddle resume: ${error.message}`)
+    }
 
     return subscription
   }
@@ -118,13 +133,18 @@ export class PaddleSubscriptionService {
     })
 
     // Update local subscription record
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('indb_subscriptions')
       .update({
         paddle_price_id: newPriceId,
         updated_at: new Date().toISOString(),
       })
       .eq('paddle_subscription_id', subscriptionId)
+
+    if (error) {
+      console.error('Failed to sync subscription update to database:', error)
+      throw new Error(`Database sync failed after Paddle update: ${error.message}`)
+    }
 
     return subscription
   }

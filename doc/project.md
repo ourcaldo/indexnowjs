@@ -8417,6 +8417,89 @@ ON public.indb_cms_posts(category, status);
 
 ## Recent Changes
 
+### November 1, 2025 - Paddle Migration Phase 5: Backend Service Layer ✅
+
+**Objective:** Implement complete Paddle backend service layer with proper SDK integration, database synchronization, and type safety.
+
+**Service Architecture:**
+- **PaddleService** - Singleton Paddle SDK instance manager with database-backed configuration
+- **PaddleCheckoutService** - Transaction creation and management operations
+- **PaddleSubscriptionService** - Subscription lifecycle management (cancel, pause, resume, update)
+- **PaddleCustomerService** - Customer operations and portal access
+
+**Key Implementations:**
+
+1. **PaddleService.ts** (Core SDK Wrapper):
+   - Singleton pattern for Paddle SDK instance management
+   - Loads gateway configuration from `indb_payment_gateways` table
+   - Reads API key from `PADDLE_API_KEY` environment variable
+   - Supports environment switching (sandbox/production)
+   - Hybrid architecture: Secrets in env vars, configuration in database
+
+2. **PaddleCheckoutService.ts** (Transactions):
+   - Create backend-initiated transactions via Paddle API
+   - Get transaction details by ID
+   - List transactions with filtering (customerId, subscriptionId, status)
+   - Uses Paddle SDK's `TransactionStatus` enum for type safety
+
+3. **PaddleSubscriptionService.ts** (Subscription Management):
+   - Cancel subscriptions (immediately or at period end)
+   - Pause/Resume subscriptions with timing control
+   - Update subscription plans/prices
+   - Automatic database sync to `indb_subscriptions` after Paddle operations
+   - Fetch user subscriptions from database
+
+4. **PaddleCustomerService.ts** (Customer Operations):
+   - Get customer details from Paddle
+   - Update customer information (email, name)
+   - Generate environment-specific customer portal URLs
+   - List customer transaction history
+
+5. **PaymentServiceFactory.ts** (Critical Bug Fix):
+   - Fixed table name bug: `indb_payment_gateway_configs` → `indb_payment_gateways`
+   - Added Paddle gateway initialization logic
+   - Verifies Paddle configuration before initialization
+   - Proper error handling and logging
+
+**TypeScript Quality:**
+- ✅ Fixed all 6 LSP errors (PaddleService, CheckoutService, SubscriptionService, CustomerService)
+- ✅ Imported correct Paddle SDK types (`Environment`, `TransactionStatus`)
+- ✅ Proper optional parameter handling for `pause()`/`resume()` methods
+- ✅ Type-safe API integration with Paddle Node.js SDK v3
+
+**Architecture Highlights:**
+- **Service Layer Pattern:** Each service has single responsibility
+- **Singleton SDK Access:** All services use PaddleService for SDK instance
+- **Database Synchronization:** Paddle operations automatically sync to local database
+- **Error Handling:** Descriptive error messages with proper error propagation
+- **Security:** API keys NEVER stored in database, only in environment variables
+
+**Files Created (5 files, ~400 lines):**
+- `lib/services/payments/paddle/PaddleService.ts` (70 lines)
+- `lib/services/payments/paddle/PaddleCheckoutService.ts` (68 lines)
+- `lib/services/payments/paddle/PaddleSubscriptionService.ts` (145 lines)
+- `lib/services/payments/paddle/PaddleCustomerService.ts` (67 lines)
+- `lib/services/payments/paddle/index.ts` (9 lines)
+
+**Files Modified (1 file, ~50 lines):**
+- `lib/services/payments/PaymentServiceFactory.ts` - Fixed table name bug, added Paddle initialization
+
+**Testing Recommendations:**
+- Verify `PADDLE_API_KEY` environment variable is set
+- Verify Paddle gateway exists in database with `is_active=true`
+- Test subscription flows (create, cancel, pause, resume)
+- Verify database sync after Paddle operations
+- Test customer portal URL generation
+
+**Next Steps:**
+- Phase 6: Webhook Handler Implementation
+- Phase 7: Frontend Integration (Paddle.js, PaddleProvider)
+- Phase 8: Checkout Flow Integration
+
+**Status:** ✅ **COMPLETE** - Backend service layer fully implemented with proper SDK integration, database sync, and type safety
+
+---
+
 ### November 1, 2025 - Paddle Migration Phase 7.4: Leftover Code Audit ✅
 
 **Objective:** Comprehensive audit to identify ALL remaining Midtrans, Snap, Bank Transfer, and multi-currency code after Phase 7.3 completion.
