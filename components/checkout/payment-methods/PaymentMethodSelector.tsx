@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
-import { Building2 } from 'lucide-react'
 import PaymentErrorBoundary from '@/components/checkout/PaymentErrorBoundary'
 
 interface PaymentMethodSelectorProps {
@@ -45,9 +44,6 @@ export default function PaymentMethodSelector({
                 <div className="flex-1">
                   <Label htmlFor={gateway.id} className="flex items-center justify-between cursor-pointer">
                     <div className="flex items-center">
-                      {gateway.slug === 'bank_transfer' && (
-                        <Building2 className="h-5 w-5 text-brand-text mr-3" />
-                      )}
                       <div className="font-medium text-brand-primary">{gateway.name}</div>
                     </div>
                     {gateway.is_default && (

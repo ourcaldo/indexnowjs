@@ -809,9 +809,13 @@ JWT_SECRET=[jwt-secret-key]
 - Manual inspection of payment hooks, components, services, API routes
 - Verification of broken imports and missing dependencies
 
-**Status**: Audit complete, cleanup plan documented, awaiting user confirmation to proceed.
+**Status**: Cleanup in progress - Category 6 complete (70 lines removed), 5 categories remaining.
 
-**Next Steps**: Execute cleanup actions for all 11 leftover files before Paddle integration (Phase 8).
+**Category 6 Status: ✅ COMPLETE** (70 lines removed)
+- ✅ Deleted `components/checkout/payment-methods/BankTransferPayment.tsx` (66 lines)
+- ✅ Cleaned `components/checkout/payment-methods/PaymentMethodSelector.tsx` (4 lines - removed bank_transfer icon logic and unused import)
+
+**Next Steps**: Continue cleanup of Categories 7-11 (9 files, ~716 lines remaining) before Paddle integration (Phase 8).
 
 **Documentation**: Full details in `doc/PADDLE_MIGRATION_PROGRESS.md` Phase 7.3.
 
