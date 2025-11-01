@@ -10,11 +10,11 @@
 ## Table of Contents
 1. [Overview](#overview)
 2. [Phase 1: Database Migration](#phase-1-database-migration-) (✅ COMPLETE)
-3. [Phase 2: Update Paddle Price IDs](#phase-2-update-paddle-price-ids-) (🔄 PENDING)
-4. [Phase 3: Environment Variables Setup](#phase-3-environment-variables-setup-) (🔄 PENDING)
-5. [Phase 4: Install Paddle SDK](#phase-4-install-paddle-sdk-) (🔄 PENDING)
-6. [Phase 5: Backend Service Layer](#phase-5-backend-service-layer-) (🔄 PENDING)
-7. [Phase 6: Webhook Implementation](#phase-6-webhook-implementation-) (🔄 PENDING)
+3. [Phase 2: Update Paddle Price IDs](#phase-2-update-paddle-price-ids-) (✅ COMPLETE)
+4. [Phase 3: Environment Variables Setup](#phase-3-environment-variables-setup-) (✅ COMPLETE)
+5. [Phase 4: Install Paddle SDK](#phase-4-install-paddle-sdk-) (✅ COMPLETE)
+6. [Phase 5: Backend Service Layer](#phase-5-backend-service-layer-) (✅ COMPLETE)
+7. [Phase 6: Webhook Implementation](#phase-6-webhook-implementation-) (🔄 IN PROGRESS)
 8. [Phase 7: Frontend Integration](#phase-7-frontend-integration-) (🔄 PENDING)
 9. [Phase 8: Checkout Flow](#phase-8-checkout-flow-) (🔄 PENDING)
 10. [Phase 9: Subscription Management](#phase-9-subscription-management-) (🔄 PENDING)
@@ -30,8 +30,8 @@ This document outlines the complete step-by-step implementation plan for integra
 ### Migration Strategy
 - **✅ Complete:** Database restructuring (multi-currency → USD-only)
 - **✅ Complete:** Old payment gateway cleanup (Midtrans, Bank Transfer removed)
-- **🔄 Pending:** Paddle SDK integration and checkout implementation
-- **🔄 Pending:** Webhook handlers for subscription lifecycle
+- **✅ Complete:** Paddle SDK integration and backend service layer
+- **🔄 In Progress:** Webhook handlers for subscription lifecycle
 - **🔄 Pending:** Frontend UI for Paddle checkout
 
 ### Key Principles
@@ -704,18 +704,18 @@ npm install @paddle/paddle-node-sdk @paddle/paddle-js
 
 ---
 
-## Phase 5: Backend Service Layer 🔄 (PENDING)
+## Phase 5: Backend Service Layer ✅ (COMPLETE)
 
-**Status:** 🔄 PENDING  
+**Status:** ✅ COMPLETE  
+**Date Completed:** November 1, 2025  
 **Dependencies:** Phase 4 complete  
-**Estimated Time:** 2-3 hours
 
 ### Objectives
-- [ ] Create Paddle service layer structure
-- [ ] Implement PaddleService (core SDK wrapper)
-- [ ] Implement PaddleCheckoutService
-- [ ] Implement PaddleSubscriptionService
-- [ ] Implement PaddleCustomerService
+- [x] Create Paddle service layer structure
+- [x] Implement PaddleService (core SDK wrapper)
+- [x] Implement PaddleCheckoutService
+- [x] Implement PaddleSubscriptionService
+- [x] Implement PaddleCustomerService
 
 ---
 
@@ -1020,9 +1020,10 @@ export class PaymentServiceFactory {
 
 ---
 
-## Phase 6: Webhook Implementation 🔄 (PENDING)
+## Phase 6: Webhook Implementation 🔄 (IN PROGRESS)
 
-**Status:** 🔄 PENDING  
+**Status:** 🔄 IN PROGRESS  
+**Date Started:** November 1, 2025  
 **Dependencies:** Phase 5 complete  
 **Estimated Time:** 3-4 hours
 
