@@ -2,10 +2,12 @@
  * Payment gateway type definitions for IndexNow Studio
  */
 
-export interface MidtransConfig {
-  serverKey: string;
-  clientKey: string;
+export interface PaddleConfig {
+  apiKey: string;
+  clientToken: string;
   environment: 'sandbox' | 'production';
+  vendorId?: string;
+  webhookSecret?: string;
 }
 
 export interface PaymentGatewayResponse {

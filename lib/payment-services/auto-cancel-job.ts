@@ -9,9 +9,7 @@ import { logger } from '@/lib/monitoring/error-handling'
 /**
  * Auto-cancel service for expired payment transactions
  * 
- * Handles two scenarios:
- * 1. Transactions older than 24 hours that are still pending
- * 2. Transactions marked as 'expire' by Midtrans webhooks (handled in webhook)
+ * Automatically cancels transactions older than 24 hours that are still pending
  */
 export class AutoCancelJob {
   private isRunning: boolean = false
@@ -279,126 +277,6 @@ export class AutoCancelJob {
     }
   }
 
-  /**
-   * Handle Midtrans 'expire' webhook notification
-   * This method is called from the webhook handler
-   */
-  static async handleMidtransExpireNotification(transaction: any, midtransData: any): Promise<void> {
-    try {
-      logger.info({ transactionId: transaction.id }, 'Processing Midtrans expire notification')
-
-      // Update transaction status and log history using SecureWrapper
-      await SecureServiceRoleWrapper.executeSecureOperation(
-        {
-          userId: 'system',
-          operation: 'expire_transaction_via_midtrans_webhook',
-          reason: 'Auto-cancel service processing Midtrans expire webhook notification and updating transaction status',
-          source: 'AutoCancelJob.handleMidtransExpireNotification',
-          metadata: {
-            transactionId: transaction.id,
-            userId: transaction.user_id,
-            midtransData: {
-              expiry_time: midtransData.expiry_time,
-              transaction_time: midtransData.transaction_time
-            },
-            operation_type: 'webhook_expiration'
-          }
-        },
-        { table: 'indb_payment_transactions', operationType: 'update' },
-        async () => {
-          // Update transaction status to expired
-          const { error: updateError } = await supabaseAdmin
-            .from('indb_payment_transactions')
-            .update({
-              transaction_status: 'expired',
-              processed_at: new Date().toISOString(),
-              gateway_response: {
-                ...transaction.gateway_response,
-                expire_notification: {
-                  received_at: new Date().toISOString(),
-                  midtrans_data: midtransData,
-                  expiry_time: midtransData.expiry_time,
-                  transaction_time: midtransData.transaction_time
-                }
-              },
-              notes: transaction.notes ? 
-                `${transaction.notes}\n[MIDTRANS-EXPIRE] Transaction expired via Midtrans notification` :
-                '[MIDTRANS-EXPIRE] Transaction expired via Midtrans notification'
-            })
-            .eq('id', transaction.id)
-
-          if (updateError) {
-            throw new Error(`Failed to update transaction status: ${updateError.message}`)
-          }
-
-          // Log to transaction history
-          const { error: historyError } = await supabaseAdmin
-            .from('indb_payment_transactions_history')
-            .insert({
-              transaction_id: transaction.id,
-              old_status: transaction.transaction_status,
-              new_status: 'expired',
-              action_type: 'webhook_expire',
-              action_description: 'Transaction expired via Midtrans webhook notification',
-              changed_by_type: 'system',
-              notes: 'Expired via Midtrans webhook notification',
-              metadata: {
-                webhook_data: midtransData,
-                midtrans_expire: true,
-                expiry_time: midtransData.expiry_time,
-                transaction_time: midtransData.transaction_time
-              }
-            })
-
-          if (historyError) {
-            logger.warn({ transactionId: transaction.id, error: historyError.message }, 'Failed to log transaction history')
-            throw historyError
-          }
-        }
-      )
-
-      // Log activity
-      if (transaction.user_id) {
-        try {
-          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5000'
-          const activityResponse = await fetch(`${baseUrl}${ADMIN_ENDPOINTS.ACTIVITY}`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.SYSTEM_API_KEY || 'system'}`
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              user_id: transaction.user_id,
-              event_type: 'payment_expired',
-              action: `Payment transaction expired via Midtrans - ID: ${transaction.id}`,
-              metadata: {
-                transaction_id: transaction.id,
-                payment_method: transaction.payment_method,
-                amount: transaction.amount,
-                currency: transaction.currency,
-                midtrans_expired: true,
-                expiry_time: midtransData.expiry_time
-              }
-            })
-          })
-
-          if (!activityResponse.ok) {
-            logger.warn({ transactionId: transaction.id }, 'Failed to log activity for expired transaction')
-          }
-        } catch (activityError) {
-          logger.warn({ transactionId: transaction.id, error: activityError instanceof Error ? activityError.message : 'Unknown error' }, 'Activity logging error for expired transaction')
-        }
-      }
-
-      logger.info({ transactionId: transaction.id }, 'Midtrans expire notification processed')
-
-    } catch (error) {
-      logger.error({ transactionId: transaction.id, error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to handle Midtrans expire notification')
-      throw error
-    }
-  }
-
   start() {
     if (this.cronJob) {
       this.cronJob.start()
@@ -418,7 +296,7 @@ export class AutoCancelJob {
       isScheduled: !!this.cronJob,
       isRunning: this.isRunning,
       schedule: '0 * * * *', // Every hour
-      description: 'Auto-cancels payment transactions older than 24 hours and handles Midtrans expire notifications'
+      description: 'Auto-cancels payment transactions older than 24 hours'
     }
   }
 

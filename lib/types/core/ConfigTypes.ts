@@ -30,11 +30,12 @@ export interface EmailConfig {
 // Payment configuration
 export interface PaymentConfig {
   providers: {
-    midtrans: {
-      serverKey: string;
-      clientKey: string;
+    paddle: {
+      apiKey: string;
+      clientToken: string;
       environment: 'sandbox' | 'production';
       webhookUrl: string;
+      vendorId?: string;
     };
     stripe?: {
       secretKey: string;

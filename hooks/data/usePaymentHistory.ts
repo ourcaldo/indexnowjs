@@ -10,7 +10,7 @@ interface PaymentTransaction {
   package_id: string
   amount: number
   currency: string
-  payment_method: 'midtrans_snap' | 'midtrans_recurring' | 'bank_transfer'
+  payment_method: 'paddle' | 'credit-card'
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'expired'
   transaction_id?: string
   external_id?: string
