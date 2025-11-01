@@ -6,6 +6,7 @@ interface PricingTier {
   promo_price: number
   regular_price: number
   period_label: string
+  paddle_price_id?: string
 }
 
 interface Package {
@@ -16,12 +17,8 @@ interface Package {
   currency: string
   billing_period: string
   pricing_tiers?: {
-    monthly?: {
-      [currency: string]: PricingTier
-    }
-    annual?: {
-      [currency: string]: PricingTier
-    }
+    monthly?: PricingTier
+    annual?: PricingTier
   }
 }
 
