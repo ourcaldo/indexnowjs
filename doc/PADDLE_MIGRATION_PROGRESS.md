@@ -777,6 +777,197 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox  # Change to 'production' when going live
 
 ---
 
+---
+
+### Phase 7.3: Deep Dive Final Leftover Cleanup Audit 🔄 IN PROGRESS
+
+**Date:** November 1, 2025
+
+**Objective:** Comprehensive deep dive audit to identify and clean up ALL remaining Midtrans, Snap, Manual Bank Transfer, and related payment gateway leftovers that were missed in Phase 7.2.
+
+**Audit Method:**
+- Full codebase search for: `midtrans`, `Midtrans`, `MIDTRANS`, `snap`, `Snap`, `SNAP`, `bank_transfer`, `bank.transfer`, `BankTransfer`, `IDR`
+- Excluded documentation files (doc/*, *.md) and backups to focus on actual source code
+- Manual inspection of all payment-related hooks, components, services, and API routes
+- Verification of missing file dependencies and broken imports
+
+---
+
+#### 📋 FINDINGS SUMMARY
+
+**Total Leftover Files Found:** 10 source files  
+**Categories:** 6 (Frontend Components, Middleware, Hooks, Background Jobs, Type Definitions, Missing Files)
+
+---
+
+#### 🔴 CATEGORY 6: FRONTEND COMPONENTS (Critical - User-facing code)
+
+**Impact:** Users could still see bank transfer payment options, dead UI components
+
+**Files:**
+
+1. **`components/checkout/payment-methods/BankTransferPayment.tsx`**
+   - ⚠️ **Status:** Complete component file still exists (66 lines)
+   - **Content:** Full bank transfer payment UI with bank details, instructions, upload proof messaging
+   - **Issue:** This component renders bank transfer details when gateway.slug === 'bank_transfer'
+   - **Action Required:** DELETE entire file
+   - **Lines to Remove:** 66 lines
+
+2. **`components/checkout/payment-methods/PaymentMethodSelector.tsx`**
+   - ⚠️ **Line 48:** Check for `gateway.slug === 'bank_transfer'` to render bank icon
+   - **Content:** Conditionally shows Building2 icon for bank transfer gateway
+   - **Issue:** Component still expects bank_transfer as valid payment method
+   - **Action Required:** Remove bank transfer icon logic (Lines 48-50)
+   - **Lines to Remove:** 3 lines
+
+---
+
+#### 🟡 CATEGORY 7: MIDDLEWARE ROUTES
+
+**Impact:** Webhook endpoints still exposed, potential security issue if old endpoints are being monitored
+
+**Files:**
+
+1. **`middleware.ts`**
+   - ⚠️ **Line 92:** `/api/midtrans/webhook` in PUBLIC_ROUTES
+   - ⚠️ **Line 93:** `/api/v1/payments/midtrans/webhook` in PUBLIC_ROUTES
+   - ⚠️ **Line 99:** `/v1/payments/midtrans/webhook` in PUBLIC_ROUTES (API subdomain equivalent)
+   - **Issue:** Midtrans webhook routes are still exposed as public routes
+   - **Action Required:** Remove all 3 Midtrans webhook routes from PUBLIC_ROUTES array
+   - **Lines to Remove:** 3 lines
+
+---
+
+#### 🟠 CATEGORY 8: HOOKS & FRONTEND SERVICES (Critical - Broken imports)
+
+**Impact:** These hooks reference non-existent services and will cause runtime errors
+
+**Files:**
+
+1. **`hooks/usePaymentProcessor.ts`**
+   - ⚠️ **CRITICAL LINE 7:** `/// <reference path="../types/midtrans.d.ts" />` - TypeScript reference to missing types
+   - ⚠️ **CRITICAL LINE 11:** `import { MidtransClientService } from '@/lib/payment-services/midtrans-client-service'` - **FILE DOESN'T EXIST**
+   - ⚠️ **Line 114:** `if (paymentData.payment_method !== 'midtrans_snap' && paymentData.payment_method !== 'midtrans_recurring')`
+   - ⚠️ **Lines 142-175:** `processCreditCardPayment()` function - Full Midtrans credit card tokenization flow
+   - ⚠️ **Lines 205-279:** `handlePaymentSuccess()` function - Midtrans Snap and Recurring payment handling
+   - ⚠️ **Lines 303-542:** `handle3DSAuthentication()` function - Complete Midtrans 3DS authentication logic with iframe popup
+   - **Issue:** Entire hook is built around Midtrans SDK which doesn't exist anymore
+   - **Action Required:** DELETE entire file OR rewrite for Paddle (after Phase 8 implementation)
+   - **Lines to Remove/Rewrite:** ~540+ lines
+
+2. **`hooks/data/usePaymentHistory.ts`**
+   - ⚠️ **Line 13:** `payment_method: 'midtrans_snap' | 'midtrans_recurring' | 'bank_transfer'`
+   - **Issue:** Type definition still allows old payment methods
+   - **Action Required:** Change to `payment_method: 'paddle' | 'credit-card'`
+   - **Lines to Update:** 1 line
+
+---
+
+#### 🟢 CATEGORY 9: BACKGROUND JOBS
+
+**Impact:** Jobs may fail or log errors when trying to process Midtrans data
+
+**Files:**
+
+1. **`lib/payment-services/auto-cancel-job.ts`**
+   - ⚠️ **Line 14:** Comment mentions "Transactions marked as 'expire' by Midtrans webhooks"
+   - ⚠️ **Lines 286-400:** `handleMidtransExpireNotification()` static method - Complete Midtrans expire webhook handler
+   - **Issue:** Method handles Midtrans webhook notifications that will never arrive anymore
+   - **Action Required:** DELETE `handleMidtransExpireNotification()` method and update comments
+   - **Lines to Remove:** ~115 lines
+
+2. **`lib/payment-services/recurring-billing-job.ts`**
+   - ⚠️ **Line 30:** `${apiUrl}${BILLING_ENDPOINTS.MIDTRANS_PROCESS_RECURRING}` - Calls Midtrans recurring endpoint
+   - **Issue:** Job tries to call removed Midtrans endpoint (removed in Phase 7.2)
+   - **Action Required:** DELETE or rewrite for Paddle recurring billing
+   - **Lines to Update/Remove:** Entire job file may need replacement (~50+ lines)
+
+---
+
+#### 🔵 CATEGORY 10: TYPE DEFINITIONS
+
+**Impact:** Type system still allows Midtrans configuration, confuses developers
+
+**Files:**
+
+1. **`lib/types/external/PaymentGatewayTypes.ts`**
+   - ⚠️ **Lines 5-8:** `MidtransConfig` interface definition
+   - **Issue:** Type definition for Midtrans configuration still exists
+   - **Action Required:** DELETE `MidtransConfig` interface, add `PaddleConfig` interface (during Phase 8)
+   - **Lines to Remove:** 4 lines
+
+2. **`lib/types/core/ConfigTypes.ts`**
+   - ⚠️ **Lines 33-36:** `midtrans` property in `PaymentConfig.providers`
+   - **Issue:** Payment config still expects Midtrans provider configuration
+   - **Action Required:** Replace `midtrans` with `paddle` configuration
+   - **Lines to Update:** 4 lines
+
+---
+
+#### ⚫ CATEGORY 11: MISSING FILES (Critical - Broken Dependencies)
+
+**Impact:** Import errors at runtime, application crashes
+
+**Missing Files:**
+
+1. **`lib/payment-services/midtrans-client-service.ts`**
+   - ⚠️ **STATUS:** FILE DOES NOT EXIST
+   - **Referenced by:** `hooks/usePaymentProcessor.ts` (Line 11)
+   - **Issue:** Critical broken import - will cause runtime error when payment processor hook is used
+   - **Action Required:** Fix broken import by either:
+     - Option A: DELETE `hooks/usePaymentProcessor.ts` entirely
+     - Option B: Rewrite hook for Paddle (during Phase 8)
+
+2. **`types/midtrans.d.ts`**
+   - ⚠️ **STATUS:** FILE EXISTENCE UNKNOWN (referenced in `hooks/usePaymentProcessor.ts` Line 7)
+   - **Issue:** TypeScript reference directive points to missing type definitions
+   - **Action Required:** Remove reference directive or verify file exists and delete it
+
+---
+
+#### 📊 PHASE 7.3 STATISTICS (PENDING CLEANUP)
+
+| Category | Files | Lines to Remove/Update | Status |
+|----------|-------|------------------------|--------|
+| Frontend Components | 2 | ~69 lines | ⚠️ Pending |
+| Middleware Routes | 1 | ~3 lines | ⚠️ Pending |
+| Hooks & Services | 2 | ~541 lines | ⚠️ Pending |
+| Background Jobs | 2 | ~165+ lines | ⚠️ Pending |
+| Type Definitions | 2 | ~8 lines | ⚠️ Pending |
+| Missing Files | 2 | N/A (verify & document) | ⚠️ Pending |
+| **TOTAL** | **11 files** | **~786+ lines** | **⚠️ PENDING CLEANUP** |
+
+---
+
+#### 🎯 RECOMMENDED ACTION PLAN FOR PHASE 7.3
+
+**Immediate Actions (Before Paddle Integration):**
+
+1. **Delete Dead UI Components:**
+   - ❌ DELETE `components/checkout/payment-methods/BankTransferPayment.tsx`
+   - ✏️ EDIT `components/checkout/payment-methods/PaymentMethodSelector.tsx` (remove bank_transfer icon check)
+
+2. **Clean Middleware:**
+   - ✏️ EDIT `middleware.ts` - Remove 3 Midtrans webhook routes from PUBLIC_ROUTES
+
+3. **Fix Type Definitions:**
+   - ✏️ EDIT `hooks/data/usePaymentHistory.ts` - Update payment_method type to `'paddle' | 'credit-card'`
+   - ❌ DELETE `MidtransConfig` from `lib/types/external/PaymentGatewayTypes.ts`
+   - ✏️ EDIT `lib/types/core/ConfigTypes.ts` - Replace `midtrans` with `paddle` in PaymentConfig
+
+4. **Clean Background Jobs:**
+   - ✏️ EDIT `lib/payment-services/auto-cancel-job.ts` - DELETE `handleMidtransExpireNotification()` method
+   - ⚠️ REVIEW `lib/payment-services/recurring-billing-job.ts` - Mark for Paddle rewrite or deletion
+
+5. **Address Broken Dependencies:**
+   - ⚠️ CRITICAL: `hooks/usePaymentProcessor.ts` has broken import to non-existent `MidtransClientService`
+   - **Decision Required:** DELETE entire hook now OR mark for Paddle rewrite in Phase 8
+   - 🔍 VERIFY: Check if `types/midtrans.d.ts` exists and delete if found
+
+**Status:** ⚠️ **PENDING USER CONFIRMATION** - Ready to proceed with cleanup once approved
+
+---
+
 #### 📝 NOTES FOR PHASE 8 (Paddle Integration)
 
 When implementing Paddle, remember to:
@@ -926,12 +1117,14 @@ WHERE slug = 'paddle';
 | 2025-11-01 | Phase 7.1: Final UI cleanup and currency migration | ✅ Complete |
 | 2025-11-01 | Phase 7.2: Leftover audit + fixed Categories 1-2 (~102 lines removed) | ✅ Complete |
 | 2025-11-01 | Phase 7.2: Categories 3-5 complete (~130 lines removed) - ALL CLEANUP DONE | ✅ Complete |
+| 2025-11-01 | Phase 7.3: Deep dive final leftover audit - Identified 11 files (~786+ lines) requiring cleanup | 🔄 In Progress |
+| TBD | Phase 7.3: Execute cleanup actions for all 11 leftover files | ⚠️ Pending Approval |
 | TBD | Replace Paddle Price ID placeholders | 🔄 Pending |
 | TBD | Configure Paddle API keys | 🔄 Pending |
 | TBD | Paddle integration implementation (Phase 8) | 🔄 Pending |
 
 ---
 
-**Document Version:** 2.3  
+**Document Version:** 2.4  
 **Last Updated:** November 1, 2025  
-**Next Review:** Before Paddle integration (Phase 8)
+**Next Review:** After Phase 7.3 cleanup execution
