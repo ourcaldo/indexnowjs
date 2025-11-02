@@ -847,17 +847,25 @@ User clicks "Cancel"
 **Database Changes Required:**
 
 ```sql
--- Add refund tracking fields
+-- Add refund tracking to transactions table
 ALTER TABLE indb_paddle_transactions
-ADD COLUMN refund_amount DECIMAL(10, 2),
-ADD COLUMN refund_reason TEXT,
-ADD COLUMN refunded_at TIMESTAMP WITH TIME ZONE;
+ADD COLUMN IF NOT EXISTS refund_amount DECIMAL(10, 2) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS refund_reason TEXT DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 -- Add cancellation analytics fields
 ALTER TABLE indb_subscriptions
-ADD COLUMN cancellation_reason TEXT,
-ADD COLUMN days_active_at_cancellation INTEGER;
-```
+ADD COLUMN IF NOT EXISTS cancellation_reason TEXT DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS days_active_at_cancellation INTEGER DEFAULT NULL;
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_paddle_transactions_refunded
+ON indb_paddle_transactions(refunded_at)
+WHERE refunded_at IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_canceled_at
+ON indb_subscriptions(canceled_at)
+WHERE canceled_at IS NOT NULL;
 
 **Current Problem Identified:**
 
@@ -3574,6 +3582,7 @@ setTotalKeywords(activeKeywordsCount)
 
 **Database Schema Requirements** (SQL queries for Supabase SQL Editor):
 ```sql
+-- Note: These table structures should be created in Supabase for full WordPress-like category functionality:
 -- Note: These table structures should be created in Supabase for full WordPress-like category functionality:
 -- 1. indb_cms_categories table for category management
 -- 2. indb_cms_post_categories junction table for multiple categories per post  
@@ -8477,6 +8486,7 @@ Public settings endpoint returns:
 **SQL Implementation**:
 ```sql
 -- 5 comprehensive blog posts covering:
+-- 5 comprehensive blog posts covering:
 -- 1. Complete Guide to Rank Tracking in 2025
 -- 2. How to Accelerate Google Indexing with IndexNow  
 -- 3. 10 Advanced SEO Techniques for 2025
@@ -8607,6 +8617,7 @@ Public settings endpoint returns:
 
 **Database Changes Required** (SQL to run in Supabase SQL Editor):
 ```sql
+-- Add category column with proper indexing
 -- Add category column with proper indexing
 ALTER TABLE public.indb_cms_posts 
 ADD COLUMN IF NOT EXISTS category text DEFAULT 'uncategorized';
@@ -11197,6 +11208,7 @@ When background jobs fail (like BullMQ worker initialization):
 **✅ DATABASE SCHEMA COMPATIBILITY**:
 The `http_method` column is nullable:
 ```sql
+http_method text null,  -- ✅ NULL is allowed
 http_method text null,  -- ✅ NULL is allowed
 ```
 
