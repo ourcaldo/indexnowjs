@@ -1,0 +1,27 @@
+
+Before, we have a plan to integrate the Paddle on this project, we've discussed about it and made the documentation on file doc/PADDLE_INTEGRATION_GUIDE.md. We also already remove the old payment gateway that the log progress you can found on Phase 1-7 on file PADDLE_MIGRATION_PROGRESS.md. 
+Please read this file until you understand in and out about it.
+
+Now, as we ready to integrate the Paddle, please deep dive into the implementation plan that we already made on file doc/PADDLE_IMPLEMENTATION_PLAN.md.
+Right now, all we do is:
+1. Already implement the Phase 1 about the database changes
+2. I already add the Paddle id on each product for the Phase 2
+3. We already implement the Paddle up to Phase 9
+
+Then, when I run a development on my local server and try to do a checkout, there's issue which come like this when I click complete purchase:
+```
+Unable to proceed
+Please wait for the payment system to load.
+```
+
+On my local server, I already put the Paddle variable on .env. I fucking not see any logs on backend server or in my browser console.
+So, I need you to deep dive into this issue, because I didn't see any error log on the backend server.
+
+YOU FUCKING LOAD THE VARIABLE FROM FUCKING WHICH PART, FROM FUCKING VARIABLE OR FUCKING DATABASE? THE FUCKING API_KEY OF PADDLE IS SHOULDN'T FUCKING EXPOSED, THAT'S WHY WE NOT USE FUCKING NEXT_PUBLIC.
+
+JUST FUCKING DO THIS,ALL VAROABLES IS FUCKING NEED TO LOAD FROM FUCKING DATABASE, SO MADE THE FUCKING ROUTES FOR THE PADDLE SO THE CRITICAL KEY ISN'T BEING FUCKING EXPOSED. THE CURRENT SQL IS I ATTCH
+
+How to write the documentation
+At the end, you need to made documentation on file:
+1. On doc/PADDLE_MIGRATION_PROGRESS.md for what you have already done. To write it, just fucking givin checklist on each part, not fucking made new diffeent section just to say that it's fixed. No need fucking summary table, report and any new fucking sections, just directly give checklist on fucking phase/sub phase/task that been done, or made new section/phase if the problem is different from before (not a fixing things, but more documentating after research).
+2. On doc/project.md for all summary. For the project.md, you need to write all in new changelogs format, not same as PADDLE_MIGRATION_PROGRESS.md. 
