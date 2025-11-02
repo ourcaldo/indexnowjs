@@ -8,10 +8,11 @@ import { z } from 'zod'
 import { authenticatedApiWrapper, formatSuccess, formatError } from '@/lib/core/api-response-middleware'
 import { PaddleSubscriptionService } from '@/lib/services/payments/paddle'
 import { supabaseAdmin } from '@/lib/database'
+import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
 
 const pauseRequestSchema = z.object({
   subscriptionId: z.string().min(1, 'Subscription ID is required'),
-  effectiveFrom: z.string().optional(),
+  effectiveFrom: z.enum(['immediately', 'next_billing_period']).optional(),
 })
 
 export const POST = authenticatedApiWrapper(async (request: NextRequest, auth) => {
@@ -19,7 +20,12 @@ export const POST = authenticatedApiWrapper(async (request: NextRequest, auth) =
   
   const validationResult = pauseRequestSchema.safeParse(body)
   if (!validationResult.success) {
-    return formatError(validationResult.error.errors[0].message, 400)
+    const error = await ErrorHandlingService.createError(
+      ErrorType.VALIDATION,
+      validationResult.error.errors[0].message,
+      { severity: ErrorSeverity.LOW, statusCode: 400 }
+    )
+    return formatError(error)
   }
 
   const { subscriptionId, effectiveFrom } = validationResult.data
@@ -31,11 +37,21 @@ export const POST = authenticatedApiWrapper(async (request: NextRequest, auth) =
     .single()
 
   if (fetchError || !subscription) {
-    return formatError('Subscription not found', 404)
+    const error = await ErrorHandlingService.createError(
+      ErrorType.BUSINESS_LOGIC,
+      'Subscription not found',
+      { severity: ErrorSeverity.LOW, statusCode: 404, userId: auth.userId }
+    )
+    return formatError(error)
   }
 
   if (subscription.user_id !== auth.userId) {
-    return formatError('You do not have permission to pause this subscription', 403)
+    const error = await ErrorHandlingService.createError(
+      ErrorType.AUTHORIZATION,
+      'You do not have permission to pause this subscription',
+      { severity: ErrorSeverity.MEDIUM, statusCode: 403, userId: auth.userId }
+    )
+    return formatError(error)
   }
 
   const options = effectiveFrom ? { effectiveFrom } : undefined

@@ -15,7 +15,6 @@ interface CheckoutForm {
   zip_code: string
   country: string
   description: string
-  payment_method: string
 }
 
 interface CheckoutFormProps {
