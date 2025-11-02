@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
-import { useUserProfile } from '@/hooks/useUserProfile'
 import { usePaddle } from '@/lib/providers/PaddleProvider'
 import { supabaseBrowser } from '@/lib/database'
 import BillingPeriodSelector from '@/components/checkout/BillingPeriodSelector'
@@ -53,7 +52,6 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams()
   const { addToast } = useToast()
   const { paddle, isLoading: paddleLoading } = usePaddle()
-  const { user: currentUser, loading: userLoading } = useUserProfile()
 
   // URL parameters
   const [package_id] = useState(searchParams?.get('package'))
@@ -61,6 +59,7 @@ export default function CheckoutPage() {
   const [isTrialFlow, setIsTrialFlow] = useState(searchParams?.get('trial') === 'true')
 
   // State
+  const [userId, setUserId] = useState<string | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<PaymentPackage | null>(null)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
@@ -89,9 +88,9 @@ export default function CheckoutPage() {
       try {
         setLoading(true)
 
-        // Get authentication token
-        const token = (await supabaseBrowser.auth.getSession()).data.session?.access_token
-        if (!token) {
+        // Get authentication session and user
+        const { data: { session } } = await supabaseBrowser.auth.getSession()
+        if (!session?.access_token || !session?.user) {
           addToast({
             title: "Authentication required",
             description: "Please log in to continue.",
@@ -101,10 +100,13 @@ export default function CheckoutPage() {
           return
         }
 
+        // Store user ID for checkout
+        setUserId(session.user.id)
+
         // Fetch full user profile including country data
         const profileResponse = await fetch(AUTH_ENDPOINTS.PROFILE, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
           },
           credentials: 'include'
@@ -136,7 +138,7 @@ export default function CheckoutPage() {
         // Fetch package data
         const packageResponse = await fetch(BILLING_ENDPOINTS.PACKAGE_BY_ID(package_id!), {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
           },
           credentials: 'include'
@@ -155,7 +157,7 @@ export default function CheckoutPage() {
         if (isTrialFlow) {
           const trialResponse = await fetch(AUTH_ENDPOINTS.TRIAL_ELIGIBILITY, {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${session.access_token}`,
               'Content-Type': 'application/json'
             },
             credentials: 'include'
@@ -204,7 +206,7 @@ export default function CheckoutPage() {
 
   // Handle Paddle checkout
   const handleCheckout = async () => {
-    if (!paddle || !selectedPackage || !currentUser) {
+    if (!paddle || !selectedPackage || !userId) {
       addToast({
         title: "Unable to proceed",
         description: "Please wait for the payment system to load.",
@@ -238,10 +240,10 @@ export default function CheckoutPage() {
       paddle.Checkout.open({
         items: [{ priceId, quantity: 1 }],
         customer: { 
-          email: form.email || currentUser.email || ''
+          email: form.email
         },
         customData: {
-          userId: currentUser.id,
+          userId: userId,
           packageId: selectedPackage.id,
           packageSlug: selectedPackage.slug,
           billingPeriod: billing_period,
@@ -340,15 +342,15 @@ export default function CheckoutPage() {
 
                       <Button
                         onClick={handleCheckout}
-                        disabled={paddleLoading || userLoading || processing || !paddle || !currentUser || !form.email || !form.first_name}
+                        disabled={paddleLoading || processing || !paddle || !userId || !form.email || !form.first_name}
                         className="w-full"
                         size="lg"
                         data-testid="button-complete-checkout"
                       >
-                        {processing || paddleLoading || userLoading ? (
+                        {processing || paddleLoading ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            {userLoading ? 'Loading user...' : paddleLoading ? 'Loading payment...' : 'Processing...'}
+                            {paddleLoading ? 'Loading payment...' : 'Processing...'}
                           </>
                         ) : (
                           <>
@@ -360,12 +362,6 @@ export default function CheckoutPage() {
                       {!paddle && !paddleLoading && (
                         <p className="text-xs text-destructive text-center">
                           Unable to load payment system. Please refresh the page.
-                        </p>
-                      )}
-                      
-                      {!currentUser && !userLoading && (
-                        <p className="text-xs text-destructive text-center">
-                          Unable to load user profile. Please refresh the page.
                         </p>
                       )}
                     </div>
