@@ -776,6 +776,75 @@ JWT_SECRET=[jwt-secret-key]
 ## Recent Changes
 
 
+### November 2, 2025: Billing UI & History Improvements - Cancel Subscription & Dual Transaction Support ✅
+
+**CRITICAL SECURITY FIXES (Post-Implementation):**
+- ✅ Added user_id scoping to ALL database queries to prevent cross-tenant data exposure
+- ✅ Fixed pagination logic to correctly calculate total items from both sources
+- ✅ Added MAX_RECORDS_PER_SOURCE cap (1000 records) to prevent unbounded queries
+- ✅ All legacy and Paddle queries now properly scoped with `.eq('user_id', auth.userId)`
+- ✅ Statistics queries also scoped to prevent leaking aggregate data from other users
+
+**Implemented two critical billing system improvements: (1) Cancel Subscription UI with refund policy dialog, and (2) Unified billing history querying both legacy and Paddle transaction tables.**
+
+**1. Cancel Subscription UI Implementation ✅**
+- ✅ Created `/api/v1/payments/paddle/subscription/my-subscription/route.ts` endpoint to fetch user's active Paddle subscription
+- ✅ Added subscription management section to main billing page (`app/dashboard/settings/plans-billing/page.tsx`)
+- ✅ Wired up existing `CancelSubscriptionDialog` component to billing page
+- ✅ Added `SubscriptionStatusBadge` component to display subscription status with visual indicators
+- ✅ Implemented cancel button that only shows when subscription is active and not already scheduled for cancellation
+- ✅ Added `handleCancelSuccess` callback to refresh subscription data after cancellation
+- ✅ Added state management for subscription data and cancel dialog visibility
+
+**UI Features:**
+- Displays subscription status badge (Active, Canceled, Past Due)
+- Shows "Access until [date]" for canceled subscriptions
+- Cancel button triggers existing refund policy dialog (7-day refund window)
+- Automatic data refresh after successful cancellation
+- Toast notifications for user feedback
+
+**2. Unified Billing History Implementation ✅**
+- ✅ Completely refactored `/api/v1/billing/history/route.ts` to query both transaction tables
+- ✅ Created `NormalizedBillingTransaction` interface for unified data structure
+- ✅ Implemented adapter functions: `mapLegacyTransaction` and `mapPaddleTransaction`
+- ✅ Parallel fetching of both legacy (`indb_payment_transactions`) and Paddle (`indb_paddle_transactions`) tables using `Promise.all`
+- ✅ Merged and sorted transactions by date (most recent first)
+- ✅ Combined statistics from both sources (total transactions, completed, pending, failed, total spent)
+- ✅ Maintained backward compatibility with existing frontend
+
+**Normalized Transaction Schema:**
+```typescript
+interface NormalizedBillingTransaction {
+  id, order_id, source: 'legacy' | 'paddle',
+  transaction_type, transaction_status, amount, currency,
+  created_at, updated_at, processed_at, verified_at,
+  payment_method, gateway_transaction_id, package_name,
+  billing_period, gateway_name, gateway_slug,
+  // Paddle-specific fields
+  paddle_transaction_id?, subscription_id?, receipt_url?, invoice_number?
+}
+```
+
+**Technical Implementation:**
+- Uses `SecureServiceRoleWrapper.executeWithUserSession` for both data sources
+- Adapter functions normalize different schemas into common format
+- Statistics aggregation from both tables using parallel queries
+- Memory-based merge and sort (suitable for typical user transaction volumes)
+- Maintains existing pagination and filtering capabilities
+
+**Benefits:**
+- Users now see complete billing history including both old (Midtrans/Bank Transfer) and new (Paddle) transactions
+- Accurate financial statistics across all payment methods
+- Seamless user experience regardless of transaction source
+- Foundation for future analytics and reporting features
+
+**Files Modified:**
+- `app/api/v1/payments/paddle/subscription/my-subscription/route.ts` (created)
+- `app/dashboard/settings/plans-billing/page.tsx` (enhanced with cancel UI)
+- `app/api/v1/billing/history/route.ts` (refactored for dual-table support)
+
+---
+
 
 ### November 2, 2025: Paddle Enhancement Plan - Documentation Created 📋
 

@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { CancelSubscriptionDialog } from './components/CancelSubscriptionDialog'
+import { SubscriptionStatusBadge } from './components/SubscriptionStatusBadge'
 
 // Type definitions
 interface PaymentPackage {
@@ -148,6 +150,10 @@ export default function BillingPage() {
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Subscription management state
+  const [subscriptionData, setSubscriptionData] = useState<any>(null)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
 
   // Plans section state
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState<string>('monthly')
@@ -187,12 +193,40 @@ export default function BillingPage() {
       await Promise.all([
         loadBillingData(),
         loadBillingHistory(),
-        loadDashboardData()
+        loadDashboardData(),
+        loadSubscriptionData()
       ])
     } catch (error) {
       handleApiError(error)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  const loadSubscriptionData = async () => {
+    try {
+      const user = await authService.getCurrentUser()
+      if (!user) return
+
+      const token = (await supabase.auth.getSession()).data.session?.access_token
+      if (!token) return
+
+      const response = await fetch('/api/v1/payments/paddle/subscription/my-subscription', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      })
+
+      if (!response.ok) return
+
+      const result = await response.json()
+      if (result.success && result.data) {
+        setSubscriptionData(result.data)
+      }
+    } catch (error) {
+      // Silently fail - subscription data is optional
     }
   }
 
@@ -446,6 +480,18 @@ export default function BillingPage() {
   const isTrialEligiblePackage = (pkg: any) => {
     return pkg.free_trial_enabled === true
   }
+  
+  const handleCancelSuccess = async () => {
+    setShowCancelDialog(false)
+    addToast({
+      title: 'Subscription Canceled',
+      description: 'Your subscription has been successfully canceled.',
+      variant: 'default'
+    })
+    // Reload subscription data
+    await loadSubscriptionData()
+    await loadBillingData()
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -601,6 +647,40 @@ export default function BillingPage() {
                 />
               </div>
             </div>
+            
+            {/* Subscription Management Section */}
+            {subscriptionData?.hasSubscription && subscriptionData.subscription && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-foreground">Subscription Management</h3>
+                    <div className="flex items-center gap-2">
+                      <SubscriptionStatusBadge 
+                        status={subscriptionData.subscription.status}
+                        cancelAtPeriodEnd={subscriptionData.subscription.cancel_at_period_end}
+                        currentPeriodEnd={subscriptionData.subscription.current_period_end}
+                      />
+                      {subscriptionData.subscription.cancel_at_period_end && subscriptionData.subscription.current_period_end && (
+                        <span className="text-xs text-muted-foreground">
+                          Access until {formatDate(subscriptionData.subscription.current_period_end)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {!subscriptionData.subscription.cancel_at_period_end && subscriptionData.subscription.status === 'active' && (
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCancelDialog(true)}
+                      data-testid="button-cancel-subscription"
+                    >
+                      Cancel Subscription
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -871,6 +951,16 @@ export default function BillingPage() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Cancel Subscription Dialog */}
+      {subscriptionData?.hasSubscription && subscriptionData.subscription && (
+        <CancelSubscriptionDialog
+          open={showCancelDialog}
+          onOpenChange={setShowCancelDialog}
+          subscriptionId={subscriptionData.subscription.paddle_subscription_id}
+          onSuccess={handleCancelSuccess}
+        />
+      )}
     </div>
   )
 }
