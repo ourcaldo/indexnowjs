@@ -3,7 +3,7 @@
  * Receives and processes webhook events from Paddle
  * 
  * Security:
- * - Validates webhook signature using PADDLE_WEBHOOK_SECRET
+ * - Validates webhook signature using webhook secret from DATABASE
  * - Logs all events to indb_paddle_webhook_events
  * - Routes events to appropriate processors
  */
@@ -23,6 +23,27 @@ import {
 } from './processors'
 
 const WEBHOOK_TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000
+
+async function getWebhookSecretFromDatabase(): Promise<string> {
+  const { data: gateway, error } = await supabaseAdmin
+    .from('indb_payment_gateways')
+    .select('api_credentials')
+    .eq('slug', 'paddle')
+    .eq('is_active', true)
+    .single()
+
+  if (error || !gateway) {
+    throw new Error('Paddle gateway not found or not active')
+  }
+
+  const webhookSecret = gateway.api_credentials?.webhook_secret
+
+  if (!webhookSecret) {
+    throw new Error('PADDLE webhook secret not found in database. Please update indb_payment_gateways.api_credentials with actual webhook_secret.')
+  }
+
+  return webhookSecret
+}
 
 export const POST = async (request: NextRequest) => {
   try {
@@ -44,7 +65,7 @@ export const POST = async (request: NextRequest) => {
       )
     }
 
-    const verificationResult = verifyPaddleSignature(rawBody, signature)
+    const verificationResult = await verifyPaddleSignature(rawBody, signature)
     
     if (!verificationResult.valid) {
       await ErrorHandlingService.createError(
@@ -136,12 +157,9 @@ interface SignatureVerificationResult {
   error?: string
 }
 
-function verifyPaddleSignature(rawBody: string, signature: string): SignatureVerificationResult {
-  const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET
-  
-  if (!webhookSecret) {
-    throw new Error('PADDLE_WEBHOOK_SECRET not configured in environment variables')
-  }
+async function verifyPaddleSignature(rawBody: string, signature: string): Promise<SignatureVerificationResult> {
+  // CRITICAL: Load webhook secret from DATABASE (not environment variables)
+  const webhookSecret = await getWebhookSecretFromDatabase()
 
   try {
     const parts = signature.split(';')

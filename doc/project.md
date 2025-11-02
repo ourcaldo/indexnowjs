@@ -775,6 +775,66 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### November 2, 2025: Paddle Migration Security Fix - Database-Based Credentials System ✅
+
+**Fixed critical security issue where Paddle credentials were exposed via NEXT_PUBLIC environment variables. All credentials now loaded from database via secure backend API routes.**
+
+**Phase 10: Database-Based Credentials System ✅**
+- ✅ Created secure config API route `/api/v1/payments/paddle/config` to serve client token
+- ✅ Updated PaddleProvider to load credentials from database API (not environment variables)
+- ✅ Updated PaddleService to load API key from database (not environment variables)
+- ✅ Updated webhook handler to load webhook secret from database (not environment variables)
+- ✅ Eliminated ALL NEXT_PUBLIC_PADDLE_* environment variables (prevents credential exposure)
+- **Security Fix - Config API Route** (`app/api/v1/payments/paddle/config/route.ts`):
+  - Loads Paddle gateway configuration from database
+  - Returns ONLY client_token to frontend (safe for browser)
+  - NEVER exposes api_key or webhook_secret
+  - Includes caching (5 minutes) and proper error handling
+- **Frontend Update - PaddleProvider** (`lib/providers/PaddleProvider.tsx`):
+  - Changed from: `process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` (EXPOSED)
+  - Changed to: `fetch('/api/v1/payments/paddle/config')` (SECURE)
+  - Removed all console logging for production readiness
+- **Backend Update - PaddleService** (`lib/services/payments/paddle/PaddleService.ts`):
+  - Changed from: `process.env.PADDLE_API_KEY` (environment variables)
+  - Changed to: `gateway.api_credentials.api_key` (database)
+  - Clear error messages guide user to update database
+- **Webhook Update** (`app/api/v1/payments/paddle/webhook/route.ts`):
+  - Changed from: `process.env.PADDLE_WEBHOOK_SECRET` (environment variables)
+  - Changed to: `getWebhookSecretFromDatabase()` (database)
+  - Signature verification uses database-stored webhook secret
+- **Database Schema Update Required**:
+  - Created SQL migration script: `doc/PADDLE_DATABASE_CREDENTIALS_UPDATE.sql`
+  - User must update `indb_payment_gateways.api_credentials` with actual Paddle credentials
+  - New structure: `{"api_key": "pdl_...", "webhook_secret": "ntfset_...", "client_token": "test_..."}`
+
+**Security Improvements:**
+- ❌ **BEFORE**: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN exposed in browser JavaScript bundle
+- ✅ **AFTER**: Zero NEXT_PUBLIC_ variables, client token loaded via secure backend API
+- ❌ **BEFORE**: Credentials stored as env var references in database
+- ✅ **AFTER**: Actual credentials stored in database, encrypted at rest by Supabase
+- ✅ **BENEFIT**: Frontend gets only what it needs (client_token), backend gets all credentials
+- ✅ **BENEFIT**: Easy credential rotation via database update (no code deployment)
+
+**Files Created:** 2 files (~120 lines)
+- ✅ `app/api/v1/payments/paddle/config/route.ts` - Secure config API endpoint
+- ✅ `doc/PADDLE_DATABASE_CREDENTIALS_UPDATE.sql` - SQL migration script with instructions
+
+**Files Modified:** 4 files (~85 lines changed)
+- ✅ `lib/providers/PaddleProvider.tsx` - Load from database API
+- ✅ `lib/services/payments/paddle/PaddleService.ts` - Load api_key from database
+- ✅ `lib/services/payments/paddle/PaddleCustomerService.ts` - Load environment from database
+- ✅ `app/api/v1/payments/paddle/webhook/route.ts` - Load webhook_secret from database
+
+**User Action Required:**
+1. Run SQL update script to store actual Paddle credentials in database
+2. Verify credentials stored correctly in `indb_payment_gateways.api_credentials`
+3. Remove PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, NEXT_PUBLIC_PADDLE_* from .env (no longer needed)
+4. Test Paddle initialization and checkout flow
+
+**Status:** ✅ **PHASE 10 COMPLETE** - Database-based credentials system implemented, waiting for user to update database with actual credentials
+
+---
+
 ### November 2, 2025: Paddle Migration Phase 9 Complete - Subscription Management ✅
 
 **Completed subscription management infrastructure with API endpoints, customer portal integration, and UI components. Users can now manage their subscriptions (cancel, pause, resume, update plans) via Paddle's customer portal.**

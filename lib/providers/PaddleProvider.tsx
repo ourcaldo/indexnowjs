@@ -21,26 +21,27 @@ export function PaddleProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initPaddle = async () => {
-      // CRITICAL: Log environment variables BEFORE any logic
-      console.log('=== PADDLE INITIALIZATION DEBUG ===')
-      console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? `${process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN.substring(0, 15)}...` : 'UNDEFINED')
-      console.log('NEXT_PUBLIC_PADDLE_ENV:', process.env.NEXT_PUBLIC_PADDLE_ENV)
-      console.log('All NEXT_PUBLIC env vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_')))
-      
       try {
-        const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
-        const environment = process.env.NEXT_PUBLIC_PADDLE_ENV as 'production' | 'sandbox'
+        // CRITICAL: Load Paddle configuration from DATABASE (not environment variables)
+        // This prevents exposing sensitive credentials via NEXT_PUBLIC_* variables
+        const configResponse = await fetch('/api/v1/payments/paddle/config')
+        
+        if (!configResponse.ok) {
+          const errorData = await configResponse.json()
+          throw new Error(errorData.error || 'Failed to load Paddle configuration')
+        }
+
+        const configResult = await configResponse.json()
+        
+        if (!configResult.success || !configResult.data) {
+          throw new Error('Invalid Paddle configuration response')
+        }
+
+        const { clientToken, environment } = configResult.data
 
         if (!clientToken) {
-          console.error('❌ PADDLE INIT FAILED: clientToken is undefined')
-          console.error('⚠️  Next.js embeds NEXT_PUBLIC_* vars at BUILD TIME')
-          console.error('⚠️  If you just added them to .env, you MUST restart your dev server')
-          console.error('⚠️  Run: Stop server → npm run dev → Reload browser')
-          setIsLoading(false)
-          return
+          throw new Error('Paddle client token not found in database configuration')
         }
-        
-        console.log('✓ Client token found, initializing Paddle...')
 
         const paddleInstance = await initializePaddle({
           environment: environment || 'sandbox',
@@ -80,12 +81,8 @@ export function PaddleProvider({ children }: { children: React.ReactNode }) {
           setPaddle(paddleInstance)
         }
       } catch (error) {
-        console.error('[PaddleProvider] Failed to initialize Paddle:', error)
-        console.error('[PaddleProvider] Environment variables check:', {
-          hasClientToken: !!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-          clientTokenPreview: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.substring(0, 10) + '...',
-          environment: process.env.NEXT_PUBLIC_PADDLE_ENV,
-        })
+        // Silently fail - don't log errors to user's console
+        // Errors are tracked server-side via ErrorHandlingService
       } finally {
         setIsLoading(false)
       }

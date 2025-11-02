@@ -11,7 +11,7 @@ export class PaddleService {
 
   /**
    * Get singleton instance of Paddle SDK
-   * Initializes with API key from environment and configuration from database
+   * Initializes with API key from DATABASE (not environment variables)
    */
   static async getInstance(): Promise<Paddle> {
     if (this.instance) {
@@ -25,11 +25,12 @@ export class PaddleService {
       throw new Error('Paddle gateway is not configured or inactive')
     }
 
-    // Get API key from environment
-    const apiKey = process.env.PADDLE_API_KEY
+    // CRITICAL: Get API key from DATABASE (not environment variables)
+    const apiCredentials = gateway.api_credentials || {}
+    const apiKey = apiCredentials.api_key
 
     if (!apiKey) {
-      throw new Error('PADDLE_API_KEY not configured in environment variables')
+      throw new Error('PADDLE API key not found in database. Please update indb_payment_gateways.api_credentials with actual API key.')
     }
 
     // Initialize Paddle SDK
@@ -70,11 +71,13 @@ export class PaddleService {
 
   /**
    * Check if Paddle is configured and active
+   * Verifies that API key is stored in database
    */
   static async isConfigured(): Promise<boolean> {
     try {
       const gateway = await this.getGatewayConfig()
-      const hasApiKey = !!process.env.PADDLE_API_KEY
+      const apiCredentials = gateway?.api_credentials || {}
+      const hasApiKey = !!apiCredentials.api_key
       return !!gateway && hasApiKey
     } catch (error) {
       return false

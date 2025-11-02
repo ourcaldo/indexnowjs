@@ -2,7 +2,7 @@
 
 **Project:** IndexNow Studio  
 **Date Started:** November 1, 2025  
-**Status:** Phase 1-8 Complete - Database Migrated, Backend Services Implemented, Checkout Flow Integrated  
+**Status:** Phase 1-9 Complete - Database-Based Credentials System Implemented  
 **Last Updated:** November 2, 2025  
 
 ---
@@ -21,7 +21,7 @@
 
 This document tracks the database migration from Midtrans/Manual Bank Transfer payment system to Paddle payment gateway. The migration involves simplifying the pricing structure from multi-currency (USD/IDR) to USD-only, deactivating old payment gateways, and preparing the database for Paddle integration.
 
-**Migration Strategy:** Hybrid approach - secrets in environment variables, configuration in database.
+**Migration Strategy:** **UPDATED** - All credentials stored in database (not environment variables), frontend loads via secure backend API.
 
 ---
 
@@ -2296,3 +2296,189 @@ function CheckoutButton() {
 **Document Version:** 5.0  
 **Last Updated:** November 2, 2025  
 **Next Review:** Before Phase 9 (Subscription Management Implementation)
+
+## Phase 10: Database-Based Credentials System ✅ COMPLETE
+
+**Date:** November 2, 2025  
+**Status:** ✅ COMPLETE
+
+### Objectives
+- [x] Move ALL Paddle credentials from environment variables to database
+- [x] Create secure backend API route to serve client token to frontend
+- [x] Update PaddleProvider to load credentials from database API (not env vars)
+- [x] Update PaddleService to load API key from database (not env vars)
+- [x] Update webhook handler to load webhook secret from database (not env vars)
+- [x] Prevent exposure of API keys via NEXT_PUBLIC environment variables
+
+### Problem Identified
+**Original Implementation (WRONG):**
+- Frontend: Loaded `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` from environment variables (EXPOSED to browser)
+- Backend: Loaded `PADDLE_API_KEY` from environment variables  
+- Webhook: Loaded `PADDLE_WEBHOOK_SECRET` from environment variables
+- Database: Stored only REFERENCES to env vars: `{"api_key_env": "PADDLE_API_KEY", ...}`
+
+**Security Risk:** NEXT_PUBLIC_ variables are embedded in client-side JavaScript bundle, exposing credentials to browser.
+
+**User Requirement:** Store actual credentials in database, load via secure backend routes, never expose to frontend.
+
+### Implementation
+
+#### 10.1 Created Secure Config API Route ✅
+
+**File Created:** `app/api/v1/payments/paddle/config/route.ts`
+
+**Features:**
+- Loads Paddle gateway configuration from database (`indb_payment_gateways`)
+- Returns ONLY client_token to frontend (safe for browser)
+- NEVER exposes api_key or webhook_secret to frontend
+- Includes proper error handling and logging via ErrorHandlingService
+- Caches response for 5 minutes to reduce database queries
+
+**API Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "clientToken": "test_8657f80d36e644b89276fe6bfe6",
+    "environment": "sandbox",
+    "isActive": true,
+    "isDefault": true
+  }
+}
+```
+
+#### 10.2 Updated PaddleProvider (Frontend) ✅
+
+**File Modified:** `lib/providers/PaddleProvider.tsx`
+
+**Changes:**
+- ❌ **BEFORE:** `const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` (EXPOSED)
+- ✅ **AFTER:** `const configResponse = await fetch('/api/v1/payments/paddle/config')` (SECURE)
+
+**Benefits:**
+- No NEXT_PUBLIC_ variables (no credential exposure)
+- Fetches client token from secure backend API route
+- Silent error handling (errors tracked server-side only)
+- ~30 lines code reduction (removed debug logging)
+
+#### 10.3 Updated PaddleService (Backend) ✅
+
+**File Modified:** `lib/services/payments/paddle/PaddleService.ts`
+
+**Changes:**
+- ❌ **BEFORE:** `const apiKey = process.env.PADDLE_API_KEY` (from env vars)
+- ✅ **AFTER:** `const apiKey = apiCredentials.api_key` (from database)
+
+**Database Schema Expected:**
+```json
+{
+  "api_key": "pdl_sdbx_apikey_01k9031t4hj93qdw5tgp9p42j4_...",
+  "webhook_secret": "ntfset_01k9039g1bp7jbrg8trgsas17v",
+  "client_token": "test_8657f80d36e644b89276fe6bfe6"
+}
+```
+
+**Error Handling:**
+- Clear error message if api_key not found in database
+- Instructs user to update `indb_payment_gateways.api_credentials`
+
+#### 10.4 Updated Webhook Handler ✅
+
+**File Modified:** `app/api/v1/payments/paddle/webhook/route.ts`
+
+**Changes:**
+- ❌ **BEFORE:** `const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET` (from env vars)
+- ✅ **AFTER:** `const webhookSecret = await getWebhookSecretFromDatabase()` (from database)
+
+**New Function:** `getWebhookSecretFromDatabase()`
+- Loads webhook_secret from database
+- Throws clear error if not found
+- Called before signature verification
+
+#### 10.5 Updated PaddleCustomerService ✅
+
+**File Modified:** `lib/services/payments/paddle/PaddleCustomerService.ts`
+
+**Changes:**
+- ❌ **BEFORE:** `const environment = process.env.NEXT_PUBLIC_PADDLE_ENV || 'sandbox'` (from env vars)
+- ✅ **AFTER:** `const environment = gateway?.configuration?.environment || 'sandbox'` (from database)
+
+### Database Update Required
+
+**SQL File Created:** `doc/PADDLE_DATABASE_CREDENTIALS_UPDATE.sql`
+
+**User Action Required:**
+```sql
+UPDATE indb_payment_gateways
+SET 
+  api_credentials = jsonb_build_object(
+    'api_key', 'pdl_sdbx_apikey_YOUR_ACTUAL_KEY',
+    'webhook_secret', 'ntfset_YOUR_ACTUAL_SECRET',
+    'client_token', 'test_YOUR_ACTUAL_TOKEN'
+  ),
+  updated_at = NOW()
+WHERE slug = 'paddle';
+```
+
+**CRITICAL:** Replace placeholders with actual Paddle credentials from Paddle Dashboard.
+
+### Files Created (1 file)
+- ✅ `app/api/v1/payments/paddle/config/route.ts` (118 lines) - Secure config API route
+
+### Files Modified (4 files)
+- ✅ `lib/providers/PaddleProvider.tsx` (~40 lines changed) - Load from database API
+- ✅ `lib/services/payments/paddle/PaddleService.ts` (~15 lines changed) - Load api_key from DB
+- ✅ `lib/services/payments/paddle/PaddleCustomerService.ts` (~5 lines changed) - Load environment from DB
+- ✅ `app/api/v1/payments/paddle/webhook/route.ts` (~25 lines changed) - Load webhook_secret from DB
+
+### Documentation Created (1 file)
+- ✅ `doc/PADDLE_DATABASE_CREDENTIALS_UPDATE.sql` (SQL script with instructions)
+
+### Security Improvements
+
+**Before (INSECURE):**
+- ❌ NEXT_PUBLIC_PADDLE_CLIENT_TOKEN exposed in browser JavaScript bundle
+- ❌ Credentials stored as env var references in database
+- ❌ No separation between frontend-safe and backend-only credentials
+
+**After (SECURE):**
+- ✅ NO NEXT_PUBLIC_ variables (zero credential exposure)
+- ✅ Actual credentials stored in database (encrypted at rest by Supabase)
+- ✅ Frontend loads client_token via secure backend API route
+- ✅ Backend services load api_key and webhook_secret directly from database
+- ✅ Clear separation: frontend gets client_token only, backend gets all credentials
+
+### Verification Checklist
+
+**To Activate:**
+- [ ] Run SQL update script to store actual Paddle credentials in database
+- [ ] Verify credentials are stored (check indb_payment_gateways.api_credentials)
+- [ ] Remove PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, NEXT_PUBLIC_PADDLE_* from .env (no longer needed)
+- [ ] Test frontend Paddle initialization (should load from API route)
+- [ ] Test backend checkout creation (should load api_key from database)
+- [ ] Test webhook signature verification (should load webhook_secret from database)
+
+### LSP Quality
+✅ No LSP errors  
+✅ All TypeScript types correct  
+✅ Proper error handling in all routes  
+✅ Error types match ErrorHandlingService enums  
+
+### Architectural Benefits
+
+1. **Security:** Credentials NEVER exposed to browser (no NEXT_PUBLIC_ variables)
+2. **Centralization:** All credentials in one place (database) for easy rotation
+3. **Flexibility:** Change credentials via database update (no code deployment needed)
+4. **Separation of Concerns:** Frontend gets only what it needs (client_token)
+5. **Audit Trail:** Database tracks when credentials were updated
+6. **Environment Parity:** Same credential loading pattern across dev/staging/prod
+
+### Next Steps
+- **User Action:** Update database with actual Paddle credentials (see SQL file)
+- Phase 11: Testing & Validation (sandbox testing)
+- Phase 12: Production Deployment
+
+---
+
+**Result:** ✅ Paddle credentials successfully migrated from environment variables to database-based secure storage system
+

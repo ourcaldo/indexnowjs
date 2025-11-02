@@ -26,7 +26,8 @@ export class PaddleCustomerService {
     // Paddle automatically provides customer portal access
     // The URL is available from the subscription management page
     // Return the standard Paddle portal URL with customer ID
-    const environment = process.env.NEXT_PUBLIC_PADDLE_ENV || 'sandbox'
+    const gateway = await PaddleService.getGatewayConfig()
+    const environment = gateway?.configuration?.environment || 'sandbox'
     const baseUrl = environment === 'production' 
       ? 'https://customer-portal.paddle.com'
       : 'https://sandbox-customer-portal.paddle.com'
