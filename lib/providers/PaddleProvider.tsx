@@ -68,7 +68,12 @@ export function PaddleProvider({ children }: { children: React.ReactNode }) {
           setPaddle(paddleInstance)
         }
       } catch (error) {
-        
+        console.error('[PaddleProvider] Failed to initialize Paddle:', error)
+        console.error('[PaddleProvider] Environment variables check:', {
+          hasClientToken: !!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+          clientTokenPreview: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.substring(0, 10) + '...',
+          environment: process.env.NEXT_PUBLIC_PADDLE_ENV,
+        })
       } finally {
         setIsLoading(false)
       }
