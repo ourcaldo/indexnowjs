@@ -485,8 +485,7 @@ export default function BillingPage() {
     setShowCancelDialog(false)
     addToast({
       title: 'Subscription Canceled',
-      description: 'Your subscription has been successfully canceled.',
-      variant: 'default'
+      description: 'Your subscription has been successfully canceled.'
     })
     // Reload subscription data
     await loadSubscriptionData()
@@ -658,7 +657,7 @@ export default function BillingPage() {
                       <SubscriptionStatusBadge 
                         status={subscriptionData.subscription.status}
                         cancelAtPeriodEnd={subscriptionData.subscription.cancel_at_period_end}
-                        currentPeriodEnd={subscriptionData.subscription.current_period_end}
+                        periodEnd={subscriptionData.subscription.current_period_end}
                       />
                       {subscriptionData.subscription.cancel_at_period_end && subscriptionData.subscription.current_period_end && (
                         <span className="text-xs text-muted-foreground">
@@ -953,11 +952,10 @@ export default function BillingPage() {
       </Card>
       
       {/* Cancel Subscription Dialog */}
-      {subscriptionData?.hasSubscription && subscriptionData.subscription && (
+      {showCancelDialog && subscriptionData?.hasSubscription && subscriptionData.subscription && (
         <CancelSubscriptionDialog
-          open={showCancelDialog}
-          onOpenChange={setShowCancelDialog}
           subscriptionId={subscriptionData.subscription.paddle_subscription_id}
+          onClose={() => setShowCancelDialog(false)}
           onSuccess={handleCancelSuccess}
         />
       )}
