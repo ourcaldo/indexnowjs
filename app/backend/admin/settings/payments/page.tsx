@@ -264,6 +264,27 @@ export default function PaymentGateways() {
               </div>
 
               <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-foreground mb-2">Client Token</label>
+                <input
+                  type="text"
+                  value={formData.api_credentials?.client_token || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    api_credentials: {
+                      ...prev.api_credentials,
+                      client_token: e.target.value
+                    }
+                  }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                  placeholder="test_... or live_..."
+                  data-testid="input-paddle-client-token"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Client-side token for Paddle.js initialization. This is safe to expose in the browser and will be served via the config API.
+                </p>
+              </div>
+
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-foreground mb-2">Webhook URL</label>
                 <input
                   type="url"

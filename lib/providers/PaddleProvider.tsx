@@ -24,7 +24,10 @@ export function PaddleProvider({ children }: { children: React.ReactNode }) {
       try {
         // CRITICAL: Load Paddle configuration from DATABASE (not environment variables)
         // This prevents exposing sensitive credentials via NEXT_PUBLIC_* variables
-        const configResponse = await fetch('/api/v1/payments/paddle/config')
+        // IMPORTANT: Use API subdomain (api.domain.com) instead of current domain (dashboard.domain.com)
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ''
+        const configUrl = apiBaseUrl ? `${apiBaseUrl}/api/v1/payments/paddle/config` : '/api/v1/payments/paddle/config'
+        const configResponse = await fetch(configUrl)
         
         if (!configResponse.ok) {
           const errorData = await configResponse.json()

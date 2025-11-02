@@ -775,6 +775,43 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+
+### November 2, 2025: Paddle Integration Bug Fixes - Subdomain Routing & Admin UI ✅
+
+**Fixed critical issues with Paddle integration: API subdomain routing and missing client token field in admin payment settings.**
+
+**Phase 10.6: Subdomain Routing & Missing Client Token Field Fixes ✅**
+- ✅ Fixed PaddleProvider to use API subdomain (api.domain.com) instead of dashboard subdomain (dashboard.domain.com)
+- ✅ Added missing client_token input field to admin payment settings page
+- **Subdomain Routing Fix** (`lib/providers/PaddleProvider.tsx`):
+  - Changed from: Relative URL `/api/v1/payments/paddle/config` (calls from current domain)
+  - Changed to: Uses `NEXT_PUBLIC_API_BASE_URL` environment variable to call api.domain.com
+  - Ensures Paddle config API is always called from correct subdomain
+  - Fallback to relative URL if environment variable not set
+- **Admin UI Update** (`app/backend/admin/settings/payments/page.tsx`):
+  - Added client_token input field to Paddle configuration section
+  - Field positioned between "Webhook Secret" and "Webhook URL"
+  - Includes proper data-testid attribute: `input-paddle-client-token`
+  - Placeholder text: `test_... or live_...`
+  - Helper text explains it's safe to expose in browser
+
+**Issues Fixed:**
+- ❌ **BEFORE**: Config API loaded from dashboard.domain.com (wrong subdomain)
+- ✅ **AFTER**: Config API correctly loads from api.domain.com (proper subdomain architecture)
+- ❌ **BEFORE**: Admin UI missing client_token field (only had vendor_id, api_key, webhook_secret)
+- ✅ **AFTER**: Admin UI has all 4 required fields (vendor_id, api_key, webhook_secret, client_token)
+
+**Files Modified:** 2 files (~25 lines changed)
+- ✅ `lib/providers/PaddleProvider.tsx` - Use API subdomain for config endpoint
+- ✅ `app/backend/admin/settings/payments/page.tsx` - Added client_token input field
+
+**Impact:**
+- **Subdomain Architecture**: Paddle now correctly uses api.domain.com for all API calls
+- **Admin UX**: Administrators can now input all required Paddle credentials via UI
+
+**Status:** ✅ **PHASE 10.6 COMPLETE** - Subdomain routing fixed, admin UI now has all required Paddle credential fields
+
+---
 ### November 2, 2025: Paddle Migration Security Fix - Database-Based Credentials System ✅
 
 **Fixed critical security issue where Paddle credentials were exposed via NEXT_PUBLIC environment variables. All credentials now loaded from database via secure backend API routes.**

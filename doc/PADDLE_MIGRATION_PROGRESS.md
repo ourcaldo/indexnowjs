@@ -2473,6 +2473,57 @@ WHERE slug = 'paddle';
 5. **Audit Trail:** Database tracks when credentials were updated
 6. **Environment Parity:** Same credential loading pattern across dev/staging/prod
 
+#### 10.6 Bug Fixes: Subdomain Routing & Missing Client Token Field ✅
+
+**Date:** November 2, 2025  
+**Status:** ✅ COMPLETE
+
+**Issues Identified:**
+1. **Subdomain Routing Issue:** `/api/v1/payments/paddle/config` endpoint was being called from dashboard.domain.com instead of api.domain.com
+2. **Missing Admin UI Field:** Client token input field was not present in admin payment settings page
+
+**Issue 1: Subdomain Routing Fix**
+
+**Problem:**
+- PaddleProvider used relative URL: `fetch('/api/v1/payments/paddle/config')`
+- This calls the API from whatever domain user is on (dashboard.domain.com)
+- Should use API subdomain (api.domain.com) as per subdomain architecture
+
+**File Modified:** `lib/providers/PaddleProvider.tsx`
+
+**Changes:**
+```typescript
+// BEFORE (BROKEN):
+const configResponse = await fetch('/api/v1/payments/paddle/config')
+
+// AFTER (FIXED):
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ''
+const configUrl = apiBaseUrl ? `${apiBaseUrl}/api/v1/payments/paddle/config` : '/api/v1/payments/paddle/config'
+const configResponse = await fetch(configUrl)
+```
+
+**Result:** ✅ Config API now correctly calls api.domain.com subdomain
+
+**Issue 2: Missing Client Token Field Fix**
+
+**Problem:**
+- Admin payment settings page had fields for: environment, vendor_id, api_key, webhook_secret, webhook_url
+- Missing field for: client_token
+- Users couldn't input client token in admin UI
+
+**File Modified:** `app/backend/admin/settings/payments/page.tsx`
+
+**Changes:**
+- ✅ Added client_token input field after webhook_secret field
+- ✅ Added proper data-testid attribute: `input-paddle-client-token`
+- ✅ Added placeholder: `test_... or live_...`
+- ✅ Added helper text explaining it's safe to expose in browser
+- ✅ Field updates `api_credentials.client_token` in formData
+
+**New Field Location:** Between "Webhook Secret" and "Webhook URL" fields (lines 269-288)
+
+**Result:** ✅ Admin UI now has all 4 required Paddle credential fields (api_key, webhook_secret, client_token, vendor_id)
+
 ### Next Steps
 - **User Action:** Update database with actual Paddle credentials (see SQL file)
 - Phase 11: Testing & Validation (sandbox testing)
@@ -2480,5 +2531,5 @@ WHERE slug = 'paddle';
 
 ---
 
-**Result:** ✅ Paddle credentials successfully migrated from environment variables to database-based secure storage system
+**Result:** ✅ Paddle credentials successfully migrated from environment variables to database-based secure storage system. Subdomain routing and admin UI issues fixed.
 
