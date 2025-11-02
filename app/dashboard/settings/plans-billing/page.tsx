@@ -955,6 +955,7 @@ export default function BillingPage() {
       {showCancelDialog && subscriptionData?.hasSubscription && subscriptionData.subscription && (
         <CancelSubscriptionDialog
           subscriptionId={subscriptionData.subscription.paddle_subscription_id}
+          subscriptionType={subscriptionData.subscription.subscription_type}
           onClose={() => setShowCancelDialog(false)}
           onSuccess={handleCancelSuccess}
         />
