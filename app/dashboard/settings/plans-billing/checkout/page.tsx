@@ -233,6 +233,8 @@ export default function CheckoutPage() {
       })
 
       // Open Paddle checkout overlay
+      // Note: Paddle handles payment failures within the overlay (no redirect)
+      // Users can close overlay and retry. Only successful payments redirect to successUrl.
       paddle.Checkout.open({
         items: [{ priceId, quantity: 1 }],
         customer: { 

@@ -2,6 +2,7 @@
 
 import { createContext, useEffect, useState, useContext } from 'react'
 import { initializePaddle, Paddle } from '@paddle/paddle-js'
+import { useRouter } from 'next/navigation'
 
 interface PaddleContextType {
   paddle: Paddle | null
@@ -16,6 +17,7 @@ const PaddleContext = createContext<PaddleContextType>({
 export function PaddleProvider({ children }: { children: React.ReactNode }) {
   const [paddle, setPaddle] = useState<Paddle | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     const initPaddle = async () => {
@@ -31,6 +33,35 @@ export function PaddleProvider({ children }: { children: React.ReactNode }) {
         const paddleInstance = await initializePaddle({
           environment: environment || 'sandbox',
           token: clientToken,
+          eventCallback: (data) => {
+            // Handle Paddle checkout events
+            switch (data.name) {
+              case 'checkout.completed':
+                // Payment successful - Paddle handles redirect via successUrl
+                // But we can also track it here if needed
+                break
+
+              case 'checkout.closed':
+                // User closed the checkout overlay (cancelled/abandoned)
+                // Redirect to dashboard with cancelled status
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/dashboard?subscription=cancelled'
+                }
+                break
+
+              case 'checkout.error':
+                // Payment failed or error occurred
+                // Redirect to dashboard with failed status
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/dashboard?subscription=failed'
+                }
+                break
+
+              default:
+                // Other events (checkout.warning, etc.)
+                break
+            }
+          }
         })
 
         if (paddleInstance) {
@@ -44,7 +75,7 @@ export function PaddleProvider({ children }: { children: React.ReactNode }) {
     }
 
     initPaddle()
-  }, [])
+  }, [router])
 
   return (
     <PaddleContext.Provider value={{ paddle, isLoading }}>

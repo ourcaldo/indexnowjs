@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
+import { useToast } from '@/hooks/use-toast'
 import PricingTable from '@/components/shared/PricingTable'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { useDomain } from '@/lib/contexts/DomainContext'
@@ -124,7 +125,7 @@ export default function Dashboard() {
   usePageViewLogger('/dashboard', 'Dashboard', { section: 'main_dashboard' })
   const { logDashboardActivity } = useActivityLogger()
 
-  // Handle subscription success/failure notifications
+  // Handle subscription success/failure/cancellation notifications
   useEffect(() => {
     const status = searchParams?.get('subscription')
     
@@ -151,6 +152,21 @@ export default function Dashboard() {
       })
       
       logDashboardActivity('subscription_failed', 'Subscription payment failed', {
+        timestamp: new Date().toISOString()
+      })
+
+      // Clean up URL parameter
+      const url = new URL(window.location.href)
+      url.searchParams.delete('subscription')
+      window.history.replaceState({}, '', url.toString())
+    } else if (status === 'cancelled') {
+      addToast({
+        title: 'Checkout Cancelled',
+        description: 'You cancelled the checkout process. You can try again anytime.',
+        type: 'info',
+      })
+      
+      logDashboardActivity('subscription_cancelled', 'User cancelled checkout', {
         timestamp: new Date().toISOString()
       })
 
