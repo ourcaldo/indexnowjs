@@ -776,6 +776,138 @@ JWT_SECRET=[jwt-secret-key]
 ## Recent Changes
 
 
+
+### November 2, 2025: Paddle Enhancement Plan - Documentation Created 📋
+
+**Created comprehensive enhancement plan for Paddle payment integration covering missing webhook handlers, 7-day refund policy, and UX improvements.**
+
+**Enhancement Plan Overview:**
+- ✅ Documented 3 missing critical webhook handlers (past_due, refunded, activated)
+- ✅ Designed 7-day refund policy with automatic cancellation logic
+- ✅ Planned frontend UX improvements for subscription status clarity
+- ✅ Created comprehensive testing and rollout strategy
+
+**Missing Webhook Handlers Identified:**
+
+1. **subscription.past_due** (CRITICAL - Priority 1)
+   - **Problem:** Payment failures not detected, users keep access without paying
+   - **Impact:** Revenue loss, database inconsistency, no user notification
+   - **Solution:** Disable access, update status, send "Update Payment Method" email
+   - **Revenue Protection:** Critical for preventing service abuse
+
+2. **transaction.refunded** (IMPORTANT - Priority 2)
+   - **Problem:** Refunds issued via Paddle dashboard don't update local database
+   - **Impact:** Transaction stays "completed", financial reports incorrect, no access revocation
+   - **Solution:** Update transaction status, revoke access if full refund, log for audit
+
+3. **subscription.activated** (NICE TO HAVE - Priority 3)
+   - **Problem:** Missed state transitions from trial→active or past_due→active
+   - **Impact:** Inconsistent data after payment recovery
+   - **Solution:** Update status, enable access, send success notification
+
+**7-Day Refund Policy Design:**
+
+**Business Logic:**
+- **≤7 days old:** Immediate cancellation + full refund + revoke access
+- **>7 days old:** Scheduled cancellation (end of period) + no refund + keep access until period ends
+
+**Technical Architecture:**
+- New service: `PaddleCancellationService` with refund policy logic
+- Automatic subscription age calculation using `differenceInDays()`
+- Integration with Paddle Adjustments API for refund processing
+- Database tracking: `days_active_at_cancellation`, `refund_amount`, `refund_reason`
+
+**User Flow:**
+```
+User clicks "Cancel" 
+  → System checks subscription age
+  → If ≤7d: Show "Full refund available" dialog
+  → If >7d: Show "Keep access until period end" dialog
+  → Process accordingly (immediate+refund OR scheduled)
+```
+
+**Frontend UX Improvements:**
+
+1. **CancelSubscriptionDialog Component:**
+   - Shows refund eligibility before cancellation
+   - Different messaging for ≤7d vs >7d scenarios
+   - Clear explanation of what happens next
+
+2. **SubscriptionStatusBadge Component:**
+   - ✅ Active - Normal subscription
+   - ⚠️ Cancels on {date} - Scheduled cancellation pending
+   - 🔴 Past Due - Payment failed, update card
+   - ⏸️ Paused - Temporarily suspended
+   - ❌ Canceled - Fully terminated
+
+3. **New API Endpoint:**
+   - `/api/v1/payments/paddle/subscription/refund-info` - Get refund eligibility info
+   - Returns: days_active, days_remaining, refund_eligible, refund_window_days
+
+**Database Changes Required:**
+
+```sql
+-- Add refund tracking fields
+ALTER TABLE indb_paddle_transactions
+ADD COLUMN refund_amount DECIMAL(10, 2),
+ADD COLUMN refund_reason TEXT,
+ADD COLUMN refunded_at TIMESTAMP WITH TIME ZONE;
+
+-- Add cancellation analytics fields
+ALTER TABLE indb_subscriptions
+ADD COLUMN cancellation_reason TEXT,
+ADD COLUMN days_active_at_cancellation INTEGER;
+```
+
+**Current Problem Identified:**
+
+When users cancel via Paddle Customer Portal:
+- Database shows: `status='canceled'`, `cancel_at_period_end=true`, `subscription_active=true`
+- Frontend shows: "Active Subscriber" (confusing - user thinks cancel failed)
+- No refund logic based on subscription age
+- All cancellations default to scheduled (regardless of how long they've been subscribed)
+
+**Rollout Plan (4-Week Timeline):**
+
+- **Week 1:** Implement 3 missing webhook handlers + email notifications
+- **Week 2:** Build 7-day refund policy service + database updates
+- **Week 3:** Frontend UX improvements + comprehensive testing
+- **Week 4:** Production deployment + monitoring
+
+**Risk Mitigation:**
+- Retry logic for failed refunds + admin notification
+- Webhook retry mechanism + daily reconciliation job
+- Timezone handling: all calculations use UTC timestamps
+- Email queue with retry for delivery failures
+
+**Success Metrics:**
+- Webhook Success Rate: >99.5%
+- Refund Processing Time: <2 minutes
+- Database Sync Accuracy: 100%
+- Refund Rate: <20% of cancellations
+- Support Tickets: -50% reduction for cancellation issues
+
+**Files Created:**
+- ✅ `doc/PADDLE_ENHANCEMENT.md` - Comprehensive 800+ line enhancement plan document
+
+**Documentation Includes:**
+- Complete webhook handler implementations (subscription.past_due, transaction.refunded, subscription.activated)
+- Service layer code for `PaddleCancellationService` with refund logic
+- Frontend components: `CancelSubscriptionDialog`, `SubscriptionStatusBadge`
+- SQL migration scripts for database changes
+- Testing strategy with unit and integration tests
+- Admin playbooks for troubleshooting
+- Error code reference and recovery procedures
+- Paddle webhook event reference (complete list)
+
+**Next Steps:**
+1. Review and approve enhancement plan
+2. Prioritize implementation phases
+3. Begin Phase 1: Missing webhook handlers implementation
+
+**Status:** ✅ **DOCUMENTATION COMPLETE** - Ready for implementation planning
+
+---
 ### November 2, 2025: Paddle Integration Bug Fixes - Subdomain Routing & Admin UI ✅
 
 **Fixed critical issues with Paddle integration: API subdomain routing and missing client token field in admin payment settings.**
