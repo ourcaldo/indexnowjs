@@ -18,8 +18,11 @@ import {
   processSubscriptionCanceled,
   processSubscriptionPaused,
   processSubscriptionResumed,
+  processSubscriptionActivated,
+  processSubscriptionPastDue,
   processTransactionCompleted,
   processTransactionPaymentFailed,
+  processTransactionRefunded,
 } from './processors'
 
 const WEBHOOK_TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000
@@ -238,11 +241,20 @@ async function routeWebhookEvent(eventType: string, data: any, eventId: string) 
       case 'subscription.resumed':
         await processSubscriptionResumed(data)
         break
+      case 'subscription.activated':
+        await processSubscriptionActivated(data)
+        break
+      case 'subscription.past_due':
+        await processSubscriptionPastDue(data)
+        break
       case 'transaction.completed':
         await processTransactionCompleted(data)
         break
       case 'transaction.payment_failed':
         await processTransactionPaymentFailed(data)
+        break
+      case 'transaction.refunded':
+        await processTransactionRefunded(data)
         break
       default:
     }
