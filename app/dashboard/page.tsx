@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -111,6 +111,8 @@ interface PaymentPackage {
 
 export default function Dashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { addToast } = useToast()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [packagesData, setPackagesData] = useState<{ packages: PaymentPackage[], current_package_id: string | null } | null>(null);
@@ -121,6 +123,43 @@ export default function Dashboard() {
   // Log page view and dashboard activities
   usePageViewLogger('/dashboard', 'Dashboard', { section: 'main_dashboard' })
   const { logDashboardActivity } = useActivityLogger()
+
+  // Handle subscription success/failure notifications
+  useEffect(() => {
+    const status = searchParams?.get('subscription')
+    
+    if (status === 'success') {
+      addToast({
+        title: 'Subscription Activated!',
+        description: 'Your subscription has been successfully activated. Welcome aboard!',
+        type: 'success',
+      })
+      
+      logDashboardActivity('subscription_success', 'Subscription successfully activated via Paddle', {
+        timestamp: new Date().toISOString()
+      })
+
+      // Clean up URL parameter
+      const url = new URL(window.location.href)
+      url.searchParams.delete('subscription')
+      window.history.replaceState({}, '', url.toString())
+    } else if (status === 'failed') {
+      addToast({
+        title: 'Payment Failed',
+        description: 'There was an issue processing your payment. Please try again or contact support.',
+        type: 'error',
+      })
+      
+      logDashboardActivity('subscription_failed', 'Subscription payment failed', {
+        timestamp: new Date().toISOString()
+      })
+
+      // Clean up URL parameter
+      const url = new URL(window.location.href)
+      url.searchParams.delete('subscription')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [searchParams, addToast, logDashboardActivity])
 
   // Use domain context for domain-related state and data
   const {

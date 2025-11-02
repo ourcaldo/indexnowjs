@@ -4,20 +4,21 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
-import { authService } from '@/lib/auth'
+import { useUserProfile } from '@/hooks/useUserProfile'
+import { usePaddle } from '@/lib/providers/PaddleProvider'
 import { supabaseBrowser } from '@/lib/database'
-import { usePaymentProcessor } from '@/hooks/usePaymentProcessor'
 import BillingPeriodSelector from '@/components/checkout/BillingPeriodSelector'
 import OrderSummary from '@/components/checkout/OrderSummary'
-import PaymentMethodSelector from '@/components/checkout/payment-methods/PaymentMethodSelector'
 import PaymentErrorBoundary from '@/components/checkout/PaymentErrorBoundary'
 import { AUTH_ENDPOINTS, BILLING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 import {
   CheckoutFormComponent,
   CheckoutHeader,
   CheckoutLoading,
-  PackageNotFound,
-  CheckoutSubmitButton
+  PackageNotFound
 } from './components'
 
 // Types
@@ -34,16 +35,6 @@ interface PaymentPackage {
   free_trial_enabled?: boolean
 }
 
-interface PaymentGateway {
-  id: string
-  name: string
-  slug: string
-  description: string
-  is_active: boolean
-  is_default: boolean
-  configuration: any
-}
-
 interface CheckoutForm {
   first_name: string
   last_name: string
@@ -55,13 +46,14 @@ interface CheckoutForm {
   zip_code: string
   country: string
   description: string
-  payment_method: string
 }
 
 export default function CheckoutPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { addToast } = useToast()
+  const { paddle, isLoading: paddleLoading } = usePaddle()
+  const { user: currentUser } = useUserProfile()
 
   // URL parameters
   const [package_id] = useState(searchParams?.get('package'))
@@ -70,10 +62,8 @@ export default function CheckoutPage() {
 
   // State
   const [selectedPackage, setSelectedPackage] = useState<PaymentPackage | null>(null)
-  const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([])
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [userCurrency] = useState<'USD'>('USD')
+  const [processing, setProcessing] = useState(false)
   const [trialEligible, setTrialEligible] = useState<boolean | null>(null)
 
   const [form, setForm] = useState<CheckoutForm>({
@@ -86,21 +76,12 @@ export default function CheckoutPage() {
     state: '',
     zip_code: '',
     country: 'Indonesia',
-    description: '',
-    payment_method: ''
+    description: ''
   })
 
   // Activity logging
   usePageViewLogger('/dashboard/settings/plans-billing/checkout', 'Checkout', { section: 'billing_checkout' })
   const { logBillingActivity } = useActivityLogger()
-
-  // Initialize payment processor hook
-  const paymentProcessor = usePaymentProcessor({
-    packageData: selectedPackage,
-    onError: (error) => {
-      logBillingActivity('payment_error', `Payment failed for ${selectedPackage?.name} plan: ${error.message}`)
-    }
-  })
 
   // Data loading effect
   useEffect(() => {
@@ -126,7 +107,7 @@ export default function CheckoutPage() {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          credentials: 'include' // Essential for cross-subdomain authentication
+          credentials: 'include'
         })
 
         if (!profileResponse.ok) {
@@ -134,7 +115,6 @@ export default function CheckoutPage() {
         }
 
         const profileResult = await profileResponse.json()
-        // API returns: { success: true, data: { profile: {...} } }
         const profileData = profileResult?.success === true && profileResult.data ? profileResult.data : profileResult
         const userProfile = profileData.profile
 
@@ -153,39 +133,23 @@ export default function CheckoutPage() {
           country: userProfile.country || ''
         }))
 
-        // Currency is hardcoded to USD (Paddle handles multi-currency conversion)
+        // Fetch package data
+        const packageResponse = await fetch(BILLING_ENDPOINTS.PACKAGE_BY_ID(package_id!), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
 
-        // Fetch package and payment gateway data
-        const [packageResponse, gatewaysResponse] = await Promise.all([
-          fetch(BILLING_ENDPOINTS.PACKAGE_BY_ID(package_id!), {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include' // Essential for cross-subdomain authentication
-          }),
-          fetch(BILLING_ENDPOINTS.PAYMENT_GATEWAYS, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include' // Essential for cross-subdomain authentication
-          })
-        ])
-
-        if (!packageResponse.ok || !gatewaysResponse.ok) {
+        if (!packageResponse.ok) {
           throw new Error('Failed to load checkout data')
         }
 
         const packageResult = await packageResponse.json()
-        const gatewaysResult = await gatewaysResponse.json()
-        
-        // API returns: { success: true, data: {...} }
         const packageData = packageResult?.success === true && packageResult.data ? packageResult.data : packageResult
-        const gatewaysData = gatewaysResult?.success === true && gatewaysResult.data ? gatewaysResult.data : gatewaysResult
 
         setSelectedPackage(packageData.data || packageData)
-        setPaymentGateways(gatewaysData.gateways || gatewaysData || [])
 
         // Check trial eligibility if needed
         if (isTrialFlow) {
@@ -194,7 +158,7 @@ export default function CheckoutPage() {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
-            credentials: 'include' // Essential for cross-subdomain authentication
+            credentials: 'include'
           })
           if (trialResponse.ok) {
             const trialResult = await trialResponse.json()
@@ -221,7 +185,6 @@ export default function CheckoutPage() {
     }
   }, [package_id, router, addToast, isTrialFlow])
 
-
   // Pricing calculation (flat USD structure)
   const calculatePrice = () => {
     if (!selectedPackage) return { price: 0, discount: 0, originalPrice: 0 }
@@ -239,115 +202,80 @@ export default function CheckoutPage() {
     return { price: 0, discount: 0, originalPrice: 0 }
   }
 
-  // Credit card submission handler
-  const handleCreditCardSubmit = async (cardData: any) => {
-    if (!selectedPackage) {
+  // Handle Paddle checkout
+  const handleCheckout = async () => {
+    if (!paddle || !selectedPackage || !currentUser) {
       addToast({
-        title: "Missing package",
-        description: "Please select a package to continue.",
+        title: "Unable to proceed",
+        description: "Please wait for the payment system to load.",
         type: "error"
       })
       return
     }
 
-    const paymentRequest = {
-      package_id: selectedPackage.id,
-      billing_period,
-      payment_method: 'paddle',
-      is_trial: isTrialFlow,
-      customer_info: {
-        first_name: form.first_name,
-        last_name: form.last_name,
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        state: form.state,
-        zip_code: form.zip_code,
-        country: form.country,
-        description: form.description
-      }
-    }
-
-    const { data: { session } } = await supabaseBrowser.auth.getSession()
-    const token = session?.access_token
-    if (!token) {
-      addToast({
-        title: "Authentication required",
-        description: "Please log in again to continue.",
-        type: "error"
-      })
-      return
-    }
-
-    const mappedCardData = {
-      card_number: cardData.card_number,
-      card_exp_month: cardData.expiry_month,
-      card_exp_year: cardData.expiry_year,
-      card_cvv: cardData.cvv
-    }
-
-    // processCreditCardPayment handles 3DS internally, no need to catch and re-handle
-    await paymentProcessor.processCreditCardPayment(paymentRequest, mappedCardData, token)
-  }
-
-  // Main form submission handler
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!selectedPackage || !form.payment_method) {
-      addToast({
-        title: "Missing information",
-        description: "Please fill in all required fields and select a payment method.",
-        type: "error"
-      })
-      return
-    }
-
-    setSubmitting(true)
+    setProcessing(true)
 
     try {
-      const token = (await supabaseBrowser.auth.getSession()).data.session?.access_token
-      if (!token) {
-        addToast({
-          title: "Authentication error", 
-          description: "Please log in again to continue.",
-          type: "error"
-        })
-        router.push('/auth/login')
-        return
+      // Get the Paddle price ID from the selected package
+      const pricingData = selectedPackage.pricing_tiers[billing_period]
+      const priceId = pricingData?.paddle_price_id
+
+      if (!priceId) {
+        throw new Error('Paddle Price ID not found for selected package')
       }
 
-      const selectedGateway = paymentGateways.find(gw => gw.id === form.payment_method)
-      const paymentRequest = {
+      logBillingActivity('checkout_initiated', `Starting Paddle checkout for ${selectedPackage.name} (${billing_period})`, {
         package_id: selectedPackage.id,
+        package_slug: selectedPackage.slug,
         billing_period,
-        payment_method: selectedGateway?.slug || 'paddle',
-        customer_info: {
-          first_name: form.first_name,
-          last_name: form.last_name,
-          email: form.email,
-          phone: form.phone,
-          address: form.address,
-          city: form.city,
-          state: form.state,
-          zip_code: form.zip_code,
-          country: form.country,
-          description: form.description
-        }
-      }
+        is_trial: isTrialFlow,
+        price_id: priceId
+      })
 
-      // Process payment via payment processor
-      await paymentProcessor.processPayment(paymentRequest, token)
+      // Open Paddle checkout overlay
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customer: { 
+          email: form.email || currentUser.email || ''
+        },
+        customData: {
+          userId: currentUser.id,
+          packageId: selectedPackage.id,
+          packageSlug: selectedPackage.slug,
+          billingPeriod: billing_period,
+          isTrial: isTrialFlow.toString(),
+          firstName: form.first_name,
+          lastName: form.last_name,
+          phone: form.phone,
+          country: form.country
+        },
+        settings: {
+          displayMode: 'overlay',
+          successUrl: `${window.location.origin}/dashboard?subscription=success`,
+          theme: 'light',
+          locale: 'en',
+        },
+      })
+
+      logBillingActivity('paddle_overlay_opened', `Paddle checkout overlay opened for ${selectedPackage.name}`, {
+        package_slug: selectedPackage.slug,
+        price_id: priceId
+      })
 
     } catch (error) {
+      console.error('Checkout error:', error)
       addToast({
         title: "Checkout failed",
-        description: error instanceof Error ? error.message : "Please try again later.",
+        description: error instanceof Error ? error.message : "Unable to open checkout. Please try again.",
         type: "error"
       })
+      
+      logBillingActivity('checkout_error', `Checkout error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        package_id: selectedPackage?.id,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
     } finally {
-      setSubmitting(false)
+      setProcessing(false)
     }
   }
 
@@ -372,7 +300,7 @@ export default function CheckoutPage() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Form */}
             <div className="lg:col-span-2">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-6">
                 {/* Billing Period Selection */}
                 <BillingPeriodSelector
                   selectedPackage={selectedPackage}
@@ -383,22 +311,59 @@ export default function CheckoutPage() {
                 {/* Checkout Form */}
                 <CheckoutFormComponent form={form} setForm={setForm} />
 
-                {/* Payment Methods */}
-                <PaymentMethodSelector
-                  paymentGateways={paymentGateways}
-                  selectedMethod={form.payment_method}
-                  onMethodChange={(value) => setForm(prev => ({ ...prev, payment_method: value }))}
-                  onCreditCardSubmit={handleCreditCardSubmit}
-                  loading={submitting}
-                />
+                {/* Paddle Checkout Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          You will be redirected to our secure payment partner, Paddle, to complete your purchase. 
+                          Paddle accepts all major credit cards and supports multiple payment methods.
+                        </p>
+                      </div>
+                      
+                      {isTrialFlow && trialEligible && (
+                        <div className="bg-success/10 border border-success/20 p-4 rounded-lg">
+                          <p className="text-sm font-medium text-success">
+                            ✨ Free Trial Available
+                          </p>
+                          <p className="text-xs text-success/80 mt-1">
+                            Start your free trial today. No payment required until the trial period ends.
+                          </p>
+                        </div>
+                      )}
 
-                {/* Submit Button */}
-                <CheckoutSubmitButton
-                  paymentMethod={form.payment_method}
-                  submitting={submitting}
-                  onSubmit={handleSubmit}
-                />
-              </form>
+                      <Button
+                        onClick={handleCheckout}
+                        disabled={paddleLoading || processing || !paddle || !form.email || !form.first_name}
+                        className="w-full"
+                        size="lg"
+                        data-testid="button-complete-checkout"
+                      >
+                        {processing || paddleLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {paddleLoading ? 'Loading...' : 'Processing...'}
+                          </>
+                        ) : (
+                          <>
+                            {isTrialFlow && trialEligible ? 'Start Free Trial' : 'Complete Purchase'}
+                          </>
+                        )}
+                      </Button>
+
+                      {!paddle && !paddleLoading && (
+                        <p className="text-xs text-destructive text-center">
+                          Unable to load payment system. Please refresh the page.
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
             {/* Order Summary */}
