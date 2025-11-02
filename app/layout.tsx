@@ -5,6 +5,7 @@ import { AuthProvider } from '@/lib/contexts/AuthContext'
 import FaviconProvider from '@/components/FaviconProvider'
 import QueryProvider from '@/components/QueryProvider'
 import { AnalyticsProvider } from '@/components/providers/AnalyticsProvider'
+import { PaddleProvider } from '@/lib/providers/PaddleProvider'
 
 // Initialize background services on server-side only once
 if (typeof window === 'undefined' && !(global as any).backgroundServicesInitialized) {
@@ -43,11 +44,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <FaviconProvider />
         <AnalyticsProvider>
-          <QueryProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </QueryProvider>
+          <PaddleProvider>
+            <QueryProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </QueryProvider>
+          </PaddleProvider>
         </AnalyticsProvider>
       </body>
     </html>
