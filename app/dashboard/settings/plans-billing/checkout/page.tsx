@@ -53,7 +53,7 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams()
   const { addToast } = useToast()
   const { paddle, isLoading: paddleLoading } = usePaddle()
-  const { user: currentUser } = useUserProfile()
+  const { user: currentUser, loading: userLoading } = useUserProfile()
 
   // URL parameters
   const [package_id] = useState(searchParams?.get('package'))
@@ -340,15 +340,15 @@ export default function CheckoutPage() {
 
                       <Button
                         onClick={handleCheckout}
-                        disabled={paddleLoading || processing || !paddle || !form.email || !form.first_name}
+                        disabled={paddleLoading || userLoading || processing || !paddle || !currentUser || !form.email || !form.first_name}
                         className="w-full"
                         size="lg"
                         data-testid="button-complete-checkout"
                       >
-                        {processing || paddleLoading ? (
+                        {processing || paddleLoading || userLoading ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            {paddleLoading ? 'Loading...' : 'Processing...'}
+                            {userLoading ? 'Loading user...' : paddleLoading ? 'Loading payment...' : 'Processing...'}
                           </>
                         ) : (
                           <>
@@ -360,6 +360,12 @@ export default function CheckoutPage() {
                       {!paddle && !paddleLoading && (
                         <p className="text-xs text-destructive text-center">
                           Unable to load payment system. Please refresh the page.
+                        </p>
+                      )}
+                      
+                      {!currentUser && !userLoading && (
+                        <p className="text-xs text-destructive text-center">
+                          Unable to load user profile. Please refresh the page.
                         </p>
                       )}
                     </div>
