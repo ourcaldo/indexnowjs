@@ -58,7 +58,7 @@ export function CancelSubscriptionDialog({
       if (!token) throw new Error('No authentication token')
 
       const response = await fetch(
-        `/api/v1/payments/paddle/subscription/refund-window-info?subscriptionId=${subscriptionId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/payments/paddle/subscription/refund-window-info?subscriptionId=${subscriptionId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -95,7 +95,7 @@ export function CancelSubscriptionDialog({
       const token = (await supabase.auth.getSession()).data.session?.access_token
       if (!token) throw new Error('No authentication token')
 
-      const response = await fetch('/api/v1/payments/paddle/subscription/cancel', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/payments/paddle/subscription/cancel`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
