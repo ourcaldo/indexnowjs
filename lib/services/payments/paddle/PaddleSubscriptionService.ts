@@ -33,7 +33,7 @@ export class PaddleSubscriptionService {
 
     // Update local subscription record
     const { error } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .update({
         status: effectiveFrom === 'immediately' ? 'canceled' : 'active',
         cancel_at_period_end: effectiveFrom === 'next_billing_period',
@@ -66,7 +66,7 @@ export class PaddleSubscriptionService {
 
     // Update local subscription record
     const { error } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .update({
         status: 'paused',
         paused_at: new Date().toISOString(),
@@ -98,7 +98,7 @@ export class PaddleSubscriptionService {
 
     // Update local subscription record
     const { error } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .update({
         status: 'active',
         paused_at: null,
@@ -134,7 +134,7 @@ export class PaddleSubscriptionService {
 
     // Update local subscription record
     const { error } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .update({
         paddle_price_id: newPriceId,
         updated_at: new Date().toISOString(),
@@ -154,7 +154,7 @@ export class PaddleSubscriptionService {
    */
   static async getSubscriptionByUserId(userId: string) {
     const { data, error } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .select('*')
       .eq('user_id', userId)
       .eq('status', 'active')

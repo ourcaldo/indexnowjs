@@ -10,7 +10,7 @@ import { supabaseAdmin } from '@/lib/database'
 
 export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
   const { data: subscription, error } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .select('paddle_customer_id')
     .eq('user_id', auth.userId)
     .eq('status', 'active')

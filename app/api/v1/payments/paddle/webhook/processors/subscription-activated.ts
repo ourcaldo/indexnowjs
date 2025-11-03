@@ -26,12 +26,16 @@ export async function processSubscriptionActivated(data: any) {
     throw new Error('Missing subscription_id in activated event')
   }
 
+  if (!current_billing_period?.starts_at || !current_billing_period?.ends_at) {
+    throw new Error('Missing required billing period dates in subscription activation')
+  }
+
   const { error: subscriptionError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .update({
       status: 'active',
-      current_period_start: current_billing_period?.starts_at || null,
-      current_period_end: current_billing_period?.ends_at || null,
+      current_period_start: current_billing_period.starts_at,
+      current_period_end: current_billing_period.ends_at,
       updated_at: new Date().toISOString(),
     })
     .eq('paddle_subscription_id', subscription_id)
@@ -41,7 +45,7 @@ export async function processSubscriptionActivated(data: any) {
   }
 
   const { data: subscription, error: fetchError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .select('user_id, plan_id')
     .eq('paddle_subscription_id', subscription_id)
     .maybeSingle()

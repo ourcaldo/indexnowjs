@@ -24,7 +24,7 @@ export async function processSubscriptionPastDue(data: any) {
   }
 
   const { error: subscriptionError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .update({
       status: 'past_due',
       updated_at: new Date().toISOString(),
@@ -36,7 +36,7 @@ export async function processSubscriptionPastDue(data: any) {
   }
 
   const { data: subscription, error: fetchError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .select('user_id, plan_id')
     .eq('paddle_subscription_id', subscription_id)
     .maybeSingle()

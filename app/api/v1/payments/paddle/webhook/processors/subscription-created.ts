@@ -58,7 +58,7 @@ export async function processSubscriptionCreated(data: any) {
   }
 
   const { data: subscription, error: subscriptionError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .insert({
       user_id: userId,
       paddle_subscription_id: subscription_id,

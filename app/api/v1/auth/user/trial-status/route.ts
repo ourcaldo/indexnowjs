@@ -85,10 +85,10 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
             ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
             userAgent: request.headers.get('user-agent')
           },
-          { table: 'indb_subscriptions', operationType: 'select', columns: ['current_period_end', 'status', 'metadata'] },
+          { table: 'indb_payment_subscriptions', operationType: 'select', columns: ['current_period_end', 'status', 'metadata'] },
           async (db) => {
-            const { data, error } = await db
-              .from('indb_subscriptions')
+            const { data, error} = await db
+              .from('indb_payment_subscriptions')
               .select('current_period_end, status, metadata')
               .eq('status', 'active')
               .order('created_at', { ascending: false })

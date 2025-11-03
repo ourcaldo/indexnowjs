@@ -31,7 +31,7 @@ export const POST = authenticatedApiWrapper(async (request: NextRequest, auth) =
   const { subscriptionId, effectiveFrom } = validationResult.data
 
   const { data: subscription, error: fetchError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .select('user_id, paddle_subscription_id')
     .eq('paddle_subscription_id', subscriptionId)
     .single()

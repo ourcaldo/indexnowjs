@@ -25,7 +25,7 @@ type SubscriptionData = {
 export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) => {
   // First, check for Paddle subscription
   const { data: paddleSubscription, error: paddleError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .select('*')
     .eq('user_id', auth.userId)
     .in('status', ['active', 'past_due', 'paused'])

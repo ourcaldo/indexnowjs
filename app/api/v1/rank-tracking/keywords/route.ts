@@ -272,7 +272,7 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
           const { data } = await db
             .from('indb_payment_subscriptions')
             .select(`package:indb_payment_packages(quota_limits)`)
-            .eq('subscription_status', 'active')
+            .eq('status', 'active')
           return data
         }
       )

@@ -76,7 +76,7 @@ export async function processTransactionRefunded(data: any) {
 
       if (isFullRefund) {
         const { error: subscriptionError } = await supabaseAdmin
-          .from('indb_subscriptions')
+          .from('indb_payment_subscriptions')
           .update({
             status: 'canceled',
             canceled_at: refundedAt,

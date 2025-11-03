@@ -25,13 +25,17 @@ export async function processSubscriptionUpdated(data: any) {
     ? safeGet(items[0], 'price.id', null) 
     : null
 
+  if (!current_billing_period?.starts_at || !current_billing_period?.ends_at) {
+    throw new Error('Missing required billing period dates in subscription update')
+  }
+
   const { error: subscriptionError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .update({
       status: status,
       paddle_price_id: priceId,
-      current_period_start: current_billing_period?.starts_at || null,
-      current_period_end: current_billing_period?.ends_at || null,
+      current_period_start: current_billing_period.starts_at,
+      current_period_end: current_billing_period.ends_at,
       paused_at: paused_at || null,
       updated_at: new Date().toISOString(),
     })
@@ -42,7 +46,7 @@ export async function processSubscriptionUpdated(data: any) {
   }
 
   const { data: subscription, error: fetchError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .select('user_id, id')
     .eq('paddle_subscription_id', subscription_id)
     .maybeSingle()

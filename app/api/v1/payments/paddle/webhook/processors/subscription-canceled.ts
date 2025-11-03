@@ -22,7 +22,7 @@ export async function processSubscriptionCanceled(data: any) {
   const cancelAtPeriodEnd = scheduled_change?.action === 'cancel'
 
   const { error: subscriptionError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .update({
       status: cancelAtPeriodEnd ? 'active' : 'canceled',
       canceled_at: canceled_at || new Date().toISOString(),
@@ -36,7 +36,7 @@ export async function processSubscriptionCanceled(data: any) {
   }
 
   const { data: subscription, error: fetchError } = await supabaseAdmin
-    .from('indb_subscriptions')
+    .from('indb_payment_subscriptions')
     .select('user_id')
     .eq('paddle_subscription_id', subscription_id)
     .maybeSingle()

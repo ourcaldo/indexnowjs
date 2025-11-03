@@ -42,7 +42,7 @@ export class PaddleCancellationService {
     userId: string
   ): Promise<CancellationResult> {
     const { data: subscription, error: fetchError } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .select('*, created_at')
       .eq('paddle_subscription_id', subscriptionId)
       .eq('user_id', userId)
@@ -120,7 +120,7 @@ export class PaddleCancellationService {
     }
 
     await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .update({
         status: 'canceled',
         canceled_at: new Date().toISOString(),
@@ -164,7 +164,7 @@ export class PaddleCancellationService {
     })
 
     await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .update({
         status: 'active',
         canceled_at: new Date().toISOString(),
@@ -190,7 +190,7 @@ export class PaddleCancellationService {
    */
   static async getRefundWindowInfo(subscriptionId: string, userId: string): Promise<RefundWindowInfo> {
     const { data: subscription, error } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .select('created_at')
       .eq('paddle_subscription_id', subscriptionId)
       .eq('user_id', userId)

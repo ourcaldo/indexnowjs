@@ -33,7 +33,7 @@ export async function processTransactionPaymentFailed(data: any) {
   let dbSubscriptionId = null
   if (subscription_id) {
     const { data: subscriptionData } = await supabaseAdmin
-      .from('indb_subscriptions')
+      .from('indb_payment_subscriptions')
       .select('id')
       .eq('paddle_subscription_id', subscription_id)
       .maybeSingle()
