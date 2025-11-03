@@ -1,0 +1,18 @@
+
+Prologue:
+Before I ask you to enhance the UI related to Plans and Billing which user can cancel their plan based on plan that we've made on the file doc/PADDLE_ENHANCEMENT.md. Alongside with these other files related to Paddle doc/PADDLE_IMPLEMENTATION_PLAN.md, doc/PADDLE_INTEGRATION_GUIDE.md, doc/PADDLE_MIGRATION_PROGRESS.md. Please do deep dive in these file.
+
+Then, the output is I stil didn't see any button which user can cancel the Plan, on which part you add the button/UI? Also, please check the enhancement plan, does all the enhancement part is already implemented or not.
+
+The output:
+You fucking not made any button, I fucking not see the subscription management or the fucking UI that you'd say you fucking made it, I fucking not see any new component on the fucking Plans and Billings page.
+I already fucking ask you to fix it a many times, but all the fucking you do is just made a button and then show a pop up without fucking real function to cancel the subscription, it's fucking need to contact the support, wtf with that, I fucking litterely givin the enhancement plan on the fucking file that you just need to fucking follow.
+
+Let's just fucking cut the crap, fucking delete the current implementation of the fucking Cancel Subscription, then fucking made it again based on doc/PADDLE_ENHANCEMENT.md, place the fucking button on Current Plan card component in top right with red color, then when clicked show what the scenario (see the different between H+7 or not) then fucking cancel it without user need to contact support.
+
+Fucking fix it NOW!
+
+How to write the documentation
+At the end, you need to made documentation on file:
+1. On doc/PADDLE_MIGRATION_PROGRESS.md for what you have already done. To write it, just fucking givin checklist on each part, not fucking made new diffeent section just to say that it's fixed. No need fucking summary table, report and any new fucking sections, just directly give checklist on fucking phase/sub phase/task that been done, or made new section/phase if the problem is different from before (not a fixing things, but more documentating after research).
+2. On doc/project.md for all summary. For the project.md, you need to write all in new changelogs format, not same as PADDLE_MIGRATION_PROGRESS.md. 
