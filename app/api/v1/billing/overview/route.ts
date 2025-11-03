@@ -56,10 +56,9 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
           .from('indb_payment_subscriptions')
           .select(`
             *,
-            package:indb_payment_packages(*),
-            gateway:indb_payment_gateways(*)
+            package:indb_payment_packages!indb_payment_subscriptions_package_id_fkey(*)
           `)
-          .eq('subscription_status', 'active')
+          .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()

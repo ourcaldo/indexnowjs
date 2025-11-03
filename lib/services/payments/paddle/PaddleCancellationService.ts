@@ -92,7 +92,6 @@ export class PaddleCancellationService {
 
     if (transaction) {
       try {
-        const amountInCents = Math.round(transaction.amount * 100)
         refund = await paddle.adjustments.create({
           action: 'refund',
           transactionId: transaction.paddle_transaction_id,
@@ -100,7 +99,6 @@ export class PaddleCancellationService {
           items: [{
             type: 'full',
             itemId: transaction.paddle_transaction_id,
-            amount: amountInCents.toString(),
           }],
         })
       } catch (refundError) {

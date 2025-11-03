@@ -65,6 +65,7 @@ export async function processSubscriptionCreated(data: any) {
       paddle_customer_id: customer_id,
       status: 'active',
       plan_id: `${packageSlug}_${billingPeriod}`,
+      package_id: packageData.id,
       paddle_price_id: priceId,
       current_period_start: current_billing_period.starts_at,
       current_period_end: current_billing_period.ends_at,
