@@ -1,0 +1,35 @@
+Then, related to payment tables, at the first time we already have "indb_payment_transactions" that supposed to be record all the transaction. Beside of that, we also have different tables for specific payment gateway, like the old payment gateway "indb_payment_midtrans" and the new one "indb_paddle_transactions" which is the Paddle. But, after you implement the Paddle, you moved the record on the "indb_paddle_transactions" table only which the main tables isnt record anything. It's not supposed to be like this. Beside that, there's also table "indb_payment_transactions_history" which supposed to be the history transaction, more like a log. I'll give all the database schema one by one. 
+
+Table schema for Paddle transaction:
+create table public.indb_paddle_transactions (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  subscription_id uuid null,
+  paddle_transaction_id character varying(255) not null,
+  amount numeric(10, 2) not null,
+  currency character varying(3) not null,
+  status character varying(50) not null,
+  payment_method character varying(100) null,
+  receipt_url text null,
+  invoice_number character varying(255) null,
+  metadata jsonb null default '{}'::jsonb,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  refund_amount numeric(10, 2) null default null::numeric,
+  refund_reason text null,
+  refunded_at timestamp with time zone null,
+  constraint indb_paddle_transactions_pkey primary key (id),
+  constraint indb_paddle_transactions_paddle_transaction_id_key unique (paddle_transaction_id),
+  constraint indb_paddle_transactions_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE,
+  constraint indb_paddle_transactions_subscription_id_fkey foreign KEY (subscription_id) references indb_payment_subscriptions (id) on delete set null
+) TABLESPACE pg_default;
+
+create index IF not exists idx_paddle_transactions_status on public.indb_paddle_transactions using btree (status) TABLESPACE pg_default;
+
+create index IF not exists idx_paddle_transactions_user_id on public.indb_paddle_transactions using btree (user_id) TABLESPACE pg_default;
+
+create index IF not exists idx_paddle_transactions_subscription_id on public.indb_paddle_transactions using btree (subscription_id) TABLESPACE pg_default;
+
+create index IF not exists idx_paddle_transactions_refunded on public.indb_paddle_transactions using btree (refunded_at) TABLESPACE pg_default
+where
+  (refunded_at is not null);
