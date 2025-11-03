@@ -25,14 +25,12 @@ interface RefundWindowInfo {
 
 interface CancelSubscriptionDialogProps {
   subscriptionId: string | null
-  subscriptionType: 'paddle' | 'legacy'
   onClose: () => void
   onSuccess: () => void
 }
 
 export function CancelSubscriptionDialog({
   subscriptionId,
-  subscriptionType,
   onClose,
   onSuccess,
 }: CancelSubscriptionDialogProps) {
@@ -42,12 +40,12 @@ export function CancelSubscriptionDialog({
   const [refundInfo, setRefundInfo] = useState<RefundWindowInfo | null>(null)
 
   useEffect(() => {
-    if (subscriptionType === 'paddle' && subscriptionId) {
+    if (subscriptionId) {
       loadRefundInfo()
     } else {
       setLoading(false)
     }
-  }, [subscriptionId, subscriptionType])
+  }, [subscriptionId])
 
   const loadRefundInfo = async () => {
     try {
@@ -82,12 +80,6 @@ export function CancelSubscriptionDialog({
   }
 
   const handleCancel = async () => {
-    if (subscriptionType === 'legacy') {
-      // Legacy subscriptions cannot be canceled through this interface
-      setError('Legacy subscriptions must be canceled by contacting support at support@indexnowstudio.com')
-      return
-    }
-
     try {
       setCanceling(true)
       setError(null)
@@ -143,18 +135,6 @@ export function CancelSubscriptionDialog({
               <AlertCircle className="h-4 w-4 text-destructive" />
               <AlertDescription className="text-destructive">{error}</AlertDescription>
             </Alert>
-          ) : subscriptionType === 'legacy' ? (
-            <Alert className="border-warning/50 bg-warning/10" data-testid="alert-legacy-subscription">
-              <AlertCircle className="h-4 w-4 text-warning" />
-              <AlertDescription className="text-warning">
-                <strong>Legacy Subscription</strong>
-                <div className="mt-2 space-y-1 text-sm">
-                  <p>• Your subscription is managed through our legacy billing system</p>
-                  <p>• Please contact support to cancel: <strong>support@indexnowstudio.com</strong></p>
-                  <p>• Our team will assist you with the cancellation process</p>
-                </div>
-              </AlertDescription>
-            </Alert>
           ) : refundInfo ? (
             <>
               {refundInfo.refundEligible ? (
@@ -193,26 +173,6 @@ export function CancelSubscriptionDialog({
           ) : null}
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={canceling}
-            data-testid="button-cancel-dialog"
-          >
-            {subscriptionType === 'legacy' ? 'Close' : 'Go Back'}
-          </Button>
-          {subscriptionType !== 'legacy' && (
-            <Button
-              variant="destructive"
-              onClick={handleCancel}
-              disabled={loading || canceling}
-              data-testid="button-confirm-cancel"
-            >
-              {canceling ? 'Canceling...' : 'Yes, Cancel Subscription'}
-            </Button>
-          )}
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
