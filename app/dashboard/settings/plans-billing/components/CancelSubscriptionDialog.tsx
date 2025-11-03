@@ -141,24 +141,14 @@ export function CancelSubscriptionDialog({
                 <Alert className="border-success/50 bg-success/10" data-testid="alert-refund-eligible">
                   <AlertCircle className="h-4 w-4 text-success" />
                   <AlertDescription className="text-success">
-                    <strong>You're within the 7-day refund window</strong>
-                    <div className="mt-2 space-y-1 text-sm">
-                      <p>• Subscription will be canceled immediately</p>
-                      <p>• You'll receive a full refund</p>
-                      <p>• You had {refundInfo.daysActive} day{refundInfo.daysActive === 1 ? '' : 's'} of access</p>
-                    </div>
+                    We're sorry to see you go! You're eligible for a full refund. Your subscription will be canceled immediately and the payment will be refunded to your original payment method.
                   </AlertDescription>
                 </Alert>
               ) : (
                 <Alert className="border-warning/50 bg-warning/10" data-testid="alert-no-refund">
                   <AlertCircle className="h-4 w-4 text-warning" />
                   <AlertDescription className="text-warning">
-                    <strong>No refund available</strong>
-                    <div className="mt-2 space-y-1 text-sm">
-                      <p>• You've had {refundInfo.daysActive} days of access (refund window: {refundInfo.refundWindowDays} days)</p>
-                      <p>• Your subscription will be canceled at the end of the current billing period</p>
-                      <p>• You'll keep access until then</p>
-                    </div>
+                    We're sorry to see you go! You're not eligible for a refund as you've exceeded the refund window. Your subscription will be canceled at the end of the current billing period, and you can continue using it until then.
                   </AlertDescription>
                 </Alert>
               )}
