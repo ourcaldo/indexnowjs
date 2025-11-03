@@ -2888,28 +2888,6 @@ await supabaseAdmin
 
 **Result:** ✅ Failed transactions now properly stored for audit trail and debugging
 
-### Phase 6: UI Copy Improvement
-
-#### Fix Cancel Subscription Dialog Copy
-- [x] Add clear refund eligibility messaging
-- [x] Show days remaining in refund window
-- [x] Add refund processing timeline (5-7 business days)
-- [x] Fix incorrect date display for non-refund-eligible users
-
-**File Modified:** `app/dashboard/settings/plans-billing/components/CancelSubscriptionDialog.tsx`
-
-**Before:**
-```typescript
-"We're sorry to see you go! You're eligible for a full refund. Your subscription will be canceled immediately and the payment will be refunded to your original payment method."
-```
-
-**After:**
-```typescript
-<strong>Full Refund Available</strong><br />
-You're within the {refundInfo.refundWindowDays}-day refund window ({refundInfo.daysRemaining} days remaining). Your subscription will be canceled immediately, and you'll receive a full refund to your original payment method within 5-7 business days.
-```
-
-**Result:** ✅ Dialog copy now clearly communicates refund policy and timeline
 
 ### Summary
 
@@ -2922,7 +2900,6 @@ You're within the {refundInfo.refundWindowDays}-day refund window ({refundInfo.d
 | Phase 3 | transaction.completed processor | ✅ Complete |
 | Phase 4 | transaction.refunded processor | ✅ Complete |
 | Phase 5 | transaction.payment_failed processor | ✅ Complete |
-| Phase 6 | UI copy improvements | ✅ Complete |
 
 **Files Created:**
 - `doc/TRANSACTION_STORAGE_FIX_SQL.sql` - SQL queries for database updates
@@ -2933,7 +2910,6 @@ You're within the {refundInfo.refundWindowDays}-day refund window ({refundInfo.d
 - `app/api/v1/payments/paddle/webhook/processors/transaction-completed.ts` - Dual-insert pattern
 - `app/api/v1/payments/paddle/webhook/processors/transaction-refunded.ts` - Dual-update pattern
 - `app/api/v1/payments/paddle/webhook/processors/transaction-payment-failed.ts` - Dual-insert pattern
-- `app/dashboard/settings/plans-billing/components/CancelSubscriptionDialog.tsx` - Copy improvements
 
 **Architecture Benefits:**
 - ✅ Data integrity: All transactions in centralized main table

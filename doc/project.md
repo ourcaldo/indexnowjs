@@ -877,11 +877,6 @@ ON indb_paddle_transactions(transaction_id);
 4. **transaction.payment_failed Processor** - Dual-Insert Pattern:
    Similar to transaction.completed but with 'failed' status for audit trail
 
-5. **Cancel Subscription Dialog** - Improved Copy:
-   - Added clear "Full Refund Available" / "No Refund Available" headers
-   - Show days remaining in refund window
-   - Add refund processing timeline (5-7 business days)
-   - Fix incorrect date display for non-refund-eligible cancellations
 
 **Impact:**
 - ✅ **Data Integrity**: All transactions now recorded in centralized main table
@@ -895,7 +890,6 @@ ON indb_paddle_transactions(transaction_id);
 - `app/api/v1/payments/paddle/webhook/processors/transaction-completed.ts`
 - `app/api/v1/payments/paddle/webhook/processors/transaction-refunded.ts`
 - `app/api/v1/payments/paddle/webhook/processors/transaction-payment-failed.ts`
-- `app/dashboard/settings/plans-billing/components/CancelSubscriptionDialog.tsx`
 
 **Files Created:**
 - `doc/TRANSACTION_STORAGE_FIX_SQL.sql` - SQL queries for database updates
