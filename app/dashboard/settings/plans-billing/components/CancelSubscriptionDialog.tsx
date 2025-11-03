@@ -24,7 +24,7 @@ interface RefundWindowInfo {
 }
 
 interface CancelSubscriptionDialogProps {
-  subscriptionId: string | null
+  subscriptionId: string
   onClose: () => void
   onSuccess: () => void
 }
