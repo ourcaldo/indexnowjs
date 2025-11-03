@@ -94,12 +94,9 @@ export class PaddleCancellationService {
       try {
         refund = await paddle.adjustments.create({
           action: 'refund',
+          type: 'full',
           transactionId: transaction.paddle_transaction_id,
           reason: 'Canceled within 7-day refund period',
-          items: [{
-            type: 'full',
-            itemId: transaction.paddle_transaction_id,
-          }] as any,
         })
       } catch (refundError) {
         await ErrorHandlingService.createError(

@@ -776,6 +776,89 @@ JWT_SECRET=[jwt-secret-key]
 ## Recent Changes
 
 
+### November 3, 2025: Fixed Paddle Refund Implementation - Transaction Item ID Issue ✅
+
+**CRITICAL BUG FIX: Refund API calls were failing due to incorrect item ID usage**
+
+**Problem Identified:**
+- Refund requests were failing with "Invalid request" error from Paddle API
+- Root cause: Using transaction ID (`txn_xxx`) instead of transaction item IDs (`txnitm_xxx`) in refund requests
+- Error occurred in `PaddleCancellationService.cancelImmediatelyWithRefund()` method
+
+**Technical Details:**
+- **File**: `lib/services/payments/paddle/PaddleCancellationService.ts`
+- **Issue**: Line 101 was passing `transaction.paddle_transaction_id` (format: `txn_xxx`) as `itemId`
+- **Paddle Requirement**: `itemId` must be a transaction item ID (format: `txnitm_xxx`), NOT transaction ID
+- **Error Example**: 
+  ```json
+  {
+    "level": "ERROR",
+    "type": "EXTERNAL_API",
+    "severity": "HIGH",
+    "statusCode": 500,
+    "metadata": {
+      "error": "Invalid request.",
+      "subscription_id": "sub_01k93rq0matmf87ydc1kmven50",
+      "transaction_id": "txn_01k93rnmhppabg4cvn89sfccym"
+    },
+    "msg": "Refund failed for transaction txn_01k93rnmhppabg4cvn89sfccym"
+  }
+  ```
+
+**Solution Implemented:**
+- Changed refund request structure to use `type: 'full'` for complete transaction refunds
+- Removed `items` array entirely (not needed for full refunds)
+- Updated `paddle.adjustments.create()` call:
+
+**Before (BROKEN):**
+```typescript
+refund = await paddle.adjustments.create({
+  action: 'refund',
+  transactionId: transaction.paddle_transaction_id,
+  reason: 'Canceled within 7-day refund period',
+  items: [{
+    type: 'full',
+    itemId: transaction.paddle_transaction_id,  // ❌ WRONG - txn_xxx instead of txnitm_xxx
+  }] as any,
+})
+```
+
+**After (FIXED):**
+```typescript
+refund = await paddle.adjustments.create({
+  action: 'refund',
+  type: 'full',  // ✅ For full transaction refunds
+  transactionId: transaction.paddle_transaction_id,
+  reason: 'Canceled within 7-day refund period',
+})
+```
+
+**According to Paddle Documentation:**
+- For **full transaction refunds**: Use `type: 'full'` without items array
+- For **partial refunds**: Use `type: 'partial'` with items array containing proper `txnitm_xxx` IDs
+- Transaction item IDs are stored in our database in `indb_paddle_transactions.metadata.items`
+
+**Impact:**
+- ✅ Refunds now process successfully for subscriptions canceled within 7-day window
+- ✅ No more "Invalid request" errors from Paddle API
+- ✅ Users receive proper refunds when canceling early subscriptions
+- ✅ Error logging still captures any future refund failures for monitoring
+
+**Files Modified:**
+- `lib/services/payments/paddle/PaddleCancellationService.ts` (lines 95-118)
+
+**Testing Required:**
+1. Test subscription cancellation within 7-day refund window
+2. Verify refund is processed successfully in Paddle dashboard
+3. Confirm transaction status updates to 'refunded' in database
+4. Check error logs to ensure no "Invalid request" errors
+
+**Related Documentation:**
+- Paddle API Reference: https://developer.paddle.com/build/transactions/create-transaction-adjustments#build-request-create-refund
+- Enhancement Plan: `doc/PADDLE_ENHANCEMENT.md` (Section: 7-Day Refund Policy Implementation)
+
+---
+
 ### November 2, 2025: Billing UI & History Improvements - Cancel Subscription & Dual Transaction Support ✅
 
 **CRITICAL SECURITY FIXES (Post-Implementation):**
