@@ -173,6 +173,24 @@ export function CancelSubscriptionDialog({
           ) : null}
         </div>
 
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={canceling}
+            data-testid="button-cancel-dialog"
+          >
+            Go Back
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleCancel}
+            disabled={loading || canceling}
+            data-testid="button-confirm-cancel"
+          >
+            {canceling ? 'Canceling...' : 'Yes, Cancel Subscription'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

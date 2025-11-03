@@ -582,6 +582,16 @@ export default function BillingPage() {
                   )}
                 </CardDescription>
               </div>
+              {subscriptionData?.hasSubscription && subscriptionData.subscription && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowCancelDialog(true)}
+                  data-testid="button-cancel-subscription"
+                >
+                  Cancel Subscription
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -646,40 +656,6 @@ export default function BillingPage() {
                 />
               </div>
             </div>
-            
-            {/* Subscription Management Section */}
-            {subscriptionData?.hasSubscription && subscriptionData.subscription && (
-              <div className="mt-6 pt-6 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-foreground">Subscription Management</h3>
-                    <div className="flex items-center gap-2">
-                      <SubscriptionStatusBadge 
-                        status={subscriptionData.subscription.status}
-                        cancelAtPeriodEnd={subscriptionData.subscription.cancel_at_period_end}
-                        periodEnd={subscriptionData.subscription.current_period_end}
-                      />
-                      {subscriptionData.subscription.cancel_at_period_end && subscriptionData.subscription.current_period_end && (
-                        <span className="text-xs text-muted-foreground">
-                          Access until {formatDate(subscriptionData.subscription.current_period_end)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {!subscriptionData.subscription.cancel_at_period_end && subscriptionData.subscription.status === 'active' && (
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowCancelDialog(true)}
-                      data-testid="button-cancel-subscription"
-                    >
-                      Cancel Subscription
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       ) : (
@@ -955,7 +931,6 @@ export default function BillingPage() {
       {showCancelDialog && subscriptionData?.hasSubscription && subscriptionData.subscription && (
         <CancelSubscriptionDialog
           subscriptionId={subscriptionData.subscription.paddle_subscription_id}
-          subscriptionType={subscriptionData.subscription.subscription_type}
           onClose={() => setShowCancelDialog(false)}
           onSuccess={handleCancelSuccess}
         />
