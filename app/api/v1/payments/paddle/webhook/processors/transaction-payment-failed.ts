@@ -1,11 +1,16 @@
 /**
  * Paddle Webhook Processor: transaction.payment_failed
  * Handles failed payment transaction events
+ * 
+ * Architecture: 3-Table Pattern
+ * 1. Insert into main transaction table (indb_payment_transactions) with 'failed' status
+ * 2. Insert into Paddle-specific table (indb_paddle_transactions) with failure details
+ * 3. History table auto-populated via database trigger
  */
 
 import { supabaseAdmin } from '@/lib/database'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
-import { validateCustomData } from './utils'
+import { validateCustomData, getPackageIdFromSubscription, getBillingPeriod, PADDLE_GATEWAY_ID } from './utils'
 
 export async function processTransactionPaymentFailed(data: any) {
   if (!data || typeof data !== 'object') {
@@ -52,9 +57,38 @@ export async function processTransactionPaymentFailed(data: any) {
     throw new Error('Missing amount or currency in failed transaction totals')
   }
 
-  const { error } = await supabaseAdmin
+  const packageId = await getPackageIdFromSubscription(subscription_id, custom_data)
+  const billingPeriod = getBillingPeriod(items)
+
+  const { data: mainTransaction, error: mainError } = await supabaseAdmin
+    .from('indb_payment_transactions')
+    .insert({
+      user_id: userId,
+      subscription_id: dbSubscriptionId,
+      package_id: packageId,
+      gateway_id: PADDLE_GATEWAY_ID,
+      transaction_type: subscription_id ? 'subscription' : 'one_time',
+      transaction_status: 'failed',
+      amount: parseFloat(amount) / 100,
+      currency: currency,
+      payment_method: 'unknown',
+      gateway_transaction_id: transaction_id,
+      gateway_response: data,
+      notes: 'Payment failed',
+      billing_period: billingPeriod,
+      metadata: { custom_data, items, failure_reason: 'payment_failed' }
+    })
+    .select()
+    .single()
+
+  if (mainError) {
+    throw new Error(`Failed to insert main transaction: ${mainError.message}`)
+  }
+
+  const { error: paddleError } = await supabaseAdmin
     .from('indb_paddle_transactions')
     .insert({
+      transaction_id: mainTransaction.id,
       user_id: userId,
       subscription_id: dbSubscriptionId,
       paddle_transaction_id: transaction_id,
@@ -65,8 +99,8 @@ export async function processTransactionPaymentFailed(data: any) {
       metadata: { custom_data, items, failure_reason: 'payment_failed' },
     })
 
-  if (error) {
-    throw new Error(`Failed to log failed transaction: ${error.message}`)
+  if (paddleError) {
+    throw new Error(`Failed to insert Paddle transaction: ${paddleError.message}`)
   }
 
   await ErrorHandlingService.createError(

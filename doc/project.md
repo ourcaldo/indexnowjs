@@ -776,6 +776,145 @@ JWT_SECRET=[jwt-secret-key]
 ## Recent Changes
 
 
+
+
+### November 3, 2025: Payment Transaction Architecture Fix - 3-Table Pattern Implementation
+
+**Overview:**
+Fixed critical payment transaction storage issue where Paddle transactions were bypassing the main transaction table, preventing proper audit trail logging and breaking the established 3-table payment architecture pattern.
+
+**Problem:**
+- Paddle transactions were ONLY being stored in `indb_paddle_transactions` (gateway-specific table)
+- Main transaction table `indb_payment_transactions` was being completely bypassed
+- Transaction history table `indb_payment_transactions_history` was not logging Paddle events (trigger never fired)
+- This violated the 3-table architecture pattern used by other payment gateways (Midtrans)
+
+**The Correct 3-Table Architecture:**
+```
+1. Main Table (indb_payment_transactions) 
+   └─→ Universal record for ALL payment gateways
+       └─→ Triggers automatic history logging
+   
+2. Gateway-Specific Table (indb_paddle_transactions)
+   └─→ Paddle-specific data with FK to main table
+   
+3. History Table (indb_payment_transactions_history)
+   └─→ Automatic audit trail (populated by database trigger)
+```
+
+**Database Schema Changes:**
+User needs to run these SQL statements in Supabase SQL Editor:
+```sql
+-- Add transaction_id FK column
+ALTER TABLE indb_paddle_transactions 
+ADD COLUMN transaction_id uuid NULL;
+
+-- Add foreign key constraint
+ALTER TABLE indb_paddle_transactions 
+ADD CONSTRAINT indb_paddle_transactions_transaction_id_fkey 
+FOREIGN KEY (transaction_id) 
+REFERENCES indb_payment_transactions (id) 
+ON DELETE CASCADE;
+
+-- Add index for performance
+CREATE INDEX idx_paddle_transactions_transaction_id 
+ON indb_paddle_transactions(transaction_id);
+```
+
+**Code Changes:**
+
+1. **Helper Functions Added** (`utils.ts`):
+   - `getPackageIdFromSubscription()` - Resolves package ID from subscription or custom_data
+   - `getBillingPeriod()` - Extracts billing period from Paddle items
+   - `getPaddleGatewayId()` - Retrieves Paddle gateway ID with fallback
+   - `PADDLE_GATEWAY_ID` constant for Paddle gateway
+
+2. **transaction.completed Processor** - Dual-Insert Pattern:
+   ```typescript
+   // 1. Insert into MAIN table first
+   const { data: mainTransaction } = await supabaseAdmin
+     .from('indb_payment_transactions')
+     .insert({
+       gateway_id: PADDLE_GATEWAY_ID,
+       transaction_status: 'completed',
+       gateway_transaction_id: transaction_id,
+       // ... other fields
+     })
+     .select()
+     .single()
+   
+   // 2. Insert into Paddle table with FK
+   await supabaseAdmin
+     .from('indb_paddle_transactions')
+     .insert({
+       transaction_id: mainTransaction.id, // ✅ FK link
+       paddle_transaction_id: transaction_id,
+       // ... other fields
+     })
+   ```
+
+3. **transaction.refunded Processor** - Dual-Update Pattern:
+   ```typescript
+   // 1. Update MAIN table (triggers history log)
+   await supabaseAdmin
+     .from('indb_payment_transactions')
+     .update({
+       transaction_status: 'refunded',
+       notes: `Refund: ${refund_reason}`
+     })
+     .eq('gateway_transaction_id', transaction_id)
+   
+   // 2. Update Paddle table with refund details
+   await supabaseAdmin
+     .from('indb_paddle_transactions')
+     .update({
+       status: 'refunded',
+       refund_amount, refund_reason, refunded_at
+     })
+     .eq('paddle_transaction_id', transaction_id)
+   ```
+
+4. **transaction.payment_failed Processor** - Dual-Insert Pattern:
+   Similar to transaction.completed but with 'failed' status for audit trail
+
+5. **Cancel Subscription Dialog** - Improved Copy:
+   - Added clear "Full Refund Available" / "No Refund Available" headers
+   - Show days remaining in refund window
+   - Add refund processing timeline (5-7 business days)
+   - Fix incorrect date display for non-refund-eligible cancellations
+
+**Impact:**
+- ✅ **Data Integrity**: All transactions now recorded in centralized main table
+- ✅ **Audit Trail**: Complete transaction history with automatic change logging
+- ✅ **Referential Integrity**: FK constraints between tables maintain data consistency
+- ✅ **Cross-Gateway Reporting**: Unified transaction view across all payment methods
+- ✅ **Compliance**: Complete refund and failure tracking for financial reconciliation
+
+**Files Modified:**
+- `app/api/v1/payments/paddle/webhook/processors/utils.ts`
+- `app/api/v1/payments/paddle/webhook/processors/transaction-completed.ts`
+- `app/api/v1/payments/paddle/webhook/processors/transaction-refunded.ts`
+- `app/api/v1/payments/paddle/webhook/processors/transaction-payment-failed.ts`
+- `app/dashboard/settings/plans-billing/components/CancelSubscriptionDialog.tsx`
+
+**Files Created:**
+- `doc/TRANSACTION_STORAGE_FIX_SQL.sql` - SQL queries for database updates
+- `doc/TRANSACTION_STORAGE_FIX_IMPLEMENTATION.md` - Detailed implementation report
+
+**Documentation Updated:**
+- ✅ `doc/PADDLE_MIGRATION_PROGRESS.md` - Added Phase 6 with detailed checklist
+- ✅ `doc/project.md` - This changelog entry in Recent Changes
+
+**Next Steps:**
+1. Run SQL updates in Supabase SQL Editor (see `doc/TRANSACTION_STORAGE_FIX_SQL.sql`)
+2. Test with Paddle sandbox webhooks to verify dual-insert pattern
+3. Monitor transaction data in both tables
+4. Verify history table is auto-logging changes
+
+**Architect Review**: Pending
+
+---
+
 ### November 3, 2025: Fixed Paddle Refund Implementation - Transaction Item ID Issue ✅
 
 **CRITICAL BUG FIX: Refund API calls were failing due to incorrect item ID usage**

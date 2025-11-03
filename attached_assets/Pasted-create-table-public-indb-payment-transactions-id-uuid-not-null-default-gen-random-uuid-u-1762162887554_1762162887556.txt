@@ -1,0 +1,47 @@
+create table public.indb_payment_transactions (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid not null,
+  subscription_id uuid null,
+  package_id uuid not null,
+  gateway_id uuid not null,
+  transaction_type text not null,
+  transaction_status text not null default 'pending'::text,
+  amount numeric(12, 2) not null,
+  currency text not null default 'IDR'::text,
+  payment_method text null,
+  payment_proof_url text null,
+  gateway_transaction_id text null,
+  gateway_response jsonb null default '{}'::jsonb,
+  processed_at timestamp with time zone null,
+  verified_by uuid null,
+  verified_at timestamp with time zone null,
+  notes text null,
+  metadata jsonb null default '{}'::jsonb,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  billing_period text null,
+  trial_metadata jsonb null,
+  constraint indb_payment_transactions_pkey primary key (id),
+  constraint indb_payment_transactions_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE,
+  constraint indb_payment_transactions_package_id_fkey foreign KEY (package_id) references indb_payment_packages (id),
+  constraint indb_payment_transactions_gateway_id_fkey foreign KEY (gateway_id) references indb_payment_gateways (id),
+  constraint indb_payment_transactions_verified_by_fkey foreign KEY (verified_by) references auth.users (id)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_payment_transactions_user_id on public.indb_payment_transactions using btree (user_id) TABLESPACE pg_default;
+
+create index IF not exists idx_payment_transactions_subscription_id on public.indb_payment_transactions using btree (subscription_id) TABLESPACE pg_default;
+
+create index IF not exists idx_payment_transactions_status on public.indb_payment_transactions using btree (transaction_status) TABLESPACE pg_default;
+
+create index IF not exists idx_payment_transactions_created_at on public.indb_payment_transactions using btree (created_at) TABLESPACE pg_default;
+
+create index IF not exists idx_payment_transactions_billing_period on public.indb_payment_transactions using btree (billing_period) TABLESPACE pg_default;
+
+create index IF not exists idx_payment_transactions_trial on public.indb_payment_transactions using gin (trial_metadata) TABLESPACE pg_default;
+
+create trigger trigger_log_transaction_history
+after INSERT
+or
+update on indb_payment_transactions for EACH row
+execute FUNCTION log_transaction_history ();

@@ -2,6 +2,11 @@
  * Paddle Webhook Processor: transaction.refunded
  * Handles refund events for transactions
  * 
+ * Architecture: 3-Table Pattern
+ * 1. Update main transaction table (indb_payment_transactions) status to 'refunded'
+ * 2. Update Paddle-specific table (indb_paddle_transactions) with refund details
+ * 3. History table auto-logs status change via database trigger
+ * 
  * Business Impact:
  * - Updates transaction status to reflect refund
  * - For full refunds: immediately revokes subscription access
@@ -46,17 +51,33 @@ export async function processTransactionRefunded(data: any) {
     },
   }
 
+  const { error: updateMainError } = await supabaseAdmin
+    .from('indb_payment_transactions')
+    .update({
+      transaction_status: 'refunded',
+      notes: `Refund: ${refund_reason}`,
+      updated_at: refundedAt
+    })
+    .eq('gateway_transaction_id', transaction_id)
+
+  if (updateMainError) {
+    throw new Error(`Failed to update main transaction refund status: ${updateMainError.message}`)
+  }
+
   const { error: updateError } = await supabaseAdmin
     .from('indb_paddle_transactions')
     .update({
       status: 'refunded',
+      refund_amount: parseFloat(refund_amount) / 100,
+      refund_reason: refund_reason,
+      refunded_at: refundedAt,
       metadata: updatedMetadata,
       updated_at: refundedAt,
     })
     .eq('paddle_transaction_id', transaction_id)
 
   if (updateError) {
-    throw new Error(`Failed to update transaction refund status: ${updateError.message}`)
+    throw new Error(`Failed to update Paddle transaction refund status: ${updateError.message}`)
   }
 
   if (subscription_id) {
