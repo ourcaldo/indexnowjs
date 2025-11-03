@@ -99,7 +99,7 @@ export class PaddleCancellationService {
           items: [{
             type: 'full',
             itemId: transaction.paddle_transaction_id,
-          }],
+          }] as any,
         })
       } catch (refundError) {
         await ErrorHandlingService.createError(
