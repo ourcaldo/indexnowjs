@@ -776,6 +776,71 @@ JWT_SECRET=[jwt-secret-key]
 ## Recent Changes
 
 
+### November 4, 2025: Settings Page Redesign - Top Tab Navigation & Clean Gray-Scale UI ✅
+
+**Overview:**
+Redesigned the entire settings section of IndexNow Studio to match a new HTML+CSS template with top tab navigation, clean gray-scale colors, and simplified card design. All existing functionality and data fetching logic preserved.
+
+**Major Changes:**
+
+**1. Navigation Redesign** (`app/dashboard/settings/page.tsx`):
+- Replaced sidebar navigation with top horizontal tab navigation
+- Implemented client-side tab state management with URL query string sync
+- Added responsive design with tab pills for General, Service Accounts, and Plans & Billing sections
+- Conditional component rendering based on active tab selection
+
+**2. Color System Enhancement** (`app/globals.css`):
+- Added complete gray-scale semantic color palette (--settings-gray-50 through --settings-gray-900)
+- Added success colors for UI feedback (--settings-success-bg, --settings-success-text)
+- Implemented both light and dark mode support for all new colors
+- All colors use proper HSL format for consistency
+
+**3. General Settings Page Redesign** (`app/dashboard/settings/general/page.tsx`):
+- Updated to clean card design with `shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl`
+- Redesigned Profile section with gray-scale colors
+- Redesigned Security (Change Password) section with improved visual hierarchy
+- Redesigned Notifications section with cleaner toggle switches
+- All Supabase data flows and form validation logic preserved unchanged
+
+**4. Service Accounts Page Redesign** (`app/dashboard/settings/service-accounts/page.tsx`):
+- Updated card styling to match new design system
+- Simplified quota usage display with gray-scale colors
+- Updated service account cards with cleaner borders and shadows
+- All CRUD operations and API endpoints unchanged
+
+**5. Plans & Billing Page Redesign** (`app/dashboard/settings/plans-billing/page.tsx`):
+- Redesigned current plan card with green badge and gray-scale colors
+- Updated billing period toggle (Monthly/Yearly) with new gray design
+- Redesigned plan cards with simplified borders and gray-scale typography
+- Updated billing history table with gray-scale headers and hover states
+- Updated pagination controls with new color scheme
+- All Paddle integration, subscription management, and transaction history logic preserved
+
+**Design Pattern:**
+- Card style: `bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6`
+- Typography: `text-[hsl(var(--gray-900))]` for headings, `text-[hsl(var(--gray-600))]` for descriptions
+- Borders: `border-[hsl(var(--gray-200))]` for dividers
+- Hover states: `hover:bg-[hsl(var(--gray-50))]`
+
+**Data Integrity:**
+- All API endpoints preserved: AUTH_ENDPOINTS, INDEXING_ENDPOINTS, BILLING_ENDPOINTS, PUBLIC_ENDPOINTS
+- All Supabase data fetching unchanged
+- All form validation and error handling intact
+- All activity logging preserved
+- All Paddle checkout and subscription flows unchanged
+
+**Files Modified:**
+- `app/globals.css` - Added gray-scale and success color variables
+- `app/dashboard/settings/page.tsx` - Top tab navigation implementation
+- `app/dashboard/settings/general/page.tsx` - UI redesign
+- `app/dashboard/settings/service-accounts/page.tsx` - UI redesign
+- `app/dashboard/settings/plans-billing/page.tsx` - UI redesign
+
+**Technical Notes:**
+- No business logic changes - purely presentational updates
+- All `data-testid` attributes preserved for testing compatibility
+- Responsive design maintained across all breakpoints
+- Dark mode compatibility maintained through semantic color variables
 
 
 ### November 3, 2025: Payment Transaction Architecture Fix - 3-Table Pattern Implementation
