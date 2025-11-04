@@ -16,18 +16,16 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
         ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
         userAgent: request.headers.get('user-agent')
       },
-      { table: 'indb_keyword_usage', operationType: 'select' },
+      { table: 'indb_keyword_keywords', operationType: 'select' },
       async (db) => {
-        const { data: keywordUsage, error: usageError } = await db
-          .from('indb_keyword_usage')
-          .select('keywords_used, keywords_limit, period_start, period_end')
+        const { count: keywordCount, error: countError } = await db
+          .from('indb_keyword_keywords')
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', auth.userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
+          .eq('is_active', true)
 
-        if (usageError && usageError.code !== 'PGRST116') {
-          throw new Error('Failed to fetch keyword usage data')
+        if (countError) {
+          throw new Error('Failed to fetch keyword count', { cause: countError })
         }
 
         const { data: profile, error: profileError } = await db
@@ -44,25 +42,13 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
           throw new Error('Failed to fetch user profile')
         }
 
-        return { keywordUsage, profile }
+        return { keywordCount, profile }
       }
     )
 
-    const { keywordUsage, profile } = usageData
+    const { keywordCount, profile } = usageData
+    const keywordsUsed = keywordCount || 0
     const keywordsLimit = (profile?.package as any)?.quota_limits?.keywords_limit || 0
-
-    if (!keywordUsage) {
-      return formatSuccess({
-        keywords_used: 0,
-        keywords_limit: keywordsLimit,
-        is_unlimited: keywordsLimit === -1,
-        remaining_quota: keywordsLimit === -1 ? -1 : keywordsLimit,
-        period_start: null,
-        period_end: null
-      })
-    }
-
-    const keywordsUsed = keywordUsage.keywords_used || 0
     const isUnlimited = keywordsLimit === -1
     const remainingQuota = isUnlimited ? -1 : Math.max(0, keywordsLimit - keywordsUsed)
 
@@ -71,8 +57,8 @@ export const GET = authenticatedApiWrapper(async (request, auth) => {
       keywords_limit: keywordsLimit,
       is_unlimited: isUnlimited,
       remaining_quota: remainingQuota,
-      period_start: keywordUsage.period_start,
-      period_end: keywordUsage.period_end
+      period_start: null,
+      period_end: null
     })
   } catch (error) {
     const structuredError = await ErrorHandlingService.createError(

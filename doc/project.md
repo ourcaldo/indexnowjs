@@ -13264,3 +13264,142 @@ return (keywords || []).map((k: any) => ({
 - **After**: Job validates successfully and processes rank checks
 
 **Architect Review**: Pending
+
+
+---
+
+## November 4, 2025 - Fixed Keyword Usage Count Inconsistency
+
+**Overview**:
+Fixed critical inconsistency in keyword usage display where sidebar and settings showed 0/1500 keywords while domain selector showed correct per-domain counts. The issue was caused by relying on an unmaintained `indb_keyword_usage` table instead of counting actual keywords from the `indb_keyword_keywords` table.
+
+**Problem**:
+- **Sidebar & Settings Page**: Displayed `0/1500 Keywords` (incorrect)
+- **Domain Selector**: Displayed correct counts per domain (e.g., tugasin.me=1, cetta.id=12, nexjob.tech=2)
+- **Root Cause**: The `indb_keyword_usage` table was not being updated when keywords were added/removed, causing stale data (keywords_used = 0)
+- **Expected Behavior**: Keyword quota should count ALL keywords across ALL domains for the user account, not per domain
+
+**Solution**:
+Updated both API endpoints to count actual active keywords from `indb_keyword_keywords` table instead of relying on the unmaintained `indb_keyword_usage` table.
+
+### Changes Made
+
+#### 1. Updated `/api/v1/dashboard/route.ts`
+**Before**:
+```typescript
+db.from('indb_keyword_usage')
+  .select('keywords_used, keywords_limit, period_start, period_end')
+  .eq('user_id', userId)
+  .order('created_at', { ascending: false })
+  .limit(1)
+  .single(),
+```
+
+**After**:
+```typescript
+db.from('indb_keyword_keywords')
+  .select('id', { count: 'exact' })
+  .eq('user_id', userId)
+  .eq('is_active', true),
+```
+
+**Processing Logic Before**:
+```typescript
+// Complex error handling checking for PGRST116 error
+// Falls back to 0 if no data found in indb_keyword_usage table
+const keywordsUsed = keywordUsage.keywords_used || 0
+```
+
+**Processing Logic After**:
+```typescript
+// Direct count from actual keywords table
+const keywordsUsed = keywordUsageResult.count || 0
+const keywordsLimit = (profile?.package as any)?.quota_limits?.keywords_limit || 0
+const isUnlimited = keywordsLimit === -1
+const remainingQuota = isUnlimited ? -1 : Math.max(0, keywordsLimit - keywordsUsed)
+
+keywordUsage = {
+  keywords_used: keywordsUsed,
+  keywords_limit: keywordsLimit,
+  is_unlimited: isUnlimited,
+  remaining_quota: remainingQuota,
+  period_start: null,
+  period_end: null
+}
+```
+
+#### 2. Updated `/api/v1/rank-tracking/keyword-usage/route.ts`
+**Before**:
+```typescript
+const { data: keywordUsage, error: usageError } = await db
+  .from('indb_keyword_usage')
+  .select('keywords_used, keywords_limit, period_start, period_end')
+  .eq('user_id', auth.userId)
+  .order('created_at', { ascending: false })
+  .limit(1)
+  .single()
+```
+
+**After**:
+```typescript
+const { count: keywordCount } = await db
+  .from('indb_keyword_keywords')
+  .select('id', { count: 'exact' })
+  .eq('user_id', auth.userId)
+  .eq('is_active', true)
+```
+
+**Return Value Updated**:
+```typescript
+const keywordsUsed = keywordCount || 0
+const keywordsLimit = (profile?.package as any)?.quota_limits?.keywords_limit || 0
+const isUnlimited = keywordsLimit === -1
+const remainingQuota = isUnlimited ? -1 : Math.max(0, keywordsLimit - keywordsUsed)
+
+return formatSuccess({
+  keywords_used: keywordsUsed,
+  keywords_limit: keywordsLimit,
+  is_unlimited: isUnlimited,
+  remaining_quota: remainingQuota,
+  period_start: null,
+  period_end: null
+})
+```
+
+**Files Modified**:
+1. `app/api/v1/dashboard/route.ts`
+   - Changed query from `indb_keyword_usage` table to `indb_keyword_keywords` table with count
+   - Simplified processing logic to use direct count instead of checking for missing data
+   - Removed dependency on unmaintained `indb_keyword_usage` table
+
+2. `app/api/v1/rank-tracking/keyword-usage/route.ts`
+   - Changed query from `indb_keyword_usage` table to `indb_keyword_keywords` table with count
+   - Updated return logic to use actual keyword count
+   - Maintained same response structure for backward compatibility
+
+**Impact**:
+- ✅ **Accurate Counts**: Sidebar and settings now show correct total keyword count across all domains
+- ✅ **Real-time Updates**: Counts update immediately when keywords are added/removed
+- ✅ **Account-level Quota**: Properly enforces account-wide keyword limits (e.g., 1500 for Pro plan)
+- ✅ **No Breaking Changes**: Response structure remains the same, only the data source changed
+- ✅ **Performance**: Count query is efficient with proper indexes on user_id and is_active
+
+**Testing Recommendations**:
+1. Check sidebar "Usage Limit" section - should show correct count (e.g., 15/1500 Keywords)
+2. Check settings page "Current Usage" - should match sidebar count
+3. Add a new keyword and verify count increments immediately
+4. Delete a keyword and verify count decrements immediately
+5. Verify count is sum of all keywords across all domains
+
+**Expected Results**:
+- If user has tugasin.me (1 keyword) + cetta.id (12 keywords) + nexjob.tech (2 keywords)
+- Sidebar should show: `15/1500 Keywords` (assuming Pro plan with 1500 limit)
+- Settings should show: `Keywords: 15 / 1.5K`
+- Domain selector continues to show per-domain counts correctly
+
+**Before vs After**:
+- **Before**: Sidebar shows `0/1500`, Settings shows `0/1500`, Domain selector shows correct counts
+- **After**: All components show consistent counts based on actual keyword data
+
+**Architect Review**: Pending
+

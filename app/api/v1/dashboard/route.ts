@@ -48,12 +48,10 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
             `)
             .single(),
 
-          db.from('indb_keyword_usage')
-            .select('keywords_used, keywords_limit, period_start, period_end')
+          db.from('indb_keyword_keywords')
+            .select('id', { count: 'exact', head: true })
             .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single(),
+            .eq('is_active', true),
 
           db.from('user_quota_summary')
             .select('*')
@@ -206,30 +204,22 @@ export const GET = authenticatedApiWrapper(async (request: NextRequest, auth) =>
     }
 
     let keywordUsage = null
-    if (keywordUsageResult.error && keywordUsageResult.error.code === 'PGRST116') {
-      const keywordsLimit = (profile?.package as any)?.quota_limits?.keywords_limit || 0
-      keywordUsage = {
-        keywords_used: 0,
-        keywords_limit: keywordsLimit,
-        is_unlimited: keywordsLimit === -1,
-        remaining_quota: keywordsLimit === -1 ? -1 : keywordsLimit,
-        period_start: null,
-        period_end: null
-      }
-    } else if (!keywordUsageResult.error && keywordUsageResult.data) {
-      const keywordsUsed = keywordUsageResult.data.keywords_used || 0
-      const keywordsLimit = (profile?.package as any)?.quota_limits?.keywords_limit || 0
-      const isUnlimited = keywordsLimit === -1
-      const remainingQuota = isUnlimited ? -1 : Math.max(0, keywordsLimit - keywordsUsed)
+    if (keywordUsageResult.error) {
+      throw new Error('Failed to fetch keyword count', { cause: keywordUsageResult.error })
+    }
 
-      keywordUsage = {
-        keywords_used: keywordsUsed,
-        keywords_limit: keywordsLimit,
-        is_unlimited: isUnlimited,
-        remaining_quota: remainingQuota,
-        period_start: keywordUsageResult.data.period_start,
-        period_end: keywordUsageResult.data.period_end
-      }
+    const keywordsUsed = keywordUsageResult.count || 0
+    const keywordsLimit = (profile?.package as any)?.quota_limits?.keywords_limit || 0
+    const isUnlimited = keywordsLimit === -1
+    const remainingQuota = isUnlimited ? -1 : Math.max(0, keywordsLimit - keywordsUsed)
+
+    keywordUsage = {
+      keywords_used: keywordsUsed,
+      keywords_limit: keywordsLimit,
+      is_unlimited: isUnlimited,
+      remaining_quota: remainingQuota,
+      period_start: null,
+      period_end: null
     }
 
     let quota = null
