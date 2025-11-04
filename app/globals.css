@@ -115,6 +115,26 @@
   --settings-section-icon-text: 218 100% 62%; /* Accent color for icons */
   --settings-gradient-from: 0 0% 100%; /* Card gradient start - white */
   --settings-gradient-to: 210 40% 98%; /* Card gradient end - muted */
+  
+  /* Gray-scale palette for new settings redesign */
+  --gray-50: 0 0% 98%; /* #F9FAFB - Very light gray background */
+  --gray-100: 0 0% 96%; /* #F3F4F6 */
+  --gray-200: 0 0% 90%; /* #E5E7EB - Light borders, backgrounds */
+  --gray-300: 0 0% 83%; /* #D1D5DB - Input borders */
+  --gray-400: 0 0% 64%; /* #9CA3AF */
+  --gray-500: 0 0% 62%; /* #6B7280 - Secondary text */
+  --gray-600: 0 0% 45%; /* #4B5563 - Medium gray text */
+  --gray-700: 0 0% 34%; /* #374151 - Darker gray text */
+  --gray-800: 0 0% 20%; /* #1F2937 */
+  --gray-900: 0 0% 11%; /* #111827 - Dark primary text/buttons */
+  
+  /* Success/Green badge colors */
+  --green-100: 142 77% 93%; /* #DCFCE7 - Light green background */
+  --green-800: 142 70% 25%; /* #166534 - Dark green text */
+  
+  /* Settings card styling */
+  --settings-card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --settings-card-ring: 0 0% 11% / 0.05; /* gray-900 with 5% opacity */
 }
 
 .dark {
@@ -158,6 +178,26 @@
   --settings-section-icon-text: 218 100% 62%; /* Keep accent consistent */
   --settings-gradient-from: 0 0% 0%; /* Card gradient start - black */
   --settings-gradient-to: 0 0% 5%; /* Card gradient end - very dark */
+  
+  /* Gray-scale palette for dark mode */
+  --gray-50: 0 0% 10%; /* Dark background equivalent */
+  --gray-100: 0 0% 12%; /* Slightly lighter dark */
+  --gray-200: 0 0% 20%; /* Dark borders */
+  --gray-300: 0 0% 30%; /* Dark input borders */
+  --gray-400: 0 0% 50%; /* Medium gray */
+  --gray-500: 0 0% 65%; /* Light gray text */
+  --gray-600: 0 0% 75%; /* Lighter gray text */
+  --gray-700: 0 0% 85%; /* Even lighter */
+  --gray-800: 0 0% 92%; /* Near white */
+  --gray-900: 0 0% 98%; /* Light text/elements */
+  
+  /* Success/Green badge colors - dark mode */
+  --green-100: 142 70% 20%; /* Dark green background */
+  --green-800: 142 77% 85%; /* Light green text */
+  
+  /* Settings card styling - dark mode */
+  --settings-card-shadow: 0 1px 2px 0 rgb(255 255 255 / 0.05);
+  --settings-card-ring: 0 0% 100% / 0.05; /* white with 5% opacity */
 }
 
 @layer base {
