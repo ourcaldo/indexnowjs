@@ -127,11 +127,11 @@ export const PricingCards = ({
                 <div className="flex items-baseline gap-1">
                   {pricing.originalPrice && pricing.originalPrice > 0 && pricing.originalPrice > pricing.price && (
                     <span className={`text-sm line-through ${isCurrentPlan ? 'text-primary-foreground/50' : 'text-muted-foreground'}`}>
-                      {formatCurrency(pricing.originalPrice, userCurrency)}
+                      {formatCurrency(pricing.originalPrice)}
                     </span>
                   )}
                   <span className={`text-2xl font-bold ${isCurrentPlan ? 'text-primary-foreground' : 'text-foreground'}`}>
-                    {formatCurrency(pricing.price, userCurrency)}
+                    {formatCurrency(pricing.price)}
                   </span>
                   <span className={`text-sm ${isCurrentPlan ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                     per month

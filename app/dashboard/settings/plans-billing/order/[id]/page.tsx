@@ -367,10 +367,11 @@ export default function OrderCompletedPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-foreground">Total Amount</span>
                     <span className="text-xl font-bold text-foreground">
-                      {transaction.currency === 'USD' 
-                        ? `$${transaction.amount}` 
-                        : `Rp ${transaction.amount.toLocaleString('id-ID')}`
-                      }
+                      {transaction.amount !== null && transaction.amount !== undefined ? (
+                        transaction.currency === 'USD' 
+                          ? `$${transaction.amount}` 
+                          : `Rp ${transaction.amount.toLocaleString('id-ID')}`
+                      ) : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -463,10 +464,11 @@ export default function OrderCompletedPage() {
                   <div>
                     <p className="text-sm font-medium text-foreground">Amount to Pay</p>
                     <p className="text-lg font-bold text-foreground">
-                      {transaction.currency === 'USD' 
-                        ? `$${transaction.amount}` 
-                        : `Rp ${transaction.amount.toLocaleString('id-ID')}`
-                      }
+                      {transaction.amount !== null && transaction.amount !== undefined ? (
+                        transaction.currency === 'USD' 
+                          ? `$${transaction.amount}` 
+                          : `Rp ${transaction.amount.toLocaleString('id-ID')}`
+                      ) : 'N/A'}
                     </p>
                   </div>
 

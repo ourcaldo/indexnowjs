@@ -562,7 +562,8 @@ export default function BillingPage() {
   }
 
   const currentPlan = packagesData?.packages.find(pkg => pkg.id === packagesData.current_package_id)
-  const currentPlanPricing = currentPlan ? getBillingPeriodPrice(currentPlan, selectedBillingPeriod) : null
+  const currentUserBillingPeriod = billingData?.currentSubscription?.billing_period || 'monthly'
+  const currentPlanPricing = currentPlan ? getBillingPeriodPrice(currentPlan, currentUserBillingPeriod) : null
 
   return (
     <div className="space-y-8">
@@ -668,12 +669,14 @@ export default function BillingPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {packagesData?.packages && packagesData.packages.length > 0 ? packagesData.packages.map((plan) => {
             const pricing = getBillingPeriodPrice(plan, selectedBillingPeriod)
-            const isCurrentPlan = plan.id === packagesData.current_package_id
+            const apiPeriod = selectedBillingPeriod === 'yearly' ? 'annual' : 'monthly'
+            const currentApiPeriod = currentUserBillingPeriod === 'annual' ? 'annual' : 'monthly'
+            const isCurrentPlan = plan.id === packagesData.current_package_id && apiPeriod === currentApiPeriod
             
             return (
               <div 
                 key={plan.id} 
-                className={`relative rounded-xl p-6 ${isCurrentPlan ? 'border-2 border-gray-900' : 'border border-gray-200'}`}
+                className={`relative rounded-xl p-6 flex flex-col ${isCurrentPlan ? 'border-2 border-gray-900' : 'border border-gray-200'}`}
                 data-testid={`card-plan-${plan.slug}`}
               >
                 {isCurrentPlan && (
@@ -683,12 +686,14 @@ export default function BillingPage() {
                   <span className="absolute top-0 -translate-y-1/2 inline-flex items-center rounded-full bg-green-100 px-3 py-0.5 text-xs font-medium text-green-800">Save {pricing.discount}%</span>
                 )}
                 
-                <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
-                <p className="mt-2 text-4xl font-bold text-gray-900">
-                  {formatCurrency(pricing.price)}
-                  <span className="text-xl font-medium text-gray-500">/mo</span>
-                </p>
-                <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
+                  <p className="mt-2 text-4xl font-bold text-gray-900">
+                    {formatCurrency(pricing.price)}
+                    <span className="text-xl font-medium text-gray-500">/mo</span>
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
+                </div>
                 
                 <button 
                   className={`mt-6 w-full rounded-md py-2 px-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
@@ -729,48 +734,79 @@ export default function BillingPage() {
         
         {historyData?.transactions && historyData.transactions.length > 0 ? (
           <div className="border-t border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {historyData.transactions.map((transaction) => (
-                  <tr key={transaction.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(transaction.created_at)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{transaction.id}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                        transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
-                          ? 'bg-green-100 text-green-800'
-                          : transaction.transaction_status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(transaction.amount)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
-                        onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
-                        className="inline-flex items-center text-gray-700 hover:text-gray-900"
-                      >
-                        <Download className="w-4 h-4 mr-1" />
-                        Download
-                      </button>
-                    </td>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {historyData.transactions.map((transaction) => (
+                    <tr key={transaction.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(transaction.created_at)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{transaction.id}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+                          transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
+                            ? 'bg-green-100 text-green-800'
+                            : transaction.transaction_status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(transaction.amount)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button 
+                          onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
+                          className="inline-flex items-center text-gray-700 hover:text-gray-900"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Download
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-200">
+              {historyData.transactions.map((transaction) => (
+                <div 
+                  key={transaction.id} 
+                  className="px-4 py-4 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-900">{formatDate(transaction.created_at)}</span>
+                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+                      transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
+                        ? 'bg-green-100 text-green-800'
+                        : transaction.transaction_status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-gray-500 truncate max-w-[200px]">{transaction.id}</div>
+                    <div className="text-sm font-semibold text-gray-900">{formatCurrency(transaction.amount)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
             
             {historyData.pagination && historyData.pagination.total_pages > 1 && (
               <div className="bg-gray-50 px-6 py-4 flex items-center justify-between rounded-b-xl">

@@ -12909,3 +12909,174 @@ Implemented comprehensive enhancements to the Paddle payment integration, adding
 
 **Architect Review**: Pending (to be reviewed before deployment)
 
+
+---
+
+## November 4, 2025 - Settings Page Billing Section UI/UX Fixes
+
+**Overview**:
+Fixed multiple critical UI/UX issues in the settings page billing section that were affecting user experience and causing errors.
+
+**Problems Fixed**:
+
+### 1. Pricing Table "Current Plan" Indicator Issue
+**Problem**:
+- When switching between Monthly and Yearly billing periods, the "Current Plan" indicator remained on the same package name regardless of billing period
+- User subscribed to Pro Monthly would see Pro Yearly also marked as "Current Plan" when viewing yearly plans
+- This was confusing as it implied the user was subscribed to both periods simultaneously
+
+**Root Cause**:
+- `isCurrentPlan` logic only checked if `pkg.id === packagesData.current_package_id`
+- Did not consider the billing period (monthly vs annual) in the comparison
+- Used `selectedBillingPeriod` (toggle state) instead of user's actual billing period
+
+**Solution**:
+1. Extracted user's actual billing period from API data: `billingData?.currentSubscription?.billing_period`
+2. Updated `isCurrentPlan` logic to check both package ID AND billing period match:
+   ```typescript
+   const apiPeriod = selectedBillingPeriod === 'yearly' ? 'annual' : 'monthly'
+   const currentApiPeriod = currentUserBillingPeriod === 'annual' ? 'annual' : 'monthly'
+   const isCurrentPlan = plan.id === packagesData.current_package_id && apiPeriod === currentApiPeriod
+   ```
+3. Added `flex flex-col` to pricing cards to enable button alignment
+4. Wrapped card content in `flex-1` div to push button to bottom
+
+**Impact**:
+- ✅ **Accurate Indicator**: "Current Plan" only shows on the exact plan+period combination user is subscribed to
+- ✅ **Clear UX**: Users can now clearly see they can upgrade from monthly to yearly or switch plans
+- ✅ **Aligned Buttons**: All pricing card buttons now align at the bottom regardless of content height
+
+### 2. Current Plan Component Pricing Display Issue
+**Problem**:
+- The pricing details displayed in "Current Plan" section changed when user toggled between monthly/yearly
+- Example: User subscribed to Pro Monthly ($45/mo) would see Pro Yearly price ($499/yr) when toggling to yearly view
+- This was misleading as it showed wrong subscription pricing
+
+**Root Cause**:
+- `currentPlanPricing` was calculated using `selectedBillingPeriod` (toggle state):
+  ```typescript
+  const currentPlanPricing = currentPlan ? getBillingPeriodPrice(currentPlan, selectedBillingPeriod) : null
+  ```
+- Should have used user's actual billing period, not the toggle state
+
+**Solution**:
+- Changed pricing calculation to use user's actual billing period:
+  ```typescript
+  const currentUserBillingPeriod = billingData?.currentSubscription?.billing_period || 'monthly'
+  const currentPlanPricing = currentPlan ? getBillingPeriodPrice(currentPlan, currentUserBillingPeriod) : null
+  ```
+
+**Impact**:
+- ✅ **Stable Pricing**: Current Plan section now shows correct subscribed plan pricing
+- ✅ **No Confusion**: Price doesn't change when toggling monthly/yearly view
+- ✅ **Accurate Billing Info**: Next billing date and amount always match user's subscription
+
+### 3. Billing History Mobile Responsiveness Issue
+**Problem**:
+- Billing history table was not responsive on mobile/small screens
+- Table columns were cramped and hard to read
+- Horizontal scrolling created poor UX on mobile devices
+
+**Solution**:
+- Implemented responsive design with separate desktop and mobile views:
+  - **Desktop (md and up)**: Traditional table layout with all columns
+  - **Mobile (below md)**: Card-based layout showing essential info
+- Desktop table wrapped in `hidden md:block overflow-x-auto` div
+- Mobile card view using `md:hidden` with simplified vertical layout:
+  - Date and status badge on first row
+  - Transaction ID and amount on second row
+  - Full card clickable to view details
+  - Truncated transaction ID with max-width for readability
+
+**Impact**:
+- ✅ **Mobile Optimized**: Clean, readable card layout on small screens
+- ✅ **No Horizontal Scroll**: Content fits within viewport on all devices
+- ✅ **Better Touch Targets**: Full card area clickable for easy navigation
+- ✅ **Maintained Desktop UX**: Table view unchanged for larger screens
+
+### 4. Order Detail Page TypeError Fix
+**Problem**:
+- Order detail page crashed with error:
+  ```
+  TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+  ```
+- Error occurred when `transaction.amount` was undefined
+- Crashed on lines 372 and 468 where `.toLocaleString()` was called without null checking
+
+**Root Cause**:
+- Direct call to `transaction.amount.toLocaleString('id-ID')` without checking if amount exists
+- API might return transaction object without amount field in some edge cases
+
+**Solution**:
+- Added null checking before calling `.toLocaleString()`:
+  ```typescript
+  {transaction.amount ? (
+    transaction.currency === 'USD' 
+      ? `$${transaction.amount}` 
+      : `Rp ${transaction.amount.toLocaleString('id-ID')}`
+  ) : 'N/A'}
+  ```
+- Applied fix to both locations (Total Amount and Amount to Pay sections)
+
+**Impact**:
+- ✅ **No More Crashes**: Page handles missing amount gracefully
+- ✅ **Better Error Handling**: Shows 'N/A' instead of crashing
+- ✅ **Improved Reliability**: Works even with incomplete API responses
+
+**Files Modified**:
+1. `app/dashboard/settings/plans-billing/page.tsx`
+   - Fixed current plan billing period logic (line 568-569)
+   - Fixed pricing cards to check both package AND period (line 675-677)
+   - Added flex layout for button alignment (line 682, 692)
+   - Added mobile responsive view for billing history table (lines 740-812)
+
+2. `app/dashboard/settings/plans-billing/components/PricingCards.tsx`
+   - Fixed formatCurrency calls (removed extra userCurrency parameter on lines 133, 137)
+
+3. `app/dashboard/settings/plans-billing/order/[id]/page.tsx`
+   - Added null checking for transaction.amount (lines 373-377, 470-474)
+
+**Technical Details**:
+- **Billing Period Mapping**: Properly maps 'yearly' ↔ 'annual' between UI and API
+- **Responsive Breakpoint**: Uses Tailwind's `md` breakpoint (768px) for mobile/desktop split
+- **Null Safety**: Handles undefined values gracefully with fallback displays
+- **Layout Fix**: Uses flexbox for consistent card button alignment across all screen sizes
+
+**Testing Recommendations**:
+1. Test on Pro Monthly subscription:
+   - Toggle to yearly → should NOT show "Current Plan" on Pro Yearly
+   - Current Plan pricing should stay at $45/mo regardless of toggle
+2. Test on smaller screen sizes (< 768px):
+   - Billing history should show card layout
+   - All content should be readable without horizontal scroll
+3. Test order detail page with various transaction states:
+   - Normal transactions with amount
+   - Edge cases where amount might be null/undefined
+   - Both USD and IDR currency displays
+
+**User Experience Improvements**:
+- ✅ **Clarity**: Users can now clearly see which plan+period they're subscribed to
+- ✅ **Accuracy**: Current plan pricing always shows correct amount
+- ✅ **Mobile-Friendly**: Billing history readable on all device sizes
+- ✅ **Stability**: Order detail page doesn't crash on missing data
+
+**Architect Review**: Pending
+
+**Update (Same Day - Architect Feedback)**:
+Fixed critical issue with zero-amount handling in order detail page:
+- Changed from falsy check `transaction.amount ? ...` to explicit null/undefined check
+- Now properly handles legitimate zero-value transactions (e.g., fully discounted invoices)
+- Zero amounts now display as "$0" instead of incorrectly showing "N/A"
+- Prevents hiding valid zero totals while still protecting against TypeError on undefined
+
+Modified null check from:
+```typescript
+{transaction.amount ? (...) : 'N/A'}
+```
+
+To:
+```typescript
+{transaction.amount !== null && transaction.amount !== undefined ? (...) : 'N/A'}
+```
+
+**Impact**: ✅ Free/discounted transactions now display correctly with $0.00 instead of N/A
