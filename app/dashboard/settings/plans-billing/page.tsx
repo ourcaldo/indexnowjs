@@ -548,10 +548,15 @@ export default function BillingPage() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Billing Data</h3>
-        <p className="text-muted-foreground mb-4">{error}</p>
-        <Button onClick={loadAllData}>Try Again</Button>
+        <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Billing Data</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button
+          onClick={loadAllData}
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+        >
+          Try Again
+        </button>
       </div>
     )
   }
@@ -560,88 +565,77 @@ export default function BillingPage() {
   const currentPlanPricing = currentPlan ? getBillingPeriodPrice(currentPlan, selectedBillingPeriod) : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Current Plan Card */}
       {currentPlan ? (
-        <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-current-plan">
-          <div className="mb-6">
-            <Badge className="mb-2 bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0 text-xs font-medium px-2 py-0.5" data-testid="badge-current-plan">Current Plan</Badge>
-            <h2 className="text-2xl font-bold text-[hsl(var(--gray-900))] mb-1" data-testid="text-plan-name">{currentPlan.name}</h2>
-            <p className="text-sm text-[hsl(var(--gray-600))]" data-testid="text-billing-info">
-              {currentPlanPricing && `${formatCurrency(currentPlanPricing.price)}/mo`}
-              {billingData?.billingStats?.next_billing_date && ` — Next bill on ${formatDate(billingData.billingStats.next_billing_date)}`}
-            </p>
+        <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+          <div className="px-6 py-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Current Plan</h2>
+                <p className="mt-2 text-3xl font-bold text-gray-900" data-testid="text-plan-name">{currentPlan.name}</p>
+                <p className="text-sm text-gray-500" data-testid="text-billing-info">
+                  {currentPlanPricing && `${formatCurrency(currentPlanPricing.price)} / mo`}
+                  {billingData?.billingStats?.next_billing_date && ` — Next bill on ${formatDate(billingData.billingStats.next_billing_date)}`}
+                </p>
+              </div>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Daily URLs */}
-            <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-daily-urls">
-              <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-daily-urls">Daily URLs</p>
-              <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-daily-urls">
-                {formatNumber(usageData?.daily_quota_used || 0)}
-                <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                  /{usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}
-                </span>
-              </p>
-              <Progress 
-                value={getUsagePercentage(
-                  usageData?.daily_quota_used || 0, 
-                  usageData?.daily_quota_limit || 0, 
-                  usageData?.is_unlimited || false
-                )} 
-                className="h-1.5" 
-                data-testid="progress-daily-urls"
-              />
-            </div>
-            
-            {/* Keywords */}
-            <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-keywords">
-              <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-keywords">Keywords</p>
-              <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-keywords">
-                {formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}
-                <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                  /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
-                </span>
-              </p>
-              <Progress 
-                value={getUsagePercentage(
-                  totalKeywords || keywordUsage?.keywords_used || 0, 
-                  keywordUsage?.keywords_limit || 0, 
-                  keywordUsage?.is_unlimited || false
-                )} 
-                className="h-1.5" 
-                data-testid="progress-keywords"
-              />
-            </div>
-            
-            {/* Service Accounts */}
-            <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-service-accounts">
-              <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-service-accounts">Service Accounts</p>
-              <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-service-accounts">
-                {serviceAccountCount}
-                <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                  /{currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}
-                </span>
-              </p>
-              <Progress 
-                value={getUsagePercentage(
-                  serviceAccountCount, 
-                  currentPlan.quota_limits?.service_accounts_limit || 0, 
-                  currentPlan.quota_limits?.service_accounts_limit === -1
-                )} 
-                className="h-1.5" 
-                data-testid="progress-service-accounts"
-              />
+
+          <div className="border-t border-gray-200 px-6 py-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Current Usage</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Daily URLs */}
+              <div>
+                <div className="flex justify-between text-sm font-medium text-gray-600">
+                  <span>Daily URLs</span>
+                  <span><span className="text-gray-900 font-bold">{formatNumber(usageData?.daily_quota_used || 0)}</span> / {usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}</span>
+                </div>
+                <div className="mt-2 bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-gray-900 h-1.5 rounded-full" 
+                    style={{ width: `${getUsagePercentage(usageData?.daily_quota_used || 0, usageData?.daily_quota_limit || 0, usageData?.is_unlimited || false)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Keywords */}
+              <div>
+                <div className="flex justify-between text-sm font-medium text-gray-600">
+                  <span>Keywords</span>
+                  <span><span className="text-gray-900 font-bold">{formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}</span> / {keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}</span>
+                </div>
+                <div className="mt-2 bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-gray-900 h-1.5 rounded-full" 
+                    style={{ width: `${getUsagePercentage(totalKeywords || keywordUsage?.keywords_used || 0, keywordUsage?.keywords_limit || 0, keywordUsage?.is_unlimited || false)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Service Accounts */}
+              <div>
+                <div className="flex justify-between text-sm font-medium text-gray-600">
+                  <span>Service Accounts</span>
+                  <span><span className="text-gray-900 font-bold">{serviceAccountCount}</span> / {currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}</span>
+                </div>
+                <div className="mt-2 bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-gray-900 h-1.5 rounded-full" 
+                    style={{ width: `${getUsagePercentage(serviceAccountCount, currentPlan.quota_limits?.service_accounts_limit || 0, currentPlan.quota_limits?.service_accounts_limit === -1)}%` }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-no-plan">
+        <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-6" data-testid="card-no-plan">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-[hsl(var(--gray-600))] flex-shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-medium text-[hsl(var(--gray-900))] mb-1">No Active Package</h3>
-              <p className="text-sm text-[hsl(var(--gray-600))]">
+              <h3 className="font-medium text-gray-900 mb-1">No Active Package</h3>
+              <p className="text-sm text-gray-600">
                 You don't have an active package. Subscribe to a plan below to start tracking your keywords and accessing all features.
               </p>
             </div>
@@ -652,33 +646,26 @@ export default function BillingPage() {
       {/* Plans */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))]" data-testid="text-heading-plans">Available Plans</h2>
-          <div className="flex items-center gap-2 bg-[hsl(var(--gray-100))] rounded-lg p-1" data-testid="toggle-billing-period">
-            <button
-              onClick={() => setSelectedBillingPeriod('monthly')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                selectedBillingPeriod === 'monthly'
-                  ? 'bg-[hsl(var(--gray-900))] text-white'
-                  : 'text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]'
-              }`}
-              data-testid="button-monthly"
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setSelectedBillingPeriod('yearly')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                selectedBillingPeriod === 'yearly'
-                  ? 'bg-[hsl(var(--gray-900))] text-white'
-                  : 'text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]'
-              }`}
-              data-testid="button-yearly"
-            >
-              Yearly
-            </button>
+          <h2 className="text-2xl font-bold text-gray-900" data-testid="text-heading-plans">Available Plans</h2>
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700">Monthly</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="sr-only" 
+                checked={selectedBillingPeriod === 'yearly'}
+                onChange={(e) => setSelectedBillingPeriod(e.target.checked ? 'yearly' : 'monthly')}
+              />
+              <div className={`w-11 h-6 rounded-full border border-gray-200 transition-colors duration-200 ease-in-out ${selectedBillingPeriod === 'yearly' ? 'bg-gray-900' : 'bg-gray-200'}`}>
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${selectedBillingPeriod === 'yearly' ? 'translate-x-5' : 'translate-x-0'}`}></div>
+              </div>
+            </label>
+            <span className="text-sm font-medium text-gray-700">Yearly</span>
+            <span className="inline-flex items-center rounded-md bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Save 20%</span>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {packagesData?.packages && packagesData.packages.length > 0 ? packagesData.packages.map((plan) => {
             const pricing = getBillingPeriodPrice(plan, selectedBillingPeriod)
             const isCurrentPlan = plan.id === packagesData.current_package_id
@@ -686,169 +673,118 @@ export default function BillingPage() {
             return (
               <div 
                 key={plan.id} 
-                className={`relative bg-white shadow-sm ring-1 rounded-xl p-6 flex flex-col ${isCurrentPlan ? 'ring-[hsl(var(--gray-900))] ring-2' : 'ring-[hsl(var(--gray-900)/0.05)]'}`}
+                className={`relative rounded-xl p-6 ${isCurrentPlan ? 'border-2 border-gray-900' : 'border border-gray-200'}`}
                 data-testid={`card-plan-${plan.slug}`}
               >
-                {/* Save Badge - Top Right Corner */}
-                {pricing.discount && pricing.discount > 0 && (
-                  <div className="absolute -top-3 -right-3 z-10">
-                    <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-lg px-3 py-1.5 text-xs font-bold" data-testid={`badge-discount-${plan.slug}`}>
-                      Save {pricing.discount}%
-                    </Badge>
-                  </div>
+                {isCurrentPlan && (
+                  <span className="absolute top-0 -translate-y-1/2 inline-flex items-center rounded-full bg-gray-100 px-3 py-0.5 text-xs font-medium text-gray-800">Current Plan</span>
+                )}
+                {!isCurrentPlan && pricing.discount && pricing.discount > 0 && (
+                  <span className="absolute top-0 -translate-y-1/2 inline-flex items-center rounded-full bg-green-100 px-3 py-0.5 text-xs font-medium text-green-800">Save {pricing.discount}%</span>
                 )}
                 
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-[hsl(var(--gray-900))] mb-2" data-testid={`text-plan-name-${plan.slug}`}>{plan.name}</h3>
-                  <div className="flex items-baseline gap-2">
-                    {pricing.originalPrice && pricing.originalPrice !== pricing.price && (
-                      <span className="text-lg text-[hsl(var(--gray-500))] line-through" data-testid={`text-plan-regular-price-${plan.slug}`}>
-                        {formatCurrency(pricing.originalPrice)}
-                      </span>
-                    )}
-                    <span className="text-3xl text-[hsl(var(--gray-900))] font-bold" data-testid={`text-plan-price-${plan.slug}`}>
-                      {formatCurrency(pricing.price)}
-                    </span>
-                    <span className="text-sm text-[hsl(var(--gray-600))]">/{selectedBillingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
-                  </div>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
+                <p className="mt-2 text-4xl font-bold text-gray-900">
+                  {formatCurrency(pricing.price)}
+                  <span className="text-xl font-medium text-gray-500">/mo</span>
+                </p>
+                <p className="mt-1 text-sm text-gray-500">{plan.description}</p>
                 
-                <ul className="space-y-2.5 mb-6 flex-1">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm" data-testid={`text-feature-${plan.slug}-${i}`}>
-                      <Check className="w-4 h-4 text-[hsl(var(--gray-900))] flex-shrink-0" />
-                      <span className="text-[hsl(var(--gray-700))]">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                <div className="space-y-2 mt-auto">
-                  <Button 
-                    className={`w-full ${isCurrentPlan ? 'bg-[hsl(var(--gray-200))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-300))]' : 'bg-[hsl(var(--gray-900))] text-white hover:bg-[hsl(var(--gray-800))]'}`}
-                    disabled={isCurrentPlan || subscribing === plan.id}
-                    onClick={() => handleSubscribe(plan.id, selectedBillingPeriod)}
-                    data-testid={`button-${isCurrentPlan ? 'current' : 'upgrade'}-${plan.slug}`}
-                  >
-                    {subscribing === plan.id ? (
-                      <>
-                        <LoadingSpinner size="sm" className="mr-2" />
-                        Processing...
-                      </>
-                    ) : isCurrentPlan ? (
-                      'Current plan'
-                    ) : (
-                      'Upgrade'
-                    )}
-                  </Button>
-                  {!isCurrentPlan && isTrialEligiblePackage(plan) && trialEligible && (
-                    <Button 
-                      className="w-full bg-[hsl(var(--gray-100))] text-[hsl(var(--gray-900))] hover:bg-[hsl(var(--gray-200))]"
-                      disabled={startingTrial === plan.id}
-                      onClick={() => handleStartTrial(plan.id)}
-                      data-testid={`button-start-trial-${plan.slug}`}
-                    >
-                      {startingTrial === plan.id ? (
-                        <>
-                          <LoadingSpinner size="sm" className="mr-2" />
-                          Starting Trial...
-                        </>
-                      ) : (
-                        'Start Free Trial'
-                      )}
-                    </Button>
+                <button 
+                  className={`mt-6 w-full rounded-md py-2 px-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
+                    isCurrentPlan 
+                      ? 'border border-transparent bg-gray-900 text-white cursor-not-allowed opacity-60'
+                      : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                  disabled={isCurrentPlan || subscribing === plan.id}
+                  onClick={() => !isCurrentPlan && handleSubscribe(plan.id, selectedBillingPeriod)}
+                >
+                  {subscribing === plan.id ? (
+                    <>
+                      <LoadingSpinner size="sm" className="mr-2" />
+                      Processing...
+                    </>
+                  ) : isCurrentPlan ? (
+                    'Currently Selected'
+                  ) : (
+                    `Switch to ${plan.name}`
                   )}
-                </div>
+                </button>
               </div>
             )
           }) : (
             <div className="col-span-3 text-center py-8">
-              <p className="text-muted-foreground">No plans available</p>
+              <p className="text-gray-500">No plans available</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Billing History - Full Width */}
-      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-billing-history">
-        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-6">Billing History</h2>
+      {/* Billing History */}
+      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900">Billing History</h2>
+          <p className="mt-1 text-sm text-gray-500">View and download your past invoices</p>
+        </div>
+        
         {historyData?.transactions && historyData.transactions.length > 0 ? (
-          <div className="space-y-4">
-            {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 pb-3 border-b border-[hsl(var(--gray-200))] text-sm font-medium text-[hsl(var(--gray-600))]">
-              <div className="col-span-5" data-testid="header-order-id">Order ID</div>
-              <div className="col-span-2" data-testid="header-status">Status</div>
-              <div className="col-span-2 text-right" data-testid="header-total">Total</div>
-              <div className="col-span-3"></div>
-            </div>
-            
-            {/* Table Rows */}
-            <div className="space-y-0">
-              {historyData.transactions.map((transaction) => (
-                <div 
-                  key={transaction.id} 
-                  className="grid grid-cols-12 gap-4 py-4 border-b border-[hsl(var(--gray-200))] last:border-0 hover:bg-[hsl(var(--gray-50))] transition-colors rounded-sm px-2 -mx-2"
-                  data-testid={`billing-row-${transaction.id}`}
-                >
-                  <div className="col-span-5">
-                    <p className="text-sm text-[hsl(var(--gray-900))] font-medium mb-1" data-testid={`text-invoice-id-${transaction.id}`}>
-                      {transaction.id}
-                    </p>
-                    <p className="text-xs text-[hsl(var(--gray-600))]" data-testid={`text-invoice-date-${transaction.id}`}>
-                      {formatDate(transaction.created_at)}
-                    </p>
-                  </div>
-                  <div className="col-span-2 flex items-center">
-                    <Badge 
-                      className={`${
+          <div className="border-t border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {historyData.transactions.map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(transaction.created_at)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{transaction.id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
                         transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
-                          ? 'bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0'
+                          ? 'bg-green-100 text-green-800'
                           : transaction.transaction_status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800 border-0'
-                          : 'bg-red-100 text-red-800 border-0'
-                      } text-xs font-medium px-2 py-0.5`}
-                      data-testid={`badge-status-${transaction.id}`}
-                    >
-                      {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
-                    </Badge>
-                  </div>
-                  <div className="col-span-2 flex items-center justify-end">
-                    <span className="text-sm text-[hsl(var(--gray-900))] font-medium" data-testid={`text-amount-${transaction.id}`}>
-                      {formatCurrency(transaction.amount)}
-                    </span>
-                  </div>
-                  <div className="col-span-3 flex items-center justify-end">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-100))] hover:text-[hsl(var(--gray-900))]"
-                      onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
-                      data-testid={`button-view-details-${transaction.id}`}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-              
-            {/* Pagination */}
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(transaction.amount)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
+                        className="inline-flex items-center text-gray-700 hover:text-gray-900"
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Download
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
             {historyData.pagination && historyData.pagination.total_pages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--gray-200))]">
-                <div className="text-sm text-[hsl(var(--gray-600))]" data-testid="text-pagination-info">
+              <div className="bg-gray-50 px-6 py-4 flex items-center justify-between rounded-b-xl">
+                <div className="text-sm text-gray-500">
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, historyData.pagination.total_items)} of {historyData.pagination.total_items} transactions
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!historyData.pagination.has_prev}
-                    className="border-[hsl(var(--gray-300))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-50))]"
-                    data-testid="button-prev-page"
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
-                  </Button>
+                  </button>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(5, historyData.pagination.total_pages) }, (_, i) => {
                       let pageNum
@@ -863,60 +799,57 @@ export default function BillingPage() {
                       }
                       
                       return (
-                        <Button
+                        <button
                           key={pageNum}
-                          variant={currentPage === pageNum ? "default" : "outline"}
-                          size="sm"
                           onClick={() => handlePageChange(pageNum)}
-                          className={`w-9 h-9 ${currentPage === pageNum ? 'bg-[hsl(var(--gray-900))] text-white' : 'border-[hsl(var(--gray-300))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-50))]'}`}
-                          data-testid={`button-page-${pageNum}`}
+                          className={`w-9 h-9 text-sm rounded-md ${
+                            currentPage === pageNum 
+                              ? 'bg-gray-900 text-white' 
+                              : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
                         >
                           {pageNum}
-                        </Button>
+                        </button>
                       )
                     })}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!historyData.pagination.has_next}
-                    className="border-[hsl(var(--gray-300))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-50))]"
-                    data-testid="button-next-page"
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-[hsl(var(--gray-600))]">No transactions found</p>
+          <div className="border-t border-gray-200 px-6 py-12 text-center">
+            <p className="text-gray-500">No transactions found</p>
           </div>
         )}
       </div>
 
       {/* Danger Zone Card - Cancel Subscription */}
       {subscriptionData?.hasSubscription && subscriptionData.subscription && (
-        <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--red-900)/0.1)] rounded-xl" data-testid="card-danger-zone">
+        <div className="bg-white shadow-sm ring-1 ring-red-900/10 rounded-xl" data-testid="card-danger-zone">
           <div className="px-6 py-5">
             <h2 className="text-lg font-semibold text-red-800">Danger Zone</h2>
-            <p className="mt-1 text-sm text-[hsl(var(--gray-600))]">Manage your subscription cancellation.</p>
+            <p className="mt-1 text-sm text-gray-500">Manage your subscription cancellation.</p>
           </div>
-          <div className="border-t border-[hsl(var(--gray-200))] px-6 py-6 flex items-center justify-between">
+          <div className="border-t border-gray-200 px-6 py-6 flex items-center justify-between">
             <div>
-              <h3 className="font-medium text-[hsl(var(--gray-900))]">Cancel Subscription</h3>
-              <p className="text-sm text-[hsl(var(--gray-600))]">All services will be stopped at the end of your billing cycle.</p>
+              <h3 className="font-medium text-gray-900">Cancel Subscription</h3>
+              <p className="text-sm text-gray-600">All services will be stopped at the end of your billing cycle.</p>
             </div>
-            <Button
-              variant="destructive"
+            <button
               onClick={() => setShowCancelDialog(true)}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               data-testid="button-cancel-subscription"
             >
               Cancel Subscription
-            </Button>
+            </button>
           </div>
         </div>
       )}
