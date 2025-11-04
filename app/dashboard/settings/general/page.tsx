@@ -8,23 +8,13 @@ import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
+import { AUTH_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { 
-  RefreshCw,
   Eye,
   EyeOff,
-  CheckCircle2,
-  Shield,
-  Mail,
-  Phone,
-  User as UserIcon,
-  AlertTriangle
+  Loader2,
+  Save
 } from 'lucide-react'
-import { AUTH_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 
 export default function GeneralSettingsPage() {
   const { addToast } = useToast()
@@ -33,7 +23,9 @@ export default function GeneralSettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
   const [savingNotifications, setSavingNotifications] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   usePageViewLogger('/dashboard/settings/general', 'Account Settings', { section: 'account_settings' })
   const { logDashboardActivity } = useActivityLogger()
@@ -103,7 +95,6 @@ export default function GeneralSettingsPage() {
         })
       }
     } catch (error) {
-      // Silent error handling
     } finally {
       setLoading(false)
     }
@@ -293,28 +284,38 @@ export default function GeneralSettingsPage() {
     }
   }
 
-  const getInitials = () => {
-    const name = profileForm.full_name || user?.email
-    if (!name) return 'U'
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-  }
+  const CustomToggle = ({ checked, onChange, label, description, testId }: { checked: boolean, onChange: (checked: boolean) => void, label: string, description: string, testId: string }) => (
+    <div className="flex items-center justify-between py-4 border-b border-[hsl(var(--gray-200))] last:border-0">
+      <div className="flex-1">
+        <label className="text-sm font-medium text-[hsl(var(--gray-900))]">{label}</label>
+        <p className="text-sm text-[hsl(var(--gray-600))] mt-0.5">{description}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        data-testid={testId}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:ring-offset-2 ${checked ? 'bg-[hsl(var(--gray-900))]' : 'bg-[hsl(var(--gray-200))]'}`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`}
+        />
+      </button>
+    </div>
+  )
 
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="border-border">
-            <CardHeader>
-              <div className="h-5 w-32 bg-muted rounded" />
-              <div className="h-4 w-48 bg-muted rounded mt-2" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="h-10 w-full bg-muted rounded" />
-                <div className="h-10 w-full bg-muted rounded" />
-              </div>
-            </CardContent>
-          </Card>
+          <div key={i} className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)]">
+            <div className="h-5 w-32 bg-[hsl(var(--gray-200))] rounded mb-4" />
+            <div className="space-y-3">
+              <div className="h-10 w-full bg-[hsl(var(--gray-200))] rounded" />
+              <div className="h-10 w-full bg-[hsl(var(--gray-200))] rounded" />
+            </div>
+          </div>
         ))}
       </div>
     )
@@ -322,274 +323,234 @@ export default function GeneralSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Profile Header Card */}
-      <Card className="border-border bg-gradient-to-br from-card to-muted/20">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-6">
-            <Avatar className="w-20 h-20 border-4 border-background shadow-lg">
-              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xl font-semibold">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h2 className="text-2xl font-semibold text-foreground mb-1">
-                {profileForm.full_name || 'User'}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-3">{user?.email}</p>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Active Account
-                </Badge>
-                <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
-                  <Mail className="w-3 h-3 mr-1" />
-                  Email Verified
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Profile Information */}
-      <Card className="border-border">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <UserIcon className="w-4 h-4 text-primary" />
-            </div>
+      {/* Personal Information */}
+      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-personal-info">
+        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Personal Information</h2>
+        <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Update your profile details and contact information</p>
+        
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <CardTitle className="text-lg">Personal Information</CardTitle>
-              <CardDescription>Update your account details and contact information</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-foreground">Full name</Label>
-                <Input 
-                  id="name" 
-                  value={profileForm.full_name} 
-                  onChange={(e) => setProfileForm(prev => ({...prev, full_name: e.target.value}))}
-                  className="bg-background border-border focus:border-primary"
-                  data-testid="input-full-name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-foreground">Email address</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  value={user?.email || ''} 
-                  readOnly
-                  className="bg-muted border-border"
-                  data-testid="input-email"
-                />
-              </div>
+              <Label htmlFor="full-name" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
+                Full name
+              </Label>
+              <Input
+                id="full-name"
+                type="text"
+                value={profileForm.full_name}
+                onChange={(e) => setProfileForm(prev => ({...prev, full_name: e.target.value}))}
+                className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent"
+                data-testid="input-full-name"
+              />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium text-foreground">Phone number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="phone" 
-                  placeholder="Optional - for account recovery" 
-                  value={profileForm.phone_number}
-                  onChange={(e) => setProfileForm(prev => ({...prev, phone_number: e.target.value}))}
-                  className="pl-10 bg-background border-border focus:border-primary"
-                  data-testid="input-phone"
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator className="my-6" />
-
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveProfile}
-              disabled={savingProfile}
-              className="bg-primary hover:bg-primary/90"
-              data-testid="button-save-profile"
-            >
-              {savingProfile ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Security - Password */}
-      <Card className="border-border">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-warning/10 rounded-lg">
-              <Shield className="w-4 h-4 text-warning" />
-            </div>
             <div>
-              <CardTitle className="text-lg">Security & Password</CardTitle>
-              <CardDescription>Keep your account secure with a strong password</CardDescription>
+              <Label htmlFor="email" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
+                Email address
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={user?.email || ''}
+                readOnly
+                className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg bg-[hsl(var(--gray-50))] text-[hsl(var(--gray-500))] cursor-not-allowed"
+                data-testid="input-email"
+              />
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current" className="text-sm font-medium text-foreground">Current password</Label>
-              <div className="relative">
-                <Input 
-                  id="current" 
-                  type={showPassword ? "text" : "password"}
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
-                  className="bg-background border-border pr-10 focus:border-warning"
-                  data-testid="input-current-password"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-              </div>
+          
+          <div>
+            <Label htmlFor="phone" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
+              Phone number
+            </Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="Optional - for account recovery"
+              value={profileForm.phone_number}
+              onChange={(e) => setProfileForm(prev => ({...prev, phone_number: e.target.value}))}
+              className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent"
+              data-testid="input-phone"
+            />
+          </div>
+        </div>
+        
+        <div className="mt-6 flex justify-end">
+          <Button
+            onClick={handleSaveProfile}
+            disabled={savingProfile}
+            className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))] disabled:opacity-50"
+            data-testid="button-save-profile"
+          >
+            {savingProfile ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Security & Password */}
+      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-security">
+        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Security & Password</h2>
+        <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Update your password to keep your account secure</p>
+        
+        <div className="space-y-5">
+          <div>
+            <Label htmlFor="current-password" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
+              Current password
+            </Label>
+            <div className="relative">
+              <Input
+                id="current-password"
+                type={showCurrentPassword ? "text" : "password"}
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
+                className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent pr-10"
+                data-testid="input-current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]"
+              >
+                {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="new" className="text-sm font-medium text-foreground">New password</Label>
-                <Input 
-                  id="new" 
-                  type="password"
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <Label htmlFor="new-password" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
+                New password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPassword ? "text" : "password"}
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm(prev => ({...prev, newPassword: e.target.value}))}
-                  className="bg-background border-border focus:border-warning"
+                  className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent pr-10"
                   data-testid="input-new-password"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm" className="text-sm font-medium text-foreground">Confirm new password</Label>
-                <Input 
-                  id="confirm" 
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm(prev => ({...prev, confirmPassword: e.target.value}))}
-                  className="bg-background border-border focus:border-warning"
-                  data-testid="input-confirm-password"
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]"
+                >
+                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
             
-            <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg border border-border">
-              <AlertTriangle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 6 characters long. For better security, use a mix of letters, numbers, and symbols.
-              </p>
+            <div>
+              <Label htmlFor="confirm-password" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
+                Confirm new password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({...prev, confirmPassword: e.target.value}))}
+                  className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent pr-10"
+                  data-testid="input-confirm-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
           </div>
-
-          <Separator className="my-6" />
-          
-          <div className="flex justify-end">
-            <Button 
-              variant="outline"
-              onClick={handleChangePassword}
-              disabled={savingPassword}
-              className="border-warning/40 text-warning hover:bg-warning/10"
-              data-testid="button-update-password"
-            >
-              {savingPassword ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <Shield className="w-4 h-4 mr-2" />
-                  Update Password
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+        
+        <div className="mt-6 flex justify-end">
+          <Button
+            onClick={handleChangePassword}
+            disabled={savingPassword}
+            className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))] disabled:opacity-50"
+            data-testid="button-update-password"
+          >
+            {savingPassword ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              'Update Password'
+            )}
+          </Button>
+        </div>
+      </div>
 
       {/* Email Notifications */}
-      <Card className="border-border">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-info/10 rounded-lg">
-              <Mail className="w-4 h-4 text-info" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Email Notifications</CardTitle>
-              <CardDescription>Choose what updates you want to receive</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { key: 'jobCompletion', label: 'Indexing updates', desc: 'Get notified when indexing jobs complete' },
-              { key: 'failures', label: 'Failure alerts', desc: 'Immediate notifications for failed jobs' },
-              { key: 'dailyReports', label: 'Daily summaries', desc: 'Daily digest of your account activity' },
-              { key: 'criticalAlerts', label: 'Critical alerts', desc: 'Important quota and system notifications' }
-            ].map((item, index) => (
-              <div key={item.key}>
-                <div className="flex items-center justify-between py-3">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium text-foreground">{item.label}</Label>
-                    <p className="text-xs text-muted-foreground">{item.desc}</p>
-                  </div>
-                  <Switch 
-                    checked={notifications[item.key as keyof typeof notifications]}
-                    onCheckedChange={(checked) => setNotifications(prev => ({...prev, [item.key]: checked}))}
-                    data-testid={`switch-${item.key}`}
-                  />
-                </div>
-                {index < 3 && <Separator />}
-              </div>
-            ))}
-          </div>
-
-          <Separator className="my-6" />
-
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveNotifications}
-              disabled={savingNotifications}
-              className="bg-primary hover:bg-primary/90"
-              data-testid="button-save-notifications"
-            >
-              {savingNotifications ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Save Preferences
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-notifications">
+        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Email Notifications</h2>
+        <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Choose which notifications you want to receive</p>
+        
+        <div className="space-y-0">
+          <CustomToggle 
+            checked={notifications.jobCompletion}
+            onChange={(checked) => setNotifications(prev => ({...prev, jobCompletion: checked}))}
+            label="Indexing updates"
+            description="Get notified when your indexing jobs complete"
+            testId="switch-jobCompletion"
+          />
+          <CustomToggle 
+            checked={notifications.failures}
+            onChange={(checked) => setNotifications(prev => ({...prev, failures: checked}))}
+            label="Failure alerts"
+            description="Receive immediate notifications for failed jobs"
+            testId="switch-failures"
+          />
+          <CustomToggle 
+            checked={notifications.dailyReports}
+            onChange={(checked) => setNotifications(prev => ({...prev, dailyReports: checked}))}
+            label="Daily summaries"
+            description="Get a daily digest of your account activity"
+            testId="switch-dailyReports"
+          />
+          <CustomToggle 
+            checked={notifications.criticalAlerts}
+            onChange={(checked) => setNotifications(prev => ({...prev, criticalAlerts: checked}))}
+            label="Critical alerts"
+            description="Important quota and system notifications"
+            testId="switch-criticalAlerts"
+          />
+        </div>
+        
+        <div className="mt-6 flex justify-end">
+          <Button
+            onClick={handleSaveNotifications}
+            disabled={savingNotifications}
+            className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))] disabled:opacity-50"
+            data-testid="button-save-notifications"
+          >
+            {savingNotifications ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Preferences
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
