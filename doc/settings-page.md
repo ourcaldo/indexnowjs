@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    
     <style>
         /* Use Inter as the default font */
         body {
@@ -54,7 +54,7 @@
                             aria-selected="true">
                         Account
                     </button>
-
+                    
                     <!-- Service Accounts Tab -->
                     <button role="tab"
                             data-tab-target="service-accounts"
@@ -78,7 +78,7 @@
         <div>
             <!-- ====== Account Panel ====== -->
             <div id="account" role="tabpanel" class="space-y-8">
-
+                
                 <!-- Personal Information Card -->
                 <div class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
                     <div class="px-6 py-5">
@@ -268,7 +268,7 @@
 
             <!-- ====== Billings Panel ====== -->
             <div id="billings" role="tabpanel" class="hidden space-y-8">
-
+                
                 <!-- Current Plan Card -->
                 <div class="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
                     <div class="px-6 py-5">
@@ -280,12 +280,12 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- New Usage Section -->
                     <div class="border-t border-gray-200 px-6 py-6">
                         <h3 class="text-base font-semibold text-gray-900 mb-4">Current Usage</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+                            
                             <!-- Usage Metric 1: Daily URLs -->
                             <div>
                                 <div class="flex justify-between text-sm font-medium text-gray-600">
@@ -446,7 +446,7 @@
                             <h3 class="font-medium text-gray-900">Cancel Subscription</h3>
                             <p class="text-sm text-gray-500">All services will be stopped at the end of your billing cycle.</p>
                         </div>
-                        <button class="inline-flex justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        <button id="open-cancel-modal" type="button" class="inline-flex justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                             Cancel Subscription
                         </button>
                     </div>
@@ -455,6 +455,44 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- ====== Confirmation Modal ====== -->
+    <div id="cancel-modal" class="relative z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div id="modal-backdrop" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <!-- Modal Panel -->
+                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <!-- Warning Icon -->
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">Cancel Subscription</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">Are you sure you want to cancel your subscription? This action cannot be undone. All your services will be stopped at the end of your current billing cycle on <span class="font-medium text-gray-700">Dec 3, 2025</span>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <button id="confirm-cancel" type="button" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 sm:ml-3 sm:w-auto">
+                            Yes, Cancel Subscription
+                        </button>
+                        <button id="close-cancel-modal" type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                            Nevermind
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -468,7 +506,7 @@
             tabs.forEach(tab => {
                 tab.addEventListener('click', function (e) {
                     e.preventDefault();
-
+                    
                     // Don't do anything if it's already active
                     if (tab === activeTab) {
                         return;
@@ -486,12 +524,12 @@
                     tab.classList.add('active-tab', 'text-gray-900', 'border-gray-900');
                     tab.classList.remove('inactive-tab', 'text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
                     tab.setAttribute('aria-selected', 'true');
-
+                    
                     activeTab = tab; // Update the active tab reference
 
                     // --- Update Content Panels ---
                     const targetId = tab.getAttribute('data-tab-target');
-
+                    
                     // Hide all panels
                     panels.forEach(panel => {
                         panel.classList.add('hidden');
@@ -504,10 +542,45 @@
                     }
                 });
             });
+
+            // --- Modal Logic ---
+            const modal = document.getElementById('cancel-modal');
+            const openModalBtn = document.getElementById('open-cancel-modal');
+            const closeModalBtn = document.getElementById('close-cancel-modal');
+            const backdrop = document.getElementById('modal-backdrop');
+            const confirmCancelBtn = document.getElementById('confirm-cancel');
+
+            const showModal = () => {
+                if (modal) modal.classList.remove('hidden');
+            };
+
+            const hideModal = () => {
+                if (modal) modal.classList.add('hidden');
+            };
+
+            if (openModalBtn) {
+                openModalBtn.addEventListener('click', showModal);
+            }
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', hideModal);
+            }
+            if (backdrop) {
+                backdrop.addEventListener('click', hideModal);
+            }
+
+            if (confirmCancelBtn) {
+                confirmCancelBtn.addEventListener('click', () => {
+                    // Add your cancellation logic here
+                    console.log("Subscription cancellation confirmed.");
+                    hideModal();
+                    // For demo, we'll just hide the modal.
+                    // In a real app, you'd make an API call here.
+                });
+            }
+
         });
     </script>
 
 </body>
 </html>
-
 
