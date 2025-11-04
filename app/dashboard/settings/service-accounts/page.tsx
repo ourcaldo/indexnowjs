@@ -321,9 +321,9 @@ export default function ServiceAccountsSettingsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-[hsl(var(--gray-900))] font-medium">{account.name || account.email}</h3>
                       {status === 'active' && (
-                        <Badge className="bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0 text-xs font-medium px-2 py-0.5">
+                        <span className="inline-flex items-center rounded-full bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] text-xs font-medium px-2.5 py-0.5">
                           Active
-                        </Badge>
+                        </span>
                       )}
                     </div>
                     <div className="flex gap-4 text-xs text-[hsl(var(--gray-600))]">

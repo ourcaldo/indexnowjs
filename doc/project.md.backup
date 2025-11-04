@@ -776,66 +776,6 @@ JWT_SECRET=[jwt-secret-key]
 ## Recent Changes
 
 
-### November 4, 2025: Settings Page Design Fixes - Billing Price Display & Service Account Badge ✅
-
-**Overview:**
-Fixed two critical UI/UX issues in the settings page that were affecting the new design implementation: billing price not rendering correctly and Service Account Active badge changing color on hover.
-
-**Issues Fixed:**
-
-**1. Billing Current Plan - Price Display Issue** (`app/dashboard/settings/plans-billing/page.tsx`):
-- **Problem**: Current Plan card was showing "$0.00/mo" instead of actual package price (e.g., "$45.00/mo")
-- **Root Cause**: Using `billingData.currentSubscription.amount_paid` which was 0 instead of actual package price
-- **Solution**: Changed to use `currentPlanPricing.price` from package data to display correct price
-- **Updated Display Format**: Now shows "{price}/mo — Next bill on {date}" matching the new design spec
-- **Code Change**: Lines 573-576 - Simplified price rendering logic to use package pricing instead of billing data
-
-**2. Billing Current Plan - Cancel Button Relocation** (`app/dashboard/settings/plans-billing/page.tsx`):
-- **Problem**: Cancel Subscription button was inside Current Plan card
-- **Design Spec**: Button should be in separate "Danger Zone" card at bottom of page
-- **Solution**: 
-  - Removed Cancel button from Current Plan card header (lines 567-577, removed justify-between layout)
-  - Created new "Danger Zone" card section after Billing History (lines 903-925)
-  - Danger Zone card features:
-    - Red-tinted border: `ring-1 ring-[hsl(var(--red-900)/0.1)]`
-    - Red heading: `text-red-800`
-    - Descriptive warning text
-    - Red Cancel Subscription button positioned on the right
-- **Conditional Rendering**: Only shows when user has active subscription (`subscriptionData?.hasSubscription`)
-
-**3. Service Account Active Badge - Hover Effect Issue** (`app/dashboard/settings/service-accounts/page.tsx`):
-- **Problem**: Active badge was turning grey when hovered
-- **Root Cause**: Using `<Badge>` component which has default hover styles
-- **Solution**: Changed to plain `<span>` element to prevent hover effects (line 327-329)
-- **Badge Styling**: 
-  - Used `inline-flex items-center rounded-full` for badge shape
-  - Green colors: `bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))]`
-  - Proper padding: `px-2.5 py-0.5` matching design spec
-- **Result**: Badge now maintains green color consistently without hover state changes
-
-**Design Alignment:**
-All changes now match the HTML+CSS design specification from `doc/settings-page.md`:
-- Current Plan card shows correct price format (line 278 of design spec)
-- Danger Zone card matches design (lines 438-453 of design spec)
-- Service Account Active badge matches design (line 208 of design spec)
-
-**Data Integrity:**
-- All API endpoints preserved unchanged
-- All subscription management logic intact
-- All data fetching and rendering functions unchanged
-- Only presentational layer modified
-
-**Files Modified:**
-- `app/dashboard/settings/plans-billing/page.tsx` - Fixed price display, removed Cancel button from Current Plan card, added Danger Zone card
-- `app/dashboard/settings/service-accounts/page.tsx` - Changed Active badge from Badge component to span element
-
-**Technical Notes:**
-- No business logic changes
-- Maintained all data-testid attributes for testing
-- Preserved all conditional rendering logic
-- Danger Zone card only appears when subscription exists
-
-
 ### November 4, 2025: Settings Page Redesign - Top Tab Navigation & Clean Gray-Scale UI ✅
 
 **Overview:**

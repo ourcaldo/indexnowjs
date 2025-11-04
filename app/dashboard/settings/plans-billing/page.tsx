@@ -564,34 +564,13 @@ export default function BillingPage() {
       {/* Current Plan Card */}
       {currentPlan ? (
         <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-current-plan">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <Badge className="mb-2 bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0 text-xs font-medium px-2 py-0.5" data-testid="badge-current-plan">Current Plan</Badge>
-              <h2 className="text-2xl font-bold text-[hsl(var(--gray-900))] mb-1" data-testid="text-plan-name">{currentPlan.name}</h2>
-              <p className="text-sm text-[hsl(var(--gray-600))]" data-testid="text-billing-info">
-                {billingData?.currentSubscription ? (
-                  <>
-                    {formatCurrency(billingData.currentSubscription.amount_paid)}/
-                    {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
-                  </>
-                ) : currentPlanPricing ? (
-                  `Active package • ${formatCurrency(currentPlanPricing.price)}/month`
-                ) : (
-                  'Active package'
-                )}
-              </p>
-            </div>
-            {subscriptionData?.hasSubscription && subscriptionData.subscription && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowCancelDialog(true)}
-                className="bg-red-600 hover:bg-red-700 text-white"
-                data-testid="button-cancel-subscription"
-              >
-                Cancel Subscription
-              </Button>
-            )}
+          <div className="mb-6">
+            <Badge className="mb-2 bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0 text-xs font-medium px-2 py-0.5" data-testid="badge-current-plan">Current Plan</Badge>
+            <h2 className="text-2xl font-bold text-[hsl(var(--gray-900))] mb-1" data-testid="text-plan-name">{currentPlan.name}</h2>
+            <p className="text-sm text-[hsl(var(--gray-600))]" data-testid="text-billing-info">
+              {currentPlanPricing && `${formatCurrency(currentPlanPricing.price)}/mo`}
+              {billingData?.billingStats?.next_billing_date && ` — Next bill on ${formatDate(billingData.billingStats.next_billing_date)}`}
+            </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -917,6 +896,30 @@ export default function BillingPage() {
           </div>
         )}
       </div>
+
+      {/* Danger Zone Card - Cancel Subscription */}
+      {subscriptionData?.hasSubscription && subscriptionData.subscription && (
+        <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--red-900)/0.1)] rounded-xl" data-testid="card-danger-zone">
+          <div className="px-6 py-5">
+            <h2 className="text-lg font-semibold text-red-800">Danger Zone</h2>
+            <p className="mt-1 text-sm text-[hsl(var(--gray-600))]">Manage your subscription cancellation.</p>
+          </div>
+          <div className="border-t border-[hsl(var(--gray-200))] px-6 py-6 flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-[hsl(var(--gray-900))]">Cancel Subscription</h3>
+              <p className="text-sm text-[hsl(var(--gray-600))]">All services will be stopped at the end of your billing cycle.</p>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={() => setShowCancelDialog(true)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              data-testid="button-cancel-subscription"
+            >
+              Cancel Subscription
+            </Button>
+          </div>
+        </div>
+      )}
       
       {/* Cancel Subscription Dialog */}
       {showCancelDialog && subscriptionData?.hasSubscription && subscriptionData.subscription?.paddle_subscription_id && (
