@@ -6,17 +6,15 @@ import { useToast } from '@/hooks/use-toast'
 import { INDEXING_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Plus, 
   Trash2, 
-  RefreshCw,
+  Loader2,
   AlertCircle
 } from 'lucide-react'
 
@@ -186,28 +184,28 @@ export default function ServiceAccountsSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading service accounts...</span>
+        <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--gray-600))]" />
+        <span className="ml-2 text-[hsl(var(--gray-600))]">Loading service accounts...</span>
       </div>
     )
   }
 
-  const totalDailyQuota = serviceAccounts.reduce((total, account) => total + (account.daily_quota_limit || 200), 0)
-  const totalUsedToday = serviceAccounts.reduce((total, account) => total + (account.quota_usage?.requests_made || 0), 0)
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-gray-900 text-xl font-semibold">Service Accounts</h2>
-          <p className="text-sm text-gray-600">Manage Google service accounts for indexing</p>
+          <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))]">Google Service Accounts</h2>
+          <p className="text-sm text-[hsl(var(--gray-600))] mt-0.5">Manage service accounts for indexing requests</p>
         </div>
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-add-service-account">
+            <Button 
+              className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))]"
+              data-testid="button-add-service-account"
+            >
               <Plus className="w-4 h-4 mr-2" />
-              New service account
+              Add Service Account
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
@@ -218,42 +216,55 @@ export default function ServiceAccountsSettingsPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <div className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="service-account-json">Service Account JSON</Label>
+                <Label htmlFor="service-account-json" className="text-sm font-medium text-[hsl(var(--gray-900))]">
+                  Service Account JSON
+                </Label>
                 <Textarea
                   id="service-account-json"
                   placeholder="Paste your Google service account JSON here..."
                   value={serviceAccountJson}
                   onChange={(e) => setServiceAccountJson(e.target.value)}
-                  className="min-h-[200px] resize-none font-mono text-xs"
+                  className="min-h-[200px] resize-none font-mono text-xs border-[hsl(var(--gray-300))] focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent"
                   data-testid="textarea-service-account-json"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-[hsl(var(--gray-600))]">
                   Download this JSON file from Google Cloud Console → IAM & Admin → Service Accounts
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="display-name">Display Name (Optional)</Label>
+                <Label htmlFor="display-name" className="text-sm font-medium text-[hsl(var(--gray-900))]">
+                  Display Name (Optional)
+                </Label>
                 <Input
                   id="display-name"
                   placeholder="e.g., Production Account"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
+                  className="border-[hsl(var(--gray-300))] focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent"
                   data-testid="input-display-name"
                 />
               </div>
             </div>
 
             <div className="flex gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAddModal(false)} 
+                className="flex-1 border-[hsl(var(--gray-300))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-50))]"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddServiceAccount} disabled={savingServiceAccount} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={handleAddServiceAccount} 
+                disabled={savingServiceAccount} 
+                className="flex-1 bg-[hsl(var(--gray-900))] text-white hover:bg-[hsl(var(--gray-800))] disabled:opacity-50"
+              >
                 {savingServiceAccount ? (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Adding...
                   </>
                 ) : (
@@ -266,29 +277,32 @@ export default function ServiceAccountsSettingsPage() {
       </div>
 
       {/* Warning */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Service accounts must be added as owners in Google Search Console to submit indexing requests.
-        </AlertDescription>
-      </Alert>
+      <div className="bg-[hsl(var(--gray-50))] border border-[hsl(var(--gray-200))] rounded-lg p-4" data-testid="alert-warning">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-[hsl(var(--gray-600))] flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-[hsl(var(--gray-700))]">
+            Service accounts must be added as owners in Google Search Console to submit indexing requests.
+          </p>
+        </div>
+      </div>
 
       {/* Service Accounts List */}
       <div className="space-y-4">
         {serviceAccounts.length === 0 ? (
-          <Card>
-            <CardContent className="pt-12 pb-12 text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                <Plus className="w-6 h-6 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No service accounts</h3>
-              <p className="text-sm text-gray-500 mb-6">Add a Google service account to start indexing</p>
-              <Button onClick={() => setShowAddModal(true)} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Service Account
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-12 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-[hsl(var(--gray-100))] flex items-center justify-center mb-4">
+              <Plus className="w-6 h-6 text-[hsl(var(--gray-600))]" />
+            </div>
+            <h3 className="text-lg font-medium text-[hsl(var(--gray-900))] mb-2">No service accounts</h3>
+            <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Add a Google service account to start indexing</p>
+            <Button 
+              onClick={() => setShowAddModal(true)} 
+              className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))]"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Service Account
+            </Button>
+          </div>
         ) : (
           serviceAccounts.map((account: any) => {
             const usedRequests = account.quota_usage?.requests_made || 0
@@ -297,61 +311,60 @@ export default function ServiceAccountsSettingsPage() {
             const status = account.status || 'active'
             
             return (
-              <Card key={account.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-gray-900 font-medium">{account.name || account.email}</h3>
-                        <Badge 
-                          variant={status === 'active' ? 'default' : 'secondary'} 
-                          className={status === 'active' ? 'bg-green-100 text-green-700 border-0 text-xs' : 'text-xs'}
-                        >
-                          {status}
+              <div 
+                key={account.id} 
+                className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6"
+                data-testid={`card-service-account-${account.id}`}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-[hsl(var(--gray-900))] font-medium">{account.name || account.email}</h3>
+                      {status === 'active' && (
+                        <Badge className="bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0 text-xs font-medium px-2 py-0.5">
+                          Active
                         </Badge>
-                      </div>
-                      <div className="flex gap-4 text-xs text-gray-500">
-                        <span>{account.email}</span>
-                        <span>Created {new Date(account.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-gray-400 hover:text-red-600"
-                      onClick={() => handleDeleteServiceAccount(account.id)}
-                      disabled={deletingServiceAccount === account.id}
-                      data-testid={`button-delete-${account.id}`}
-                    >
-                      {deletingServiceAccount === account.id ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
                       )}
-                    </Button>
+                    </div>
+                    <div className="flex gap-4 text-xs text-[hsl(var(--gray-600))]">
+                      <span>{account.email}</span>
+                      <span>Created {new Date(account.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => handleDeleteServiceAccount(account.id)}
+                    disabled={deletingServiceAccount === account.id}
+                    className="text-[hsl(var(--gray-600))] hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-[hsl(var(--gray-50))] disabled:opacity-50"
+                    data-testid={`button-delete-${account.id}`}
+                  >
+                    {deletingServiceAccount === account.id ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
 
-                  <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">Daily Quota Usage</span>
-                      <span className="text-sm text-gray-900">
-                        {usedRequests.toLocaleString()}/{dailyLimit.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all ${
-                          usagePercentage >= 90 ? 'bg-red-500' : 
-                          usagePercentage >= 70 ? 'bg-yellow-500' : 
-                          'bg-blue-500'
-                        }`}
-                        style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{usagePercentage}% used</p>
+                <div className="bg-[hsl(var(--gray-50))] rounded-lg px-4 py-3 border border-[hsl(var(--gray-200))]">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-[hsl(var(--gray-700))]">Daily Quota Usage</span>
+                    <span className="text-sm text-[hsl(var(--gray-900))] font-medium">
+                      {usedRequests.toLocaleString()}/{dailyLimit.toLocaleString()}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="w-full bg-[hsl(var(--gray-200))] rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={`h-2 rounded-full transition-all ${
+                        usagePercentage >= 90 ? 'bg-red-500' : 
+                        usagePercentage >= 70 ? 'bg-yellow-500' : 
+                        'bg-[hsl(var(--gray-900))]'
+                      }`}
+                      style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-[hsl(var(--gray-600))] mt-1">{usagePercentage}% used</p>
+                </div>
+              </div>
             )
           })
         )}
@@ -360,39 +373,39 @@ export default function ServiceAccountsSettingsPage() {
       {/* Summary Cards */}
       {serviceAccounts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Daily Quota</CardTitle>
-              <CardDescription>Combined from all service accounts</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Total Daily Quota</h3>
+            <p className="text-sm text-[hsl(var(--gray-600))] mb-4">Combined from all service accounts</p>
+            <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Total capacity</span>
-                <span className="text-gray-900 font-medium">{totalDailyQuota.toLocaleString()}</span>
+                <span className="text-[hsl(var(--gray-600))]">Total capacity</span>
+                <span className="text-[hsl(var(--gray-900))] font-medium">
+                  {serviceAccounts.reduce((total, account) => total + (account.daily_quota_limit || 200), 0).toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Used today</span>
-                <span className="text-gray-900 font-medium">{totalUsedToday.toLocaleString()}</span>
+                <span className="text-[hsl(var(--gray-600))]">Used today</span>
+                <span className="text-[hsl(var(--gray-900))] font-medium">
+                  {serviceAccounts.reduce((total, account) => total + (account.quota_usage?.requests_made || 0), 0).toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Active accounts</span>
-                <span className="text-gray-900 font-medium">{serviceAccounts.length}</span>
+                <span className="text-[hsl(var(--gray-600))]">Active accounts</span>
+                <span className="text-[hsl(var(--gray-900))] font-medium">{serviceAccounts.length}</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Tips</CardTitle>
-              <CardDescription>Best practices</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-gray-700">
+          <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Quick Tips</h3>
+            <p className="text-sm text-[hsl(var(--gray-600))] mb-4">Best practices</p>
+            <div className="space-y-2 text-sm text-[hsl(var(--gray-700))]">
               <p>• Add accounts as Search Console owners</p>
               <p>• Monitor daily quota usage</p>
               <p>• Rotate accounts for high volume</p>
               <p>• Keep credentials secure</p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </div>
