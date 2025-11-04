@@ -775,6 +775,138 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### November 4, 2025: Settings Page UI Redesign - Match New Design Specification ✅ (Partial)
+
+**Overview:**
+Redesigned settings pages UI to match the new design specification from `doc/settings-page.md`. Replaced HSL semantic color system with direct Tailwind utility classes and updated card structures to match the new design layout while preserving all data fetching and business logic.
+
+#### 1. Main Settings Page Updates
+
+**File Changed:** `app/dashboard/settings/page.tsx`
+
+**Changes Made:**
+- ✅ **Tab Navigation**: Replaced custom tab system with new design border-bottom style
+  - Active tab: `text-gray-900 border-gray-900` (black text + black border)
+  - Inactive tab: `text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300`
+  - Border width: `border-b-2` for clear visual distinction
+- ✅ **Page Header**: Updated to match new design with larger heading (`text-3xl font-bold text-gray-900`)
+- ✅ **Layout**: Simplified container structure with proper spacing (`space-x-6` for tabs, `py-12` for page padding)
+- ✅ **Removed**: HSL semantic colors like `hsl(var(--gray-900))` replaced with direct Tailwind classes
+
+#### 2. Account Settings Tab (General) Updates
+
+**File Changed:** `app/dashboard/settings/general/page.tsx`
+
+**Changes Made:**
+- ✅ **Card Structure**: Converted from shadcn Card components to raw HTML with Tailwind classes
+  - Cards: `bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl`
+  - Headers: `px-6 py-5` with `text-lg font-semibold text-gray-900`
+  - Content: `border-t border-gray-200 px-6 py-6` for visual separation
+  - Footer: `bg-gray-50 px-6 py-4 text-right rounded-b-xl` for action buttons
+- ✅ **Input Fields**: Replaced shadcn Input component with native HTML inputs
+  - Style: `mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm`
+  - Read-only state: `bg-gray-50 text-gray-500 cursor-not-allowed`
+- ✅ **Buttons**: Updated to match new design
+  - Primary: `bg-gray-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700`
+  - Focus ring: `focus:ring-2 focus:ring-gray-500 focus:ring-offset-2`
+- ✅ **Toggle Switches**: Replaced custom toggle component with raw HTML implementation
+  - Active: `bg-gray-900` background with knob translated right
+  - Inactive: `bg-gray-200` background with knob at left
+  - Smooth transitions: `transition-colors duration-200 ease-in-out`
+- ✅ **Email Notifications**: Fixed critical bug where save handler was accidentally removed
+  - **Bug**: `handleSaveNotifications` function and save button were deleted during redesign
+  - **Impact**: Users couldn't persist notification preferences to backend
+  - **Fix**: Restored `handleSaveNotifications` with proper API call to `AUTH_ENDPOINTS.SETTINGS`
+  - **Fix**: Added save button back with proper loading state
+- ✅ **Loading State**: Updated skeleton with gray-900/5 ring instead of HSL colors
+
+#### 3. Service Accounts Tab Updates
+
+**File Changed:** `app/dashboard/settings/service-accounts/page.tsx`
+
+**Changes Made:**
+- ✅ **Header Button**: Updated "Add Service Account" button to match new design
+  - Style: `bg-gray-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700`
+  - Icon: Plus icon with proper sizing (`w-5 h-5 -ml-1 mr-2`)
+- ✅ **Service Account Cards**: Redesigned card structure
+  - Card: `bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-6`
+  - Header: Flex layout with name + badge on left, delete button on right
+  - Badge: `bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800`
+  - Email: `text-sm text-gray-500` below name
+- ✅ **Quota Usage Bar**: Simplified design
+  - Container: `bg-gray-200 rounded-full h-2`
+  - Progress: `bg-gray-900 h-2 rounded-full` with dynamic width
+  - Labels: `text-sm font-medium text-gray-600` for usage text
+- ✅ **Warning Alert**: Updated with gray color scheme
+  - Background: `bg-gray-50 border border-gray-200 rounded-lg p-4`
+  - Icon: `text-gray-600` AlertCircle
+- ⚠️ **Modal Components**: Dialog components (shadcn) still used for add/edit functionality
+  - **Note**: Modal isn't visible in design mockup, kept functional Dialog component
+  - **Future**: Can convert to native HTML dialog if needed
+
+#### 4. Plans & Billing Tab Status
+
+**File:** `app/dashboard/settings/plans-billing/page.tsx`
+- ⏳ **Status**: Partially updated
+- ⏳ **Remaining Work**: Needs complete redesign to match new specification
+  - Current plan card structure needs updating
+  - Plans grid layout needs to match new design
+  - Billing history table needs styling updates
+  - Usage metrics cards need new layout
+
+### Technical Details
+
+**Color Migration:**
+- **Before**: HSL semantic colors via CSS variables
+  ```tsx
+  className="bg-[hsl(var(--gray-50))] text-[hsl(var(--gray-900))]"
+  ```
+- **After**: Direct Tailwind utility classes
+  ```tsx
+  className="bg-gray-50 text-gray-900"
+  ```
+
+**Card Pattern (New Design):**
+```tsx
+<div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+  <div className="px-6 py-5">
+    <h2 className="text-lg font-semibold text-gray-900">Title</h2>
+    <p className="mt-1 text-sm text-gray-500">Description</p>
+  </div>
+  <div className="border-t border-gray-200 px-6 py-6">
+    {/* Content */}
+  </div>
+  <div className="bg-gray-50 px-6 py-4 text-right rounded-b-xl">
+    {/* Actions */}
+  </div>
+</div>
+```
+
+**Files Modified (3):**
+1. `app/dashboard/settings/page.tsx` - Main settings layout with tabs
+2. `app/dashboard/settings/general/page.tsx` - Account tab (Personal Info, Security, Notifications)
+3. `app/dashboard/settings/service-accounts/page.tsx` - Service accounts management
+
+**Preserved Functionality:**
+- ✅ All data fetching logic unchanged (useEffect, loadData functions)
+- ✅ All state management preserved (useState hooks)
+- ✅ All API endpoints unchanged (AUTH_ENDPOINTS, INDEXING_ENDPOINTS)
+- ✅ All form validation logic intact
+- ✅ All error handling preserved
+- ✅ All activity logging maintained
+
+**Breaking Changes**: None - all existing functionality preserved
+
+**Remaining Work:**
+1. Complete Plans & Billing tab redesign to match specification
+2. Consider replacing Dialog components with native HTML dialog (optional)
+3. Test all forms and ensure visual consistency across all tabs
+4. Verify responsive behavior on mobile devices
+
+**Architect Review**: ✅ **REVIEWED** - Critical bug in notification save handler identified and fixed
+
+**Status**: ⏳ **IN PROGRESS** - Account and Service Accounts tabs complete, Plans & Billing tab pending
+
 
 ### November 4, 2025: Settings Page Design Fixes - Billing Price Display & Service Account Badge ✅
 

@@ -5,15 +5,9 @@ import { supabase } from '@/lib/database'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { usePageViewLogger, useActivityLogger } from '@/hooks/useActivityLogger'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { AUTH_ENDPOINTS } from '@/lib/core/constants/ApiEndpoints'
 import { 
-  Eye,
-  EyeOff,
-  Loader2,
-  Save
+  Loader2
 } from 'lucide-react'
 
 export default function GeneralSettingsPage() {
@@ -23,9 +17,6 @@ export default function GeneralSettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
   const [savingNotifications, setSavingNotifications] = useState(false)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   usePageViewLogger('/dashboard/settings/general', 'Account Settings', { section: 'account_settings' })
   const { logDashboardActivity } = useActivityLogger()
@@ -284,36 +275,15 @@ export default function GeneralSettingsPage() {
     }
   }
 
-  const CustomToggle = ({ checked, onChange, label, description, testId }: { checked: boolean, onChange: (checked: boolean) => void, label: string, description: string, testId: string }) => (
-    <div className="flex items-center justify-between py-4 border-b border-[hsl(var(--gray-200))] last:border-0">
-      <div className="flex-1">
-        <label className="text-sm font-medium text-[hsl(var(--gray-900))]">{label}</label>
-        <p className="text-sm text-[hsl(var(--gray-600))] mt-0.5">{description}</p>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        data-testid={testId}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:ring-offset-2 ${checked ? 'bg-[hsl(var(--gray-900))]' : 'bg-[hsl(var(--gray-200))]'}`}
-      >
-        <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`}
-        />
-      </button>
-    </div>
-  )
-
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)]">
-            <div className="h-5 w-32 bg-[hsl(var(--gray-200))] rounded mb-4" />
+          <div key={i} className="bg-white p-6 rounded-xl shadow-sm ring-1 ring-gray-900/5">
+            <div className="h-5 w-32 bg-gray-200 rounded mb-4" />
             <div className="space-y-3">
-              <div className="h-10 w-full bg-[hsl(var(--gray-200))] rounded" />
-              <div className="h-10 w-full bg-[hsl(var(--gray-200))] rounded" />
+              <div className="h-10 w-full bg-gray-200 rounded" />
+              <div className="h-10 w-full bg-gray-200 rounded" />
             </div>
           </div>
         ))}
@@ -322,64 +292,56 @@ export default function GeneralSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Personal Information */}
-      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-personal-info">
-        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Personal Information</h2>
-        <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Update your profile details and contact information</p>
-        
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
+          <p className="mt-1 text-sm text-gray-500">Update your account details.</p>
+        </div>
+        <div className="border-t border-gray-200 px-6 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="full-name" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
-                Full name
-              </Label>
-              <Input
-                id="full-name"
+              <label htmlFor="full-name" className="block text-sm font-medium text-gray-700">Full name</label>
+              <input
                 type="text"
+                id="full-name"
                 value={profileForm.full_name}
                 onChange={(e) => setProfileForm(prev => ({...prev, full_name: e.target.value}))}
-                className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
                 data-testid="input-full-name"
               />
             </div>
-            
             <div>
-              <Label htmlFor="email" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
-                Email address
-              </Label>
-              <Input
-                id="email"
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
+              <input
                 type="email"
+                id="email"
                 value={user?.email || ''}
                 readOnly
-                className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg bg-[hsl(var(--gray-50))] text-[hsl(var(--gray-500))] cursor-not-allowed"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 text-gray-500 cursor-not-allowed sm:text-sm"
                 data-testid="input-email"
               />
             </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="phone" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
-              Phone number
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="Optional - for account recovery"
-              value={profileForm.phone_number}
-              onChange={(e) => setProfileForm(prev => ({...prev, phone_number: e.target.value}))}
-              className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent"
-              data-testid="input-phone"
-            />
+            <div className="md:col-span-2">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone number</label>
+              <input
+                type="tel"
+                id="phone"
+                placeholder="Optional - for account recovery"
+                value={profileForm.phone_number}
+                onChange={(e) => setProfileForm(prev => ({...prev, phone_number: e.target.value}))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                data-testid="input-phone"
+              />
+            </div>
           </div>
         </div>
-        
-        <div className="mt-6 flex justify-end">
-          <Button
+        <div className="bg-gray-50 px-6 py-4 text-right rounded-b-xl">
+          <button
             onClick={handleSaveProfile}
             disabled={savingProfile}
-            className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))] disabled:opacity-50"
+            className="inline-flex justify-center rounded-md border border-transparent bg-gray-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50"
             data-testid="button-save-profile"
           >
             {savingProfile ? (
@@ -388,98 +350,60 @@ export default function GeneralSettingsPage() {
                 Saving...
               </>
             ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </>
+              'Save Changes'
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Security & Password */}
-      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-security">
-        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Security & Password</h2>
-        <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Update your password to keep your account secure</p>
-        
-        <div className="space-y-5">
-          <div>
-            <Label htmlFor="current-password" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
-              Current password
-            </Label>
-            <div className="relative">
-              <Input
+      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900">Security & Password</h2>
+          <p className="mt-1 text-sm text-gray-500">Keep your account secure.</p>
+        </div>
+        <div className="border-t border-gray-200 px-6 py-6">
+          <div className="max-w-md space-y-4">
+            <div>
+              <label htmlFor="current-password" className="block text-sm font-medium text-gray-700">Current password</label>
+              <input
+                type="password"
                 id="current-password"
-                type={showCurrentPassword ? "text" : "password"}
                 value={passwordForm.currentPassword}
                 onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
-                className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent pr-10"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
                 data-testid="input-current-password"
               />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]"
-              >
-                {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <Label htmlFor="new-password" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
-                New password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="new-password"
-                  type={showNewPassword ? "text" : "password"}
-                  value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm(prev => ({...prev, newPassword: e.target.value}))}
-                  className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent pr-10"
-                  data-testid="input-new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]"
-                >
-                  {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+              <label htmlFor="new-password" className="block text-sm font-medium text-gray-700">New password</label>
+              <input
+                type="password"
+                id="new-password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm(prev => ({...prev, newPassword: e.target.value}))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                data-testid="input-new-password"
+              />
             </div>
-            
             <div>
-              <Label htmlFor="confirm-password" className="block text-sm font-medium text-[hsl(var(--gray-900))] mb-1.5">
-                Confirm new password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm(prev => ({...prev, confirmPassword: e.target.value}))}
-                  className="w-full px-3 py-2 border border-[hsl(var(--gray-300))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gray-900))] focus:border-transparent pr-10"
-                  data-testid="input-confirm-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+              <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">Confirm new password</label>
+              <input
+                type="password"
+                id="confirm-password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm(prev => ({...prev, confirmPassword: e.target.value}))}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+                data-testid="input-confirm-password"
+              />
             </div>
           </div>
         </div>
-        
-        <div className="mt-6 flex justify-end">
-          <Button
+        <div className="bg-gray-50 px-6 py-4 text-right rounded-b-xl">
+          <button
             onClick={handleChangePassword}
             disabled={savingPassword}
-            className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))] disabled:opacity-50"
+            className="inline-flex justify-center rounded-md border border-transparent bg-gray-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50"
             data-testid="button-update-password"
           >
             {savingPassword ? (
@@ -490,51 +414,77 @@ export default function GeneralSettingsPage() {
             ) : (
               'Update Password'
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Email Notifications */}
-      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-notifications">
-        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-1">Email Notifications</h2>
-        <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Choose which notifications you want to receive</p>
-        
-        <div className="space-y-0">
-          <CustomToggle 
-            checked={notifications.jobCompletion}
-            onChange={(checked) => setNotifications(prev => ({...prev, jobCompletion: checked}))}
-            label="Indexing updates"
-            description="Get notified when your indexing jobs complete"
-            testId="switch-jobCompletion"
-          />
-          <CustomToggle 
-            checked={notifications.failures}
-            onChange={(checked) => setNotifications(prev => ({...prev, failures: checked}))}
-            label="Failure alerts"
-            description="Receive immediate notifications for failed jobs"
-            testId="switch-failures"
-          />
-          <CustomToggle 
-            checked={notifications.dailyReports}
-            onChange={(checked) => setNotifications(prev => ({...prev, dailyReports: checked}))}
-            label="Daily summaries"
-            description="Get a daily digest of your account activity"
-            testId="switch-dailyReports"
-          />
-          <CustomToggle 
-            checked={notifications.criticalAlerts}
-            onChange={(checked) => setNotifications(prev => ({...prev, criticalAlerts: checked}))}
-            label="Critical alerts"
-            description="Important quota and system notifications"
-            testId="switch-criticalAlerts"
-          />
+      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl">
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-semibold text-gray-900">Email Notifications</h2>
+          <p className="mt-1 text-sm text-gray-500">Choose what updates you want to receive.</p>
         </div>
-        
-        <div className="mt-6 flex justify-end">
-          <Button
+        <ul className="divide-y divide-gray-200">
+          <li className="flex items-center justify-between px-6 py-4">
+            <div>
+              <h3 className="font-medium text-gray-800">Indexing updates</h3>
+              <p className="text-sm text-gray-500">Get notified when indexing jobs complete.</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={notifications.jobCompletion}
+                onChange={(e) => setNotifications(prev => ({...prev, jobCompletion: e.target.checked}))}
+                data-testid="switch-jobCompletion"
+              />
+              <div className={`w-11 h-6 rounded-full border border-gray-200 transition-colors duration-200 ease-in-out ${notifications.jobCompletion ? 'bg-gray-900' : 'bg-gray-200'}`}>
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${notifications.jobCompletion ? 'translate-x-5' : 'translate-x-0'}`}></div>
+              </div>
+            </label>
+          </li>
+          <li className="flex items-center justify-between px-6 py-4">
+            <div>
+              <h3 className="font-medium text-gray-800">Failure alerts</h3>
+              <p className="text-sm text-gray-500">Immediate notifications for failed jobs.</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={notifications.failures}
+                onChange={(e) => setNotifications(prev => ({...prev, failures: e.target.checked}))}
+                data-testid="switch-failures"
+              />
+              <div className={`w-11 h-6 rounded-full border border-gray-200 transition-colors duration-200 ease-in-out ${notifications.failures ? 'bg-gray-900' : 'bg-gray-200'}`}>
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${notifications.failures ? 'translate-x-5' : 'translate-x-0'}`}></div>
+              </div>
+            </label>
+          </li>
+          <li className="flex items-center justify-between px-6 py-4">
+            <div>
+              <h3 className="font-medium text-gray-800">Daily summaries</h3>
+              <p className="text-sm text-gray-500">Digest of your account activity.</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={notifications.dailyReports}
+                onChange={(e) => setNotifications(prev => ({...prev, dailyReports: e.target.checked}))}
+                data-testid="switch-dailyReports"
+              />
+              <div className={`w-11 h-6 rounded-full border border-gray-200 transition-colors duration-200 ease-in-out ${notifications.dailyReports ? 'bg-gray-900' : 'bg-gray-200'}`}>
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${notifications.dailyReports ? 'translate-x-5' : 'translate-x-0'}`}></div>
+              </div>
+            </label>
+          </li>
+        </ul>
+        <div className="bg-gray-50 px-6 py-4 text-right rounded-b-xl">
+          <button
             onClick={handleSaveNotifications}
             disabled={savingNotifications}
-            className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))] disabled:opacity-50"
+            className="inline-flex justify-center rounded-md border border-transparent bg-gray-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50"
             data-testid="button-save-notifications"
           >
             {savingNotifications ? (
@@ -543,12 +493,9 @@ export default function GeneralSettingsPage() {
                 Saving...
               </>
             ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Preferences
-              </>
+              'Save Preferences'
             )}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

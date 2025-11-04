@@ -184,8 +184,8 @@ export default function ServiceAccountsSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--gray-600))]" />
-        <span className="ml-2 text-[hsl(var(--gray-600))]">Loading service accounts...</span>
+        <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
+        <span className="ml-2 text-gray-600">Loading service accounts...</span>
       </div>
     )
   }
@@ -193,20 +193,17 @@ export default function ServiceAccountsSettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))]">Google Service Accounts</h2>
-          <p className="text-sm text-[hsl(var(--gray-600))] mt-0.5">Manage service accounts for indexing requests</p>
-        </div>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600">Manage Google service accounts for indexing.</p>
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
           <DialogTrigger asChild>
-            <Button 
-              className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--gray-900))]"
+            <button 
+              className="inline-flex items-center rounded-md border border-transparent bg-gray-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               data-testid="button-add-service-account"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Service Account
-            </Button>
+              <Plus className="w-5 h-5 -ml-1 mr-2" />
+              New service account
+            </button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
@@ -277,10 +274,10 @@ export default function ServiceAccountsSettingsPage() {
       </div>
 
       {/* Warning */}
-      <div className="bg-[hsl(var(--gray-50))] border border-[hsl(var(--gray-200))] rounded-lg p-4" data-testid="alert-warning">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4" data-testid="alert-warning">
         <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-[hsl(var(--gray-600))] flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-[hsl(var(--gray-700))]">
+          <AlertCircle className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-gray-700">
             Service accounts must be added as owners in Google Search Console to submit indexing requests.
           </p>
         </div>
@@ -289,19 +286,19 @@ export default function ServiceAccountsSettingsPage() {
       {/* Service Accounts List */}
       <div className="space-y-4">
         {serviceAccounts.length === 0 ? (
-          <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-12 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-[hsl(var(--gray-100))] flex items-center justify-center mb-4">
-              <Plus className="w-6 h-6 text-[hsl(var(--gray-600))]" />
+          <div className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-12 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Plus className="w-6 h-6 text-gray-600" />
             </div>
-            <h3 className="text-lg font-medium text-[hsl(var(--gray-900))] mb-2">No service accounts</h3>
-            <p className="text-sm text-[hsl(var(--gray-600))] mb-6">Add a Google service account to start indexing</p>
-            <Button 
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No service accounts</h3>
+            <p className="text-sm text-gray-600 mb-6">Add a Google service account to start indexing</p>
+            <button 
               onClick={() => setShowAddModal(true)} 
-              className="inline-flex items-center px-4 py-2 bg-[hsl(var(--gray-900))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--gray-800))]"
+              className="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Service Account
-            </Button>
+            </button>
           </div>
         ) : (
           serviceAccounts.map((account: any) => {
@@ -313,28 +310,22 @@ export default function ServiceAccountsSettingsPage() {
             return (
               <div 
                 key={account.id} 
-                className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6"
+                className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-6"
                 data-testid={`card-service-account-${account.id}`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-[hsl(var(--gray-900))] font-medium">{account.name || account.email}</h3>
-                      {status === 'active' && (
-                        <span className="inline-flex items-center rounded-full bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] text-xs font-medium px-2.5 py-0.5">
-                          Active
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-4 text-xs text-[hsl(var(--gray-600))]">
-                      <span>{account.email}</span>
-                      <span>Created {new Date(account.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <h3 className="text-lg font-semibold text-gray-900">{account.name || account.email}</h3>
+                    {status === 'active' && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                        Active
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => handleDeleteServiceAccount(account.id)}
                     disabled={deletingServiceAccount === account.id}
-                    className="text-[hsl(var(--gray-600))] hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-[hsl(var(--gray-50))] disabled:opacity-50"
+                    className="text-gray-400 hover:text-red-600"
                     data-testid={`button-delete-${account.id}`}
                   >
                     {deletingServiceAccount === account.id ? (
@@ -344,25 +335,19 @@ export default function ServiceAccountsSettingsPage() {
                     )}
                   </button>
                 </div>
+                <p className="mt-1 text-sm text-gray-500">{account.email}</p>
 
-                <div className="bg-[hsl(var(--gray-50))] rounded-lg px-4 py-3 border border-[hsl(var(--gray-200))]">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-[hsl(var(--gray-700))]">Daily Quota Usage</span>
-                    <span className="text-sm text-[hsl(var(--gray-900))] font-medium">
-                      {usedRequests.toLocaleString()}/{dailyLimit.toLocaleString()}
-                    </span>
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm font-medium text-gray-600">
+                    <span>Daily Quota Usage</span>
+                    <span>{usedRequests.toLocaleString()} / {dailyLimit.toLocaleString()}</span>
                   </div>
-                  <div className="w-full bg-[hsl(var(--gray-200))] rounded-full h-2 overflow-hidden">
+                  <div className="mt-1 bg-gray-200 rounded-full h-2">
                     <div 
-                      className={`h-2 rounded-full transition-all ${
-                        usagePercentage >= 90 ? 'bg-red-500' : 
-                        usagePercentage >= 70 ? 'bg-yellow-500' : 
-                        'bg-[hsl(var(--gray-900))]'
-                      }`}
+                      className="bg-gray-900 h-2 rounded-full" 
                       style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                     />
                   </div>
-                  <p className="text-xs text-[hsl(var(--gray-600))] mt-1">{usagePercentage}% used</p>
                 </div>
               </div>
             )

@@ -55,54 +55,44 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--gray-50))]">
-      {/* Header */}
-      <div className="bg-white border-b border-[hsl(var(--gray-200))]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <h1 className="text-2xl font-bold text-[hsl(var(--gray-900))]">Settings</h1>
-            <p className="mt-1 text-sm text-[hsl(var(--gray-600))]">
-              Manage your account settings and preferences
-            </p>
-          </div>
-          
-          {/* Tab Navigation */}
-          <div className="mt-4">
-            <nav className="flex space-x-8 border-b border-[hsl(var(--gray-200))]" data-testid="nav-settings-tabs">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`
-                      relative pb-4 px-1 text-sm font-medium transition-colors duration-200
-                      ${isActive
-                        ? 'text-[hsl(var(--gray-900))]'
-                        : 'text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]'
-                      }
-                    `}
-                    data-testid={`tab-${tab.id}`}
-                  >
-                    {tab.label}
-                    {isActive && (
-                      <span 
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[hsl(var(--gray-900))]"
-                        data-testid="tab-active-indicator"
-                      />
-                    )}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Page Header */}
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+        <p className="mt-1 text-sm text-gray-500">Manage your account, services, and billing preferences.</p>
+      </header>
+
+      {/* Tab Navigation */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-6" aria-label="Tabs" role="tablist" data-testid="nav-settings-tabs">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
+                    isActive
+                      ? 'text-gray-900 border-gray-900'
+                      : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                  aria-selected={isActive}
+                  data-testid={`tab-${tab.id}`}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
+          </nav>
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Tab Content Panels */}
+      <div>
         {renderTabContent()}
-      </main>
+      </div>
     </div>
   )
 }
