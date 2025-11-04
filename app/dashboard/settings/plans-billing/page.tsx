@@ -563,128 +563,124 @@ export default function BillingPage() {
     <div className="space-y-6">
       {/* Current Plan Card */}
       {currentPlan ? (
-        <Card className="bg-card border-border" data-testid="card-current-plan">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <Badge className="mb-2 bg-primary text-primary-foreground" data-testid="badge-current-plan">Current Plan</Badge>
-                <CardTitle className="text-2xl" data-testid="text-plan-name">{currentPlan.name}</CardTitle>
-                <CardDescription className="text-foreground/70" data-testid="text-billing-info">
-                  {billingData?.currentSubscription ? (
-                    <>
-                      {formatCurrency(billingData.currentSubscription.amount_paid)}/
-                      {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
-                    </>
-                  ) : currentPlanPricing ? (
-                    `Active package • ${formatCurrency(currentPlanPricing.price)}/month`
-                  ) : (
-                    'Active package'
-                  )}
-                </CardDescription>
-              </div>
-              {subscriptionData?.hasSubscription && subscriptionData.subscription && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowCancelDialog(true)}
-                  data-testid="button-cancel-subscription"
-                >
-                  Cancel Subscription
-                </Button>
-              )}
+        <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-current-plan">
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <Badge className="mb-2 bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0 text-xs font-medium px-2 py-0.5" data-testid="badge-current-plan">Current Plan</Badge>
+              <h2 className="text-2xl font-bold text-[hsl(var(--gray-900))] mb-1" data-testid="text-plan-name">{currentPlan.name}</h2>
+              <p className="text-sm text-[hsl(var(--gray-600))]" data-testid="text-billing-info">
+                {billingData?.currentSubscription ? (
+                  <>
+                    {formatCurrency(billingData.currentSubscription.amount_paid)}/
+                    {billingData.currentSubscription.billing_period} • Next billing {billingData.billingStats.next_billing_date ? formatDate(billingData.billingStats.next_billing_date) : 'N/A'}
+                  </>
+                ) : currentPlanPricing ? (
+                  `Active package • ${formatCurrency(currentPlanPricing.price)}/month`
+                ) : (
+                  'Active package'
+                )}
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Daily URLs */}
-              <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-daily-urls">
-                <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-daily-urls">Daily URLs</p>
-                <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-daily-urls">
-                  {formatNumber(usageData?.daily_quota_used || 0)}
-                  <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                    /{usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}
-                  </span>
-                </p>
-                <Progress 
-                  value={getUsagePercentage(
-                    usageData?.daily_quota_used || 0, 
-                    usageData?.daily_quota_limit || 0, 
-                    usageData?.is_unlimited || false
-                  )} 
-                  className="h-1.5" 
-                  data-testid="progress-daily-urls"
-                />
-              </div>
-              
-              {/* Keywords */}
-              <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-keywords">
-                <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-keywords">Keywords</p>
-                <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-keywords">
-                  {formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}
-                  <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                    /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
-                  </span>
-                </p>
-                <Progress 
-                  value={getUsagePercentage(
-                    totalKeywords || keywordUsage?.keywords_used || 0, 
-                    keywordUsage?.keywords_limit || 0, 
-                    keywordUsage?.is_unlimited || false
-                  )} 
-                  className="h-1.5" 
-                  data-testid="progress-keywords"
-                />
-              </div>
-              
-              {/* Service Accounts */}
-              <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-service-accounts">
-                <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-service-accounts">Service Accounts</p>
-                <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-service-accounts">
-                  {serviceAccountCount}
-                  <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
-                    /{currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}
-                  </span>
-                </p>
-                <Progress 
-                  value={getUsagePercentage(
-                    serviceAccountCount, 
-                    currentPlan.quota_limits?.service_accounts_limit || 0, 
-                    currentPlan.quota_limits?.service_accounts_limit === -1
-                  )} 
-                  className="h-1.5" 
-                  data-testid="progress-service-accounts"
-                />
-              </div>
+            {subscriptionData?.hasSubscription && subscriptionData.subscription && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowCancelDialog(true)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                data-testid="button-cancel-subscription"
+              >
+                Cancel Subscription
+              </Button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Daily URLs */}
+            <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-daily-urls">
+              <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-daily-urls">Daily URLs</p>
+              <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-daily-urls">
+                {formatNumber(usageData?.daily_quota_used || 0)}
+                <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
+                  /{usageData?.is_unlimited ? '∞' : formatNumber(usageData?.daily_quota_limit || 0)}
+                </span>
+              </p>
+              <Progress 
+                value={getUsagePercentage(
+                  usageData?.daily_quota_used || 0, 
+                  usageData?.daily_quota_limit || 0, 
+                  usageData?.is_unlimited || false
+                )} 
+                className="h-1.5" 
+                data-testid="progress-daily-urls"
+              />
             </div>
-          </CardContent>
-        </Card>
+            
+            {/* Keywords */}
+            <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-keywords">
+              <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-keywords">Keywords</p>
+              <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-keywords">
+                {formatNumber(totalKeywords || keywordUsage?.keywords_used || 0)}
+                <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
+                  /{keywordUsage?.is_unlimited ? '∞' : formatNumber(keywordUsage?.keywords_limit || 0)}
+                </span>
+              </p>
+              <Progress 
+                value={getUsagePercentage(
+                  totalKeywords || keywordUsage?.keywords_used || 0, 
+                  keywordUsage?.keywords_limit || 0, 
+                  keywordUsage?.is_unlimited || false
+                )} 
+                className="h-1.5" 
+                data-testid="progress-keywords"
+              />
+            </div>
+            
+            {/* Service Accounts */}
+            <div className="bg-gradient-to-br from-[hsl(var(--usage-card-bg-from))] to-[hsl(var(--usage-card-bg-to))] rounded-lg p-4 border border-[hsl(var(--usage-card-border))]" data-testid="card-usage-service-accounts">
+              <p className="text-xs text-[hsl(var(--usage-card-label))] mb-2 font-medium" data-testid="text-label-service-accounts">Service Accounts</p>
+              <p className="text-2xl text-[hsl(var(--usage-card-value))] font-bold mb-2" data-testid="text-value-service-accounts">
+                {serviceAccountCount}
+                <span className="text-sm text-[hsl(var(--usage-card-label))] font-normal ml-0.5">
+                  /{currentPlan.quota_limits?.service_accounts_limit === -1 ? '∞' : currentPlan.quota_limits?.service_accounts_limit || 0}
+                </span>
+              </p>
+              <Progress 
+                value={getUsagePercentage(
+                  serviceAccountCount, 
+                  currentPlan.quota_limits?.service_accounts_limit || 0, 
+                  currentPlan.quota_limits?.service_accounts_limit === -1
+                )} 
+                className="h-1.5" 
+                data-testid="progress-service-accounts"
+              />
+            </div>
+          </div>
+        </div>
       ) : (
-        <Card data-testid="card-no-plan">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-foreground mb-1">No Active Package</h3>
-                <p className="text-sm text-muted-foreground">
-                  You don't have an active package. Subscribe to a plan below to start tracking your keywords and accessing all features.
-                </p>
-              </div>
+        <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-no-plan">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-[hsl(var(--gray-600))] flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-[hsl(var(--gray-900))] mb-1">No Active Package</h3>
+              <p className="text-sm text-[hsl(var(--gray-600))]">
+                You don't have an active package. Subscribe to a plan below to start tracking your keywords and accessing all features.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Plans */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-foreground" data-testid="text-heading-plans">Plans</h2>
-          <div className="flex items-center gap-2 bg-secondary rounded-lg p-1" data-testid="toggle-billing-period">
+          <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))]" data-testid="text-heading-plans">Available Plans</h2>
+          <div className="flex items-center gap-2 bg-[hsl(var(--gray-100))] rounded-lg p-1" data-testid="toggle-billing-period">
             <button
               onClick={() => setSelectedBillingPeriod('monthly')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 selectedBillingPeriod === 'monthly'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-[hsl(var(--gray-900))] text-white'
+                  : 'text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]'
               }`}
               data-testid="button-monthly"
             >
@@ -694,8 +690,8 @@ export default function BillingPage() {
               onClick={() => setSelectedBillingPeriod('yearly')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 selectedBillingPeriod === 'yearly'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-[hsl(var(--gray-900))] text-white'
+                  : 'text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))]'
               }`}
               data-testid="button-yearly"
             >
@@ -709,9 +705,9 @@ export default function BillingPage() {
             const isCurrentPlan = plan.id === packagesData.current_package_id
             
             return (
-              <Card 
+              <div 
                 key={plan.id} 
-                className={`relative flex flex-col ${isCurrentPlan ? 'border-2 border-border' : 'border border-border'}`}
+                className={`relative bg-white shadow-sm ring-1 rounded-xl p-6 flex flex-col ${isCurrentPlan ? 'ring-[hsl(var(--gray-900))] ring-2' : 'ring-[hsl(var(--gray-900)/0.05)]'}`}
                 data-testid={`card-plan-${plan.slug}`}
               >
                 {/* Save Badge - Top Right Corner */}
@@ -723,69 +719,67 @@ export default function BillingPage() {
                   </div>
                 )}
                 
-                <CardHeader>
-                  <CardTitle data-testid={`text-plan-name-${plan.slug}`}>{plan.name}</CardTitle>
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-[hsl(var(--gray-900))] mb-2" data-testid={`text-plan-name-${plan.slug}`}>{plan.name}</h3>
                   <div className="flex items-baseline gap-2">
                     {pricing.originalPrice && pricing.originalPrice !== pricing.price && (
-                      <span className="text-lg text-muted-foreground line-through" data-testid={`text-plan-regular-price-${plan.slug}`}>
+                      <span className="text-lg text-[hsl(var(--gray-500))] line-through" data-testid={`text-plan-regular-price-${plan.slug}`}>
                         {formatCurrency(pricing.originalPrice)}
                       </span>
                     )}
-                    <span className="text-3xl text-foreground font-bold" data-testid={`text-plan-price-${plan.slug}`}>
+                    <span className="text-3xl text-[hsl(var(--gray-900))] font-bold" data-testid={`text-plan-price-${plan.slug}`}>
                       {formatCurrency(pricing.price)}
                     </span>
-                    <span className="text-sm text-muted-foreground">/{selectedBillingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
+                    <span className="text-sm text-[hsl(var(--gray-600))]">/{selectedBillingPeriod === 'yearly' ? 'yr' : 'mo'}</span>
                   </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
-                  <ul className="space-y-2.5 mb-6 flex-1">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm" data-testid={`text-feature-${plan.slug}-${i}`}>
-                        <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span className="text-foreground">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="space-y-2 mt-auto">
+                </div>
+                
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm" data-testid={`text-feature-${plan.slug}-${i}`}>
+                      <Check className="w-4 h-4 text-[hsl(var(--gray-900))] flex-shrink-0" />
+                      <span className="text-[hsl(var(--gray-700))]">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <div className="space-y-2 mt-auto">
+                  <Button 
+                    className={`w-full ${isCurrentPlan ? 'bg-[hsl(var(--gray-200))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-300))]' : 'bg-[hsl(var(--gray-900))] text-white hover:bg-[hsl(var(--gray-800))]'}`}
+                    disabled={isCurrentPlan || subscribing === plan.id}
+                    onClick={() => handleSubscribe(plan.id, selectedBillingPeriod)}
+                    data-testid={`button-${isCurrentPlan ? 'current' : 'upgrade'}-${plan.slug}`}
+                  >
+                    {subscribing === plan.id ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2" />
+                        Processing...
+                      </>
+                    ) : isCurrentPlan ? (
+                      'Current plan'
+                    ) : (
+                      'Upgrade'
+                    )}
+                  </Button>
+                  {!isCurrentPlan && isTrialEligiblePackage(plan) && trialEligible && (
                     <Button 
-                      className="w-full"
-                      variant={isCurrentPlan ? 'secondary' : 'default'}
-                      disabled={isCurrentPlan || subscribing === plan.id}
-                      onClick={() => handleSubscribe(plan.id, selectedBillingPeriod)}
-                      data-testid={`button-${isCurrentPlan ? 'current' : 'upgrade'}-${plan.slug}`}
+                      className="w-full bg-[hsl(var(--gray-100))] text-[hsl(var(--gray-900))] hover:bg-[hsl(var(--gray-200))]"
+                      disabled={startingTrial === plan.id}
+                      onClick={() => handleStartTrial(plan.id)}
+                      data-testid={`button-start-trial-${plan.slug}`}
                     >
-                      {subscribing === plan.id ? (
+                      {startingTrial === plan.id ? (
                         <>
                           <LoadingSpinner size="sm" className="mr-2" />
-                          Processing...
+                          Starting Trial...
                         </>
-                      ) : isCurrentPlan ? (
-                        'Current plan'
                       ) : (
-                        'Upgrade'
+                        'Start Free Trial'
                       )}
                     </Button>
-                    {!isCurrentPlan && isTrialEligiblePackage(plan) && trialEligible && (
-                      <Button 
-                        className="w-full"
-                        variant="secondary"
-                        disabled={startingTrial === plan.id}
-                        onClick={() => handleStartTrial(plan.id)}
-                        data-testid={`button-start-trial-${plan.slug}`}
-                      >
-                        {startingTrial === plan.id ? (
-                          <>
-                            <LoadingSpinner size="sm" className="mr-2" />
-                            Starting Trial...
-                          </>
-                        ) : (
-                          'Start Free Trial'
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  )}
+                </div>
+              </div>
             )
           }) : (
             <div className="col-span-3 text-center py-8">
@@ -796,136 +790,133 @@ export default function BillingPage() {
       </div>
 
       {/* Billing History - Full Width */}
-      <Card data-testid="card-billing-history">
-        <CardHeader>
-          <CardTitle>Billing History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {historyData?.transactions && historyData.transactions.length > 0 ? (
-            <div className="space-y-4">
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-4 pb-3 border-b border-border text-sm font-medium text-muted-foreground">
-                <div className="col-span-5" data-testid="header-order-id">Order ID</div>
-                <div className="col-span-2" data-testid="header-status">Status</div>
-                <div className="col-span-2 text-right" data-testid="header-total">Total</div>
-                <div className="col-span-3"></div>
-              </div>
-              
-              {/* Table Rows */}
-              <div className="space-y-0">
-                {historyData.transactions.map((transaction) => (
-                  <div 
-                    key={transaction.id} 
-                    className="grid grid-cols-12 gap-4 py-4 border-b border-border last:border-0 hover:bg-muted/30 transition-colors rounded-sm px-2 -mx-2"
-                    data-testid={`billing-row-${transaction.id}`}
-                  >
-                    <div className="col-span-5">
-                      <p className="text-sm text-foreground font-medium mb-1" data-testid={`text-invoice-id-${transaction.id}`}>
-                        {transaction.id}
-                      </p>
-                      <p className="text-xs text-muted-foreground" data-testid={`text-invoice-date-${transaction.id}`}>
-                        {formatDate(transaction.created_at)}
-                      </p>
-                    </div>
-                    <div className="col-span-2 flex items-center">
-                      <Badge 
-                        variant="secondary" 
-                        className={`${
-                          transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
-                            ? 'bg-success/10 text-success border-success/20'
-                            : transaction.transaction_status === 'pending'
-                            ? 'bg-warning/10 text-warning border-warning/20'
-                            : 'bg-destructive/10 text-destructive border-destructive/20'
-                        }`}
-                        data-testid={`badge-status-${transaction.id}`}
-                      >
-                        {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
-                      </Badge>
-                    </div>
-                    <div className="col-span-2 flex items-center justify-end">
-                      <span className="text-sm text-foreground font-medium" data-testid={`text-amount-${transaction.id}`}>
-                        {formatCurrency(transaction.amount)}
-                      </span>
-                    </div>
-                    <div className="col-span-3 flex items-center justify-end">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8"
-                        onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
-                        data-testid={`button-view-details-${transaction.id}`}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        View Details
-                      </Button>
-                    </div>
+      <div className="bg-white shadow-sm ring-1 ring-[hsl(var(--gray-900)/0.05)] rounded-xl p-6" data-testid="card-billing-history">
+        <h2 className="text-lg font-semibold text-[hsl(var(--gray-900))] mb-6">Billing History</h2>
+        {historyData?.transactions && historyData.transactions.length > 0 ? (
+          <div className="space-y-4">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 pb-3 border-b border-[hsl(var(--gray-200))] text-sm font-medium text-[hsl(var(--gray-600))]">
+              <div className="col-span-5" data-testid="header-order-id">Order ID</div>
+              <div className="col-span-2" data-testid="header-status">Status</div>
+              <div className="col-span-2 text-right" data-testid="header-total">Total</div>
+              <div className="col-span-3"></div>
+            </div>
+            
+            {/* Table Rows */}
+            <div className="space-y-0">
+              {historyData.transactions.map((transaction) => (
+                <div 
+                  key={transaction.id} 
+                  className="grid grid-cols-12 gap-4 py-4 border-b border-[hsl(var(--gray-200))] last:border-0 hover:bg-[hsl(var(--gray-50))] transition-colors rounded-sm px-2 -mx-2"
+                  data-testid={`billing-row-${transaction.id}`}
+                >
+                  <div className="col-span-5">
+                    <p className="text-sm text-[hsl(var(--gray-900))] font-medium mb-1" data-testid={`text-invoice-id-${transaction.id}`}>
+                      {transaction.id}
+                    </p>
+                    <p className="text-xs text-[hsl(var(--gray-600))]" data-testid={`text-invoice-date-${transaction.id}`}>
+                      {formatDate(transaction.created_at)}
+                    </p>
                   </div>
-                ))}
-              </div>
-              
-              {/* Pagination */}
-              {historyData.pagination && historyData.pagination.total_pages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                  <div className="text-sm text-muted-foreground" data-testid="text-pagination-info">
-                    Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, historyData.pagination.total_items)} of {historyData.pagination.total_items} transactions
+                  <div className="col-span-2 flex items-center">
+                    <Badge 
+                      className={`${
+                        transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed'
+                          ? 'bg-[hsl(var(--green-100))] text-[hsl(var(--green-800))] border-0'
+                          : transaction.transaction_status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800 border-0'
+                          : 'bg-red-100 text-red-800 border-0'
+                      } text-xs font-medium px-2 py-0.5`}
+                      data-testid={`badge-status-${transaction.id}`}
+                    >
+                      {transaction.transaction_status === 'completed' || transaction.transaction_status === 'confirmed' ? 'Paid' : getStatusText(transaction.transaction_status)}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={!historyData.pagination.has_prev}
-                      data-testid="button-prev-page"
+                  <div className="col-span-2 flex items-center justify-end">
+                    <span className="text-sm text-[hsl(var(--gray-900))] font-medium" data-testid={`text-amount-${transaction.id}`}>
+                      {formatCurrency(transaction.amount)}
+                    </span>
+                  </div>
+                  <div className="col-span-3 flex items-center justify-end">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-100))] hover:text-[hsl(var(--gray-900))]"
+                      onClick={() => window.location.href = `/dashboard/settings/plans-billing/order/${transaction.id}`}
+                      data-testid={`button-view-details-${transaction.id}`}
                     >
-                      Previous
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, historyData.pagination.total_pages) }, (_, i) => {
-                        let pageNum
-                        if (historyData.pagination.total_pages <= 5) {
-                          pageNum = i + 1
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1
-                        } else if (currentPage >= historyData.pagination.total_pages - 2) {
-                          pageNum = historyData.pagination.total_pages - 4 + i
-                        } else {
-                          pageNum = currentPage - 2 + i
-                        }
-                        
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(pageNum)}
-                            className="w-9 h-9"
-                            data-testid={`button-page-${pageNum}`}
-                          >
-                            {pageNum}
-                          </Button>
-                        )
-                      })}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={!historyData.pagination.has_next}
-                      data-testid="button-next-page"
-                    >
-                      Next
+                      <Download className="w-4 h-4 mr-2" />
+                      View Details
                     </Button>
                   </div>
                 </div>
-              )}
+              ))}
             </div>
-          ) : (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">No transactions found</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              
+            {/* Pagination */}
+            {historyData.pagination && historyData.pagination.total_pages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--gray-200))]">
+                <div className="text-sm text-[hsl(var(--gray-600))]" data-testid="text-pagination-info">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, historyData.pagination.total_items)} of {historyData.pagination.total_items} transactions
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={!historyData.pagination.has_prev}
+                    className="border-[hsl(var(--gray-300))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-50))]"
+                    data-testid="button-prev-page"
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, historyData.pagination.total_pages) }, (_, i) => {
+                      let pageNum
+                      if (historyData.pagination.total_pages <= 5) {
+                        pageNum = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1
+                      } else if (currentPage >= historyData.pagination.total_pages - 2) {
+                        pageNum = historyData.pagination.total_pages - 4 + i
+                      } else {
+                        pageNum = currentPage - 2 + i
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-9 h-9 ${currentPage === pageNum ? 'bg-[hsl(var(--gray-900))] text-white' : 'border-[hsl(var(--gray-300))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-50))]'}`}
+                          data-testid={`button-page-${pageNum}`}
+                        >
+                          {pageNum}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!historyData.pagination.has_next}
+                    className="border-[hsl(var(--gray-300))] text-[hsl(var(--gray-700))] hover:bg-[hsl(var(--gray-50))]"
+                    data-testid="button-next-page"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-[hsl(var(--gray-600))]">No transactions found</p>
+          </div>
+        )}
+      </div>
       
       {/* Cancel Subscription Dialog */}
       {showCancelDialog && subscriptionData?.hasSubscription && subscriptionData.subscription?.paddle_subscription_id && (
