@@ -222,8 +222,8 @@ function DashboardLayoutContent({
           <div className={`transition-all duration-300 ml-0 ${
             sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
           }`}>
-            {/* Dashboard Header - Unified component for desktop and mobile */}
-            {mounted && pathname && !pathname.includes('/dashboard/settings') && (
+            {/* Dashboard Header - Hidden on settings pages */}
+            {mounted && pathname && !pathname.startsWith('/dashboard/settings') && (
               <DashboardHeader
                 domains={domains}
                 selectedDomainId={selectedDomainId}
