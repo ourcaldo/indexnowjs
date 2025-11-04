@@ -80,11 +80,11 @@ async function triggerImmediateRankCheckWithBullMQ(
         'immediate-rank-check',
         {
           keywordId: keywordData.id,
-          userId: keywordData.user_id,
-          domainId: keywordData.domain_id,
+          userId: keywordData.userId,
+          domainId: keywordData.domainId,
           keyword: keywordData.keyword,
-          countryCode: keywordData.country_code,
-          device: keywordData.device,
+          countryCode: keywordData.countryCode,
+          device: keywordData.deviceType,
         },
         {
           priority: 1,

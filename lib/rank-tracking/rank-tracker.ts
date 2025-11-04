@@ -15,6 +15,7 @@ interface KeywordToTrack {
   id: string
   keyword: string
   domain: string
+  domainId: string
   deviceType: 'desktop' | 'mobile'
   countryCode: string
   countryName: string
@@ -342,6 +343,7 @@ export class RankTracker {
             id: keyword.id,
             keyword: keyword.keyword,
             domain: keyword.domain.domain_name,
+            domainId: keyword.domain_id,
             deviceType: keyword.device_type,
             countryCode: keyword.country.iso2_code,
             countryName: keyword.country.name,

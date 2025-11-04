@@ -14,8 +14,10 @@ interface KeywordToTrack {
   id: string
   keyword: string
   domain: string
+  domainId: string
   deviceType: 'desktop' | 'mobile'
   countryCode: string
+  countryName: string
   userId: string
 }
 
@@ -120,9 +122,10 @@ export class BatchProcessor {
               keyword,
               device_type,
               user_id,
+              domain_id,
               last_check_date,
               domain:indb_keyword_domains(domain_name),
-              country:indb_keyword_countries(iso2_code)
+              country:indb_keyword_countries(name, iso2_code)
             `)
             .eq('is_active', true)
             .or('last_check_date.is.null,last_check_date.neq.' + new Date().toISOString().split('T')[0])
@@ -141,8 +144,10 @@ export class BatchProcessor {
         id: k.id,
         keyword: k.keyword,
         domain: k.domain.domain_name,
+        domainId: k.domain_id,
         deviceType: k.device_type,
         countryCode: k.country.iso2_code,
+        countryName: k.country.name,
         userId: k.user_id
       }))
 
