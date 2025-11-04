@@ -5990,6 +5990,34 @@ The infinite loading was caused by waiting for a callback parameter that never e
 
 ## Recent Changes
 
+### November 4, 2025: Dashboard Header Hidden from Settings Pages - Fix ✅
+
+**Overview:**
+Fixed the Dashboard Header not being properly hidden on settings pages despite the conditional rendering in place.
+
+**Issue:**
+- User reported still seeing the Dashboard Header (showing domain selector "tugasim.me", "Keywords 2", and "Add Keywords" button) on settings pages
+- The condition `!pathname.startsWith('/dashboard/settings')` was not reliably hiding the header
+
+**Solution:**
+- Changed the condition from `!pathname.startsWith('/dashboard/settings')` to `!pathname.includes('/settings')`
+- This broader check ensures the header is hidden on any page with '/settings' in the URL path
+- More robust against timing issues and pathname variations
+
+**Technical Change:**
+- File: `app/dashboard/layout.tsx`
+- Line 229: Updated conditional rendering logic
+- Old condition: `!pathname.startsWith('/dashboard/settings')`
+- New condition: `!pathname.includes('/settings')`
+
+**Files Modified (1):**
+1. `app/dashboard/layout.tsx` - Updated DashboardHeader hiding condition
+
+**Result**: Dashboard Header with domain selector and "Add Keywords" button is now completely hidden on all settings pages.
+
+---
+
+
 ### November 4, 2025: Cancel Subscription Dialog UI Redesign ✅
 
 **Overview:**
