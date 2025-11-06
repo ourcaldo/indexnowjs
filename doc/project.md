@@ -775,6 +775,182 @@ JWT_SECRET=[jwt-secret-key]
 
 ## Recent Changes
 
+### November 6, 2025: Subscription Validation for Restricted Operations - Security Enhancement ✅ COMPLETE
+
+**Overview:**
+Implemented comprehensive subscription validation to prevent users without active packages/subscriptions from performing restricted operations (add keywords, add domains, create jobs). This critical security fix ensures that only users with valid, non-expired packages can access premium features.
+
+#### Problem Statement
+
+**Critical Security Issue:**
+Users without active packages or with expired subscriptions were able to:
+- ✅ Add keywords to rank tracking system
+- ✅ Add domains for rank tracking
+- ✅ Create indexing jobs
+
+This violated the freemium business model and allowed unauthorized access to premium features.
+
+#### Solution Implementation
+
+**1. Created Subscription Validation Service**
+
+**File Created:** `lib/services/validation/SubscriptionValidator.ts`
+
+**Key Features:**
+- ✅ **Comprehensive Validation**: Checks package_id, expires_at, trial_status
+- ✅ **User-Friendly Error Messages**: Clear messages for each failure scenario
+- ✅ **Security-First**: Uses SecureServiceRoleWrapper for all database operations
+- ✅ **Activity Logging**: Logs all subscription validation attempts
+- ✅ **Error Classification**: Returns specific error codes (NO_PACKAGE, SUBSCRIPTION_EXPIRED, TRIAL_EXPIRED, DATABASE_ERROR)
+
+**Validation Logic:**
+```typescript
+1. User must have package_id (not null)
+2. If expires_at exists, it must be in the future
+3. If trial_status is 'expired', user must have active subscription
+4. All checks logged for security auditing
+```
+
+**2. Applied Validation to Keyword Creation Endpoint**
+
+**File Modified:** `app/api/v1/rank-tracking/keywords/route.ts`
+
+**Changes Made:**
+- ✅ **Import**: Added SubscriptionValidator import
+- ✅ **Validation Check**: Added subscription validation before domain ownership check
+- ✅ **Error Handling**: Returns 403 Forbidden with clear error message if subscription invalid
+- ✅ **Security Flow**: Validation → Domain Check → Quota Check → Keyword Creation
+- ✅ **Fixed Pre-existing Issues**: Corrected ErrorType.NOT_FOUND → ErrorType.AUTHORIZATION
+- ✅ **Fixed Pre-existing Issues**: Corrected ErrorType.QUOTA_EXCEEDED → ErrorType.BUSINESS_LOGIC
+
+**3. Applied Validation to Domain Creation Endpoint**
+
+**File Modified:** `app/api/v1/rank-tracking/domains/route.ts`
+
+**Changes Made:**
+- ✅ **Import**: Added SubscriptionValidator import
+- ✅ **Validation Check**: Added subscription validation before domain creation
+- ✅ **Error Handling**: Returns 403 Forbidden with clear error message if subscription invalid
+- ✅ **Security Flow**: Validation → Domain Creation
+
+**4. Applied Validation to Job Creation Endpoint**
+
+**File Modified:** `app/api/v1/indexing/jobs/route.ts`
+
+**Changes Made:**
+- ✅ **Import**: Added SubscriptionValidator import
+- ✅ **Validation Check**: Added subscription validation before quota check
+- ✅ **Error Handling**: Returns 403 Forbidden with clear error message if subscription invalid
+- ✅ **Security Flow**: Validation → Quota Check → Job Creation
+- ✅ **Fixed Pre-existing Issues**: Corrected ErrorType.QUOTA_EXCEEDED → ErrorType.BUSINESS_LOGIC
+
+#### Technical Details
+
+**Validation Metadata Tracking:**
+```typescript
+{
+  ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+  userAgent: request.headers.get('user-agent') || undefined,
+  endpoint: '/api/v1/rank-tracking/keywords',
+  operation: 'create_keywords'
+}
+```
+
+**Error Response Format:**
+```json
+{
+  "success": false,
+  "error": {
+    "type": "AUTHORIZATION",
+    "message": "You need an active subscription to perform this action. Please subscribe to a plan to continue.",
+    "statusCode": 403
+  }
+}
+```
+
+**User-Facing Error Messages:**
+- **No Package**: "You need an active subscription to perform this action. Please subscribe to a plan to continue."
+- **Subscription Expired**: "Your subscription has expired. Please renew your subscription to continue."
+- **Trial Expired**: "Your trial has expired. Please subscribe to a plan to continue."
+- **Database Error**: "Unable to verify subscription status. Please contact support."
+
+#### Files Modified (Total: 4)
+
+1. ✅ **CREATED** `lib/services/validation/SubscriptionValidator.ts` - Core validation service
+2. ✅ **MODIFIED** `app/api/v1/rank-tracking/keywords/route.ts` - Added subscription check + fixed ErrorType issues
+3. ✅ **MODIFIED** `app/api/v1/rank-tracking/domains/route.ts` - Added subscription check
+4. ✅ **MODIFIED** `app/api/v1/indexing/jobs/route.ts` - Added subscription check + fixed ErrorType issues
+
+#### Security Impact
+
+**Before Fix:**
+- ❌ Users without packages could add unlimited keywords
+- ❌ Users with expired subscriptions could still use premium features
+- ❌ Trial users after expiration could continue using the service
+- ❌ No audit trail for unauthorized access attempts
+
+**After Fix:**
+- ✅ All restricted operations require active subscription
+- ✅ Expired subscriptions immediately block access
+- ✅ Expired trials require subscription upgrade
+- ✅ All validation attempts logged for security auditing
+- ✅ Clear error messages guide users to subscription pages
+
+#### Business Logic Validation
+
+**Package/Subscription Requirements:**
+```typescript
+// User MUST have:
+1. package_id !== null (has a package assigned)
+2. expires_at === null OR expires_at > now() (subscription not expired)
+3. trial_status !== 'expired' OR has active subscription (trial rules)
+```
+
+**Allowed Operations:**
+- ✅ View existing data (keywords, domains, jobs)
+- ✅ Browse subscription plans
+- ✅ Update account settings
+
+**Blocked Operations (Without Active Subscription):**
+- ❌ Add new keywords
+- ❌ Add new domains
+- ❌ Create new indexing jobs
+- ❌ Track new ranks
+
+#### Testing & Verification
+
+**Verified Scenarios:**
+1. ✅ User with active package can create keywords/domains/jobs
+2. ✅ User without package_id receives clear error message
+3. ✅ User with expired subscription receives expiration notice
+4. ✅ User with expired trial receives upgrade prompt
+5. ✅ All validation attempts logged to activity logs
+6. ✅ Server starts successfully after changes
+7. ✅ Pre-existing LSP errors fixed (ErrorType corrections)
+
+**Server Status:**
+- ✅ Development server running on http://0.0.0.0:5000
+- ✅ All endpoints functional
+- ✅ No runtime errors introduced
+
+**Architect Review:**
+- ✅ PASS - Subscription validation enforced for all three endpoints
+- ✅ Security checks confirmed
+- ✅ No security gaps observed
+- ✅ Error handling and messaging appropriate
+
+#### Future Enhancements (Not Implemented)
+
+**Potential Improvements:**
+- Add frontend UI blocking for users without subscriptions
+- Add subscription status banner in dashboard
+- Add grace period for recently expired subscriptions
+- Add quota tracking for free-tier users
+- Add rate limiting per subscription tier
+
+---
+
+
 ### November 4, 2025: Settings Page UI Redesign - Match New Design Specification ✅ COMPLETE
 
 **Overview:**
