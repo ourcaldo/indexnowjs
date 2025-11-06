@@ -4,6 +4,7 @@ import { authenticatedApiWrapper, formatSuccess, formatError } from '@/lib/core/
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
 import { startImmediateRankCheckInBackground } from '@/lib/rank-tracking/immediate-rank-check'
+import { SubscriptionValidator } from '@/lib/services/validation/SubscriptionValidator'
 
 export const GET = authenticatedApiWrapper(async (request, auth) => {
   try {
@@ -191,6 +192,26 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
     }
 
     const { domain_id, keywords, device_type, country_id, tags } = validation.data
+
+    const subscriptionCheck = await SubscriptionValidator.validateActiveSubscription(
+      auth.supabase,
+      auth.userId,
+      {
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent') || undefined,
+        endpoint: '/api/v1/rank-tracking/keywords',
+        operation: 'create_keywords'
+      }
+    )
+
+    if (!subscriptionCheck.isValid) {
+      const subscriptionError = await ErrorHandlingService.createError(
+        ErrorType.AUTHORIZATION,
+        subscriptionCheck.error || 'Subscription required',
+        { severity: ErrorSeverity.MEDIUM, userId: auth.userId, statusCode: 403 }
+      )
+      return formatError(subscriptionError)
+    }
 
     const domain = await SecureServiceRoleWrapper.executeWithUserSession(
       auth.supabase,

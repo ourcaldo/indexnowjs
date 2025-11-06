@@ -4,6 +4,7 @@ import { authenticatedApiWrapper, formatSuccess, formatError } from '@/lib/core/
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { JobLoggingService } from '@/lib/job-management/job-logging-service'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
+import { SubscriptionValidator } from '@/lib/services/validation/SubscriptionValidator'
 
 export const GET = authenticatedApiWrapper(async (request, auth) => {
   try {
@@ -141,6 +142,26 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
         }
       )
       return formatError(validationError)
+    }
+
+    const subscriptionCheck = await SubscriptionValidator.validateActiveSubscription(
+      auth.supabase,
+      auth.userId,
+      {
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent') || undefined,
+        endpoint: '/api/v1/indexing/jobs',
+        operation: 'create_job'
+      }
+    )
+
+    if (!subscriptionCheck.isValid) {
+      const subscriptionError = await ErrorHandlingService.createError(
+        ErrorType.AUTHORIZATION,
+        subscriptionCheck.error || 'Subscription required',
+        { severity: ErrorSeverity.MEDIUM, userId: auth.userId, statusCode: 403 }
+      )
+      return formatError(subscriptionError)
     }
 
     // Import QuotaService for quota enforcement

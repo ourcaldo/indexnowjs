@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { authenticatedApiWrapper, formatSuccess, formatError } from '@/lib/core/api-response-middleware'
 import { SecureServiceRoleWrapper } from '@/lib/services/security/SecureServiceRoleWrapper'
 import { ErrorHandlingService, ErrorType, ErrorSeverity } from '@/lib/monitoring/error-handling'
+import { SubscriptionValidator } from '@/lib/services/validation/SubscriptionValidator'
 
 const createDomainSchema = z.object({
   domain_name: z.string().min(1, 'Domain name is required'),
@@ -65,6 +66,27 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
     }
 
     const { domain_name, display_name } = validation.data
+
+    const subscriptionCheck = await SubscriptionValidator.validateActiveSubscription(
+      auth.supabase,
+      auth.userId,
+      {
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim(),
+        userAgent: request.headers.get('user-agent') || undefined,
+        endpoint: '/api/v1/rank-tracking/domains',
+        operation: 'create_domain'
+      }
+    )
+
+    if (!subscriptionCheck.isValid) {
+      const subscriptionError = await ErrorHandlingService.createError(
+        ErrorType.AUTHORIZATION,
+        subscriptionCheck.error || 'Subscription required',
+        { severity: ErrorSeverity.MEDIUM, userId: auth.userId, statusCode: 403 }
+      )
+      return formatError(subscriptionError)
+    }
+
     const cleanDomain = domain_name
       .replace(/^https?:\/\//, '')
       .replace(/^www\./, '')
