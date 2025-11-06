@@ -179,7 +179,7 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
       const quotaCheck = await QuotaService.canSubmitUrls(auth.userId, urlCount)
       if (!quotaCheck.canSubmit) {
         const quotaError = await ErrorHandlingService.createError(
-          ErrorType.QUOTA_EXCEEDED,
+          ErrorType.BUSINESS_LOGIC,
           quotaCheck.message || 'Quota exceeded. Upgrade your package to submit more URLs.',
           {
             severity: ErrorSeverity.LOW,

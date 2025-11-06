@@ -237,7 +237,7 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     if (domain.error || !domain.data) {
       const notFoundError = await ErrorHandlingService.createError(
-        ErrorType.NOT_FOUND,
+        ErrorType.AUTHORIZATION,
         'Access denied',
         { severity: ErrorSeverity.LOW, userId: auth.userId, statusCode: 404 }
       )
@@ -315,7 +315,7 @@ export const POST = authenticatedApiWrapper(async (request, auth) => {
 
     if (keywordLimit !== Infinity && (currentKeywordCount || 0) + keywords.length > keywordLimit) {
       const quotaError = await ErrorHandlingService.createError(
-        ErrorType.QUOTA_EXCEEDED,
+        ErrorType.BUSINESS_LOGIC,
         `Adding ${keywords.length} keywords would exceed your limit of ${keywordLimit === Infinity ? 'unlimited' : keywordLimit}. Current usage: ${currentKeywordCount || 0}`,
         { severity: ErrorSeverity.LOW, userId: auth.userId, statusCode: 400 }
       )
